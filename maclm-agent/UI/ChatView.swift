@@ -1,7 +1,31 @@
 import SwiftUI
 
+enum ChatViewStyle {
+    case mainWindow
+    case compact
+
+    var emptyStateHeight: CGFloat {
+        switch self {
+        case .mainWindow:
+            300
+        case .compact:
+            220
+        }
+    }
+
+    var bubbleInset: CGFloat {
+        switch self {
+        case .mainWindow:
+            72
+        case .compact:
+            36
+        }
+    }
+}
+
 struct ChatView: View {
     @Bindable var viewModel: ChatViewModel
+    var style: ChatViewStyle = .mainWindow
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,13 +46,14 @@ struct ChatView: View {
                             systemImage: "brain",
                             description: Text("Запустите сервер LM Studio и отправьте сообщение.")
                         )
-                        .frame(maxWidth: .infinity, minHeight: 300)
+                        .frame(maxWidth: .infinity, minHeight: style.emptyStateHeight)
                     } else {
                         ForEach(viewModel.messages) { message in
                             MessageBubble(
                                 message: message,
                                 isWaiting: viewModel.isWaitingForFirstToken
-                                    && message.id == viewModel.generatingMessageID
+                                    && message.id == viewModel.generatingMessageID,
+                                horizontalInset: style.bubbleInset
                             )
                             .id(message.id)
                         }
@@ -72,11 +97,12 @@ struct ChatView: View {
 private struct MessageBubble: View {
     let message: Message
     let isWaiting: Bool
+    let horizontalInset: CGFloat
 
     var body: some View {
         HStack {
             if message.role == .user {
-                Spacer(minLength: 72)
+                Spacer(minLength: horizontalInset)
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -100,7 +126,7 @@ private struct MessageBubble: View {
             .background(bubbleColor, in: RoundedRectangle(cornerRadius: 14))
 
             if message.role != .user {
-                Spacer(minLength: 72)
+                Spacer(minLength: horizontalInset)
             }
         }
     }

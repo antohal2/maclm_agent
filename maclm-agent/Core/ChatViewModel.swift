@@ -32,6 +32,7 @@ final class ChatViewModel {
     ) {
         self.modelContext = modelContext
         self.agentLoop = agentLoop
+        restoreSelection()
     }
 
     @discardableResult
@@ -66,6 +67,13 @@ final class ChatViewModel {
         }
         modelContext.delete(conversation)
         saveContext()
+    }
+
+    func ensureConversationSelected() {
+        guard selectedConversation == nil else {
+            return
+        }
+        restoreSelection()
     }
 
     func send() {
@@ -213,6 +221,19 @@ final class ChatViewModel {
         isWaitingForFirstToken = false
         generatingMessageID = nil
         generationTask = nil
+    }
+
+    private func restoreSelection() {
+        var descriptor = FetchDescriptor<Conversation>(
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+
+        if let conversation = try? modelContext.fetch(descriptor).first {
+            selectConversation(conversation)
+        } else {
+            createConversation()
+        }
     }
 
     private func saveContext() {

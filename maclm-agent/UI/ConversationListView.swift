@@ -107,6 +107,10 @@ struct ConversationListView: View {
     }
 
     private func ensureSelection(excluding excludedID: UUID? = nil) {
+        if excludedID == nil, viewModel.selectedConversation == nil {
+            viewModel.ensureConversationSelected()
+        }
+
         if let selectedID = viewModel.selectedConversationID, selectedID != excludedID {
             let selectedConversationExists = conversations.contains { $0.id == selectedID }
             if selectedConversationExists {

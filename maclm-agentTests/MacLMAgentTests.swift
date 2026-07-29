@@ -123,6 +123,39 @@ final class MacLMAgentTests: XCTestCase {
     }
 
     @MainActor
+    func testChatViewModelRestoresMostRecentConversation() throws {
+        let container = try makeInMemoryModelContainer()
+        let context = ModelContext(container)
+        let olderConversation = Conversation(
+            title: "Старая",
+            createdAt: Date(timeIntervalSince1970: 100)
+        )
+        let recentConversation = Conversation(
+            title: "Активная",
+            createdAt: Date(timeIntervalSince1970: 200)
+        )
+        context.insert(olderConversation)
+        context.insert(recentConversation)
+        try context.save()
+
+        let viewModel = ChatViewModel(modelContext: context)
+
+        XCTAssertEqual(viewModel.selectedConversationID, recentConversation.id)
+    }
+
+    @MainActor
+    func testChatViewModelCreatesConversationForEmptyStore() throws {
+        let container = try makeInMemoryModelContainer()
+        let context = ModelContext(container)
+
+        let viewModel = ChatViewModel(modelContext: context)
+        let conversations = try context.fetch(FetchDescriptor<Conversation>())
+
+        XCTAssertEqual(conversations.count, 1)
+        XCTAssertEqual(viewModel.selectedConversationID, conversations.first?.id)
+    }
+
+    @MainActor
     private func makeInMemoryModelContainer() throws -> ModelContainer {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(

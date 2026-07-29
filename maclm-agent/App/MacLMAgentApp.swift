@@ -25,13 +25,17 @@ struct MacLMAgentApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        // App-owned state is injected into both scenes so they always observe
+        // the same active conversation, draft, and streaming response.
+        Window("maclm-agent", id: "main") {
             MainWindowView(viewModel: chatViewModel)
         }
         .modelContainer(modelContainer)
 
         MenuBarExtra("maclm-agent", systemImage: "brain") {
-            MenuBarContentView()
+            MenuBarContentView(viewModel: chatViewModel)
         }
+        .modelContainer(modelContainer)
+        .menuBarExtraStyle(.window)
     }
 }
