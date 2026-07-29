@@ -89,28 +89,7 @@ struct ToolDefinition: Codable, Equatable, Sendable {
 struct ToolFunctionDefinition: Codable, Equatable, Sendable {
     let name: String
     let description: String
-    let parameters: ToolParameters
-}
-
-struct ToolParameters: Codable, Equatable, Sendable {
-    let type: String
-    let properties: [String: ToolPropertyDefinition]
-    let required: [String]
-
-    init(
-        type: String = "object",
-        properties: [String: ToolPropertyDefinition] = [:],
-        required: [String] = []
-    ) {
-        self.type = type
-        self.properties = properties
-        self.required = required
-    }
-}
-
-struct ToolPropertyDefinition: Codable, Equatable, Sendable {
-    let type: String
-    let description: String
+    let parameters: JSONSchema
 }
 
 enum ChatStreamEvent: Equatable, Sendable {

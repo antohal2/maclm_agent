@@ -20,13 +20,14 @@ extension Message {
             id: chatMessage.id,
             role: MessageRole(chatMessage.role),
             content: chatMessage.content,
+            toolCallID: chatMessage.toolCallID,
             timestamp: timestamp,
             conversation: conversation
         )
 
         toolCalls = chatMessage.toolCalls?.map { call in
             ToolCall(
-                id: UUID(uuidString: call.id) ?? UUID(),
+                providerCallID: call.id,
                 toolName: call.function.name,
                 argumentsJSON: call.function.arguments,
                 timestamp: timestamp,
@@ -40,7 +41,7 @@ extension Message {
             .sorted { $0.timestamp < $1.timestamp }
             .map { call in
                 ChatToolCall(
-                    id: call.id.uuidString,
+                    id: call.providerCallID ?? call.id.uuidString,
                     type: "function",
                     function: ChatToolFunction(
                         name: call.toolName,
@@ -53,7 +54,8 @@ extension Message {
             id: id,
             role: role.chatRole,
             content: content,
-            toolCalls: mappedToolCalls.isEmpty ? nil : mappedToolCalls
+            toolCalls: mappedToolCalls.isEmpty ? nil : mappedToolCalls,
+            toolCallID: toolCallID
         )
     }
 }

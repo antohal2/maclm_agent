@@ -235,7 +235,7 @@ final class MacLMAgentTests: XCTestCase {
     func testMessageDTOConversionPreservesProviderFields() {
         let conversation = Conversation()
         let toolCall = ChatToolCall(
-            id: UUID().uuidString,
+            id: "provider_call_42",
             type: "function",
             function: ChatToolFunction(
                 name: "read_file",
@@ -256,6 +256,19 @@ final class MacLMAgentTests: XCTestCase {
         XCTAssertEqual(convertedDTO.role, dto.role)
         XCTAssertEqual(convertedDTO.content, dto.content)
         XCTAssertEqual(convertedDTO.toolCalls, dto.toolCalls)
+    }
+
+    @MainActor
+    func testToolMessageDTOConversionPreservesToolCallID() {
+        let dto = ChatMessage(
+            role: .tool,
+            content: "result",
+            toolCallID: "provider_call_42"
+        )
+
+        let message = Message(chatMessage: dto)
+
+        XCTAssertEqual(message.chatMessage, dto)
     }
 
     @MainActor

@@ -12,6 +12,7 @@ enum ToolCallStatus: String, Codable, CaseIterable, Sendable {
 @Model
 final class ToolCall {
     @Attribute(.unique) var id: UUID
+    var providerCallID: String?
     var toolName: String
     var argumentsJSON: String
     var resultJSON: String?
@@ -30,6 +31,7 @@ final class ToolCall {
 
     init(
         id: UUID = UUID(),
+        providerCallID: String? = nil,
         toolName: String,
         argumentsJSON: String,
         resultJSON: String? = nil,
@@ -38,6 +40,7 @@ final class ToolCall {
         message: Message? = nil
     ) {
         self.id = id
+        self.providerCallID = providerCallID
         self.toolName = toolName
         self.argumentsJSON = argumentsJSON
         self.resultJSON = resultJSON
