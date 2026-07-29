@@ -113,6 +113,28 @@ final class ChatViewModel {
         }
     }
 
+    func resolveConfirmation(
+        toolCallID: UUID,
+        decision: ConfirmationDecision
+    ) {
+        guard
+            let toolCall = persistentToolCall(id: toolCallID),
+            toolCall.status == .pending
+        else {
+            return
+        }
+
+        toolCall.status = decision == .approved ? .approved : .rejected
+        saveContext()
+
+        Task { [agentLoop] in
+            await agentLoop.resolveConfirmation(
+                requestID: toolCallID,
+                decision: decision
+            )
+        }
+    }
+
     private func persistPrompt(
         _ content: String,
         in conversation: Conversation
@@ -183,6 +205,12 @@ final class ChatViewModel {
             updateMessage(id: generatingMessageID ?? assistantID) { message in
                 message.content += delta
             }
+        case let .confirmationRequested(request):
+            isWaitingForFirstToken = false
+            persistConfirmation(
+                request,
+                assistantID: generatingMessageID ?? assistantID
+            )
         case let .toolCallsCompleted(executions):
             isWaitingForFirstToken = false
             persist(executions, assistantID: generatingMessageID ?? assistantID)
@@ -226,7 +254,9 @@ final class ChatViewModel {
         messages = conversation.orderedMessages
         saveContext()
     }
+}
 
+private extension ChatViewModel {
     private func persist(
         _ executions: [AgentToolCallExecution],
         assistantID: UUID
@@ -240,18 +270,29 @@ final class ChatViewModel {
 
         var timestamp = assistantMessage.timestamp
         for execution in executions {
-            timestamp = timestamp.addingTimeInterval(0.000_001)
-            let toolCall = ToolCall(
-                providerCallID: execution.toolCall.id,
-                toolName: execution.toolCall.function.name,
-                argumentsJSON: execution.toolCall.function.arguments,
-                resultJSON: execution.result.displayContent ?? execution.result.content,
-                status: execution.result.isError ? .failed : .completed,
-                timestamp: timestamp,
-                message: nil
-            )
-            modelContext.insert(toolCall)
-            assistantMessage.toolCalls.append(toolCall)
+            let toolCall: ToolCall
+            if let pendingToolCall = confirmedToolCall(for: execution) {
+                toolCall = pendingToolCall
+                timestamp = max(timestamp, toolCall.timestamp)
+            } else {
+                timestamp = timestamp.addingTimeInterval(0.000_001)
+                toolCall = ToolCall(
+                    providerCallID: execution.toolCall.id,
+                    toolName: execution.toolCall.function.name,
+                    argumentsJSON: execution.toolCall.function.arguments,
+                    timestamp: timestamp,
+                    message: nil
+                )
+                modelContext.insert(toolCall)
+                assistantMessage.toolCalls.append(toolCall)
+            }
+
+            toolCall.resultJSON = execution.result.displayContent ?? execution.result.content
+            if execution.confirmationDecision == .rejected {
+                toolCall.status = .rejected
+            } else {
+                toolCall.status = execution.result.isError ? .failed : .completed
+            }
 
             timestamp = timestamp.addingTimeInterval(0.000_001)
             let toolMessage = Message(
@@ -265,6 +306,45 @@ final class ChatViewModel {
         }
 
         conversation.updatedAt = timestamp
+        messages = conversation.orderedMessages
+        saveContext()
+    }
+
+    private func confirmedToolCall(
+        for execution: AgentToolCallExecution
+    ) -> ToolCall? {
+        guard let requestID = execution.confirmationRequestID else {
+            return nil
+        }
+        return persistentToolCall(id: requestID)
+    }
+
+    private func persistConfirmation(
+        _ request: ConfirmationRequest,
+        assistantID: UUID
+    ) {
+        guard
+            persistentToolCall(id: request.id) == nil,
+            let assistantMessage = persistentMessage(id: assistantID),
+            let conversation = assistantMessage.conversation
+        else {
+            return
+        }
+
+        let lastTimestamp = conversation.orderedMessages.last?.timestamp
+            ?? assistantMessage.timestamp
+        let toolCall = ToolCall(
+            id: request.id,
+            providerCallID: request.toolCall.id,
+            toolName: request.toolCall.function.name,
+            argumentsJSON: request.toolCall.function.arguments,
+            status: .pending,
+            timestamp: lastTimestamp.addingTimeInterval(0.000_001),
+            message: nil
+        )
+        modelContext.insert(toolCall)
+        assistantMessage.toolCalls.append(toolCall)
+        conversation.updatedAt = toolCall.timestamp
         messages = conversation.orderedMessages
         saveContext()
     }
@@ -298,6 +378,15 @@ final class ChatViewModel {
         let descriptor = FetchDescriptor<Message>(
             predicate: #Predicate { message in
                 message.id == id
+            }
+        )
+        return try? modelContext.fetch(descriptor).first
+    }
+
+    private func persistentToolCall(id: UUID) -> ToolCall? {
+        let descriptor = FetchDescriptor<ToolCall>(
+            predicate: #Predicate { toolCall in
+                toolCall.id == id
             }
         )
         return try? modelContext.fetch(descriptor).first
