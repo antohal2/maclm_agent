@@ -9,8 +9,7 @@ struct ChatView: View {
             Divider()
             composer
         }
-        .frame(minWidth: 560, minHeight: 420)
-        .navigationTitle("maclm-agent")
+        .navigationTitle(viewModel.selectedConversation?.title ?? "maclm-agent")
     }
 
     private var messageList: some View {
@@ -29,7 +28,7 @@ struct ChatView: View {
                             MessageBubble(
                                 message: message,
                                 isWaiting: viewModel.isWaitingForFirstToken
-                                    && message.id == viewModel.messages.last?.id
+                                    && message.id == viewModel.generatingMessageID
                             )
                             .id(message.id)
                         }
@@ -71,7 +70,7 @@ struct ChatView: View {
 }
 
 private struct MessageBubble: View {
-    let message: ChatMessage
+    let message: Message
     let isWaiting: Bool
 
     var body: some View {

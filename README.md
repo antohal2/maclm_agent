@@ -4,10 +4,10 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-Version v0.1.1 provides a streaming chat with an LM Studio server at
-`http://localhost:1234/v1`. Responses are rendered in the main window as SSE
-chunks arrive. The provider boundary and message types already support future
-tool-call events, while conversation history remains in memory for this step.
+Version v0.1.2 provides a streaming chat with an LM Studio server at
+`http://localhost:1234/v1`. Conversations and messages are stored with
+SwiftData and remain available after relaunch. The main window includes a
+sidebar for creating, switching, renaming, and deleting conversations.
 
 ## Requirements
 
