@@ -51,4 +51,7 @@ identifier_name:
   excluded:
     - id
 
+trailing_comma:
+  mandatory_comma: true
+
 reporter: xcode

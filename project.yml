@@ -28,7 +28,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: true
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
-        MARKETING_VERSION: 0.1.4
+        MARKETING_VERSION: 0.1.5
         PRODUCT_BUNDLE_IDENTIFIER: local.maclm-agent
         PRODUCT_NAME: maclm-agent
         SWIFT_EMIT_LOC_STRINGS: true

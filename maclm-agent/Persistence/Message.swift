@@ -13,6 +13,7 @@ final class Message {
     @Attribute(.unique) var id: UUID
     private var roleRawValue: String
     var content: String
+    var toolCallID: String?
     var timestamp: Date
     var conversation: Conversation?
 
@@ -32,6 +33,7 @@ final class Message {
         id: UUID = UUID(),
         role: MessageRole,
         content: String,
+        toolCallID: String? = nil,
         timestamp: Date = Date(),
         conversation: Conversation? = nil,
         toolCalls: [ToolCall] = []
@@ -39,6 +41,7 @@ final class Message {
         self.id = id
         roleRawValue = role.rawValue
         self.content = content
+        self.toolCallID = toolCallID
         self.timestamp = timestamp
         self.conversation = conversation
         self.toolCalls = toolCalls

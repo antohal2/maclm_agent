@@ -47,7 +47,7 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 14) {
-                    if viewModel.messages.isEmpty {
+                    if visibleMessages.isEmpty {
                         ContentUnavailableView(
                             "Локальный ассистент",
                             systemImage: "brain",
@@ -55,7 +55,7 @@ struct ChatView: View {
                         )
                         .frame(maxWidth: .infinity, minHeight: style.emptyStateHeight)
                     } else {
-                        ForEach(viewModel.messages) { message in
+                        ForEach(visibleMessages) { message in
                             MessageBubble(
                                 message: message,
                                 isWaiting: viewModel.isWaitingForFirstToken
@@ -68,13 +68,17 @@ struct ChatView: View {
                 }
                 .padding()
             }
-            .onChange(of: viewModel.messages.last?.content) {
-                guard let messageID = viewModel.messages.last?.id else {
+            .onChange(of: visibleMessages.last?.content) {
+                guard let messageID = visibleMessages.last?.id else {
                     return
                 }
                 proxy.scrollTo(messageID, anchor: .bottom)
             }
         }
+    }
+
+    private var visibleMessages: [Message] {
+        viewModel.messages.filter { $0.role != .tool }
     }
 
     private var composer: some View {
@@ -138,16 +142,20 @@ private struct MessageBubble: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if isWaiting, message.content.isEmpty {
+                if isWaiting, message.content.isEmpty, message.toolCalls.isEmpty {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
                         Text("Печатает…")
                             .foregroundStyle(.secondary)
                     }
-                } else {
+                } else if !message.content.isEmpty {
                     Text(message.content)
                         .textSelection(.enabled)
+                }
+
+                ForEach(orderedToolCalls) { toolCall in
+                    ToolCallCard(toolCall: toolCall)
                 }
             }
             .padding(12)
@@ -176,5 +184,14 @@ private struct MessageBubble: View {
         message.role == .user
             ? Color.accentColor.opacity(0.18)
             : Color.secondary.opacity(0.12)
+    }
+
+    private var orderedToolCalls: [ToolCall] {
+        message.toolCalls.sorted {
+            if $0.timestamp == $1.timestamp {
+                return $0.id.uuidString < $1.id.uuidString
+            }
+            return $0.timestamp < $1.timestamp
+        }
     }
 }

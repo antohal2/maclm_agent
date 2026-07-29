@@ -174,19 +174,21 @@ final class ChatViewModel {
         }
     }
 
-    private func consume(_ event: ChatStreamEvent, assistantID: UUID) {
+    private func consume(_ event: AgentLoopEvent, assistantID: UUID) {
         switch event {
+        case .assistantResponseStarted:
+            startAssistantResponse(after: assistantID)
         case let .contentDelta(delta):
             isWaitingForFirstToken = false
-            updateMessage(id: assistantID) { message in
+            updateMessage(id: generatingMessageID ?? assistantID) { message in
                 message.content += delta
             }
-        case .toolCallDelta:
-            // Tool execution and presentation are intentionally deferred to step 1.5.
-            break
+        case let .toolCallsCompleted(executions):
+            isWaitingForFirstToken = false
+            persist(executions, assistantID: generatingMessageID ?? assistantID)
         case .done:
             isWaitingForFirstToken = false
-            updateMessage(id: assistantID) { message in
+            updateMessage(id: generatingMessageID ?? assistantID) { message in
                 if message.content.isEmpty {
                     message.content = "LLM-сервер завершил ответ без текста."
                 }
@@ -196,9 +198,75 @@ final class ChatViewModel {
 
     private func show(error: Error, in assistantID: UUID) {
         isWaitingForFirstToken = false
-        updateMessage(id: assistantID) { message in
+        updateMessage(id: generatingMessageID ?? assistantID) { message in
             message.content = "Ошибка: \(error.localizedDescription)"
         }
+    }
+
+    private func startAssistantResponse(after fallbackID: UUID) {
+        guard
+            let previousMessage = persistentMessage(id: generatingMessageID ?? fallbackID),
+            let conversation = previousMessage.conversation
+        else {
+            return
+        }
+
+        let lastTimestamp = conversation.orderedMessages.last?.timestamp
+            ?? previousMessage.timestamp
+        let message = Message(
+            role: .assistant,
+            content: "",
+            timestamp: lastTimestamp.addingTimeInterval(0.000_001),
+            conversation: conversation
+        )
+        modelContext.insert(message)
+        conversation.updatedAt = message.timestamp
+        generatingMessageID = message.id
+        isWaitingForFirstToken = true
+        messages = conversation.orderedMessages
+        saveContext()
+    }
+
+    private func persist(
+        _ executions: [AgentToolCallExecution],
+        assistantID: UUID
+    ) {
+        guard
+            let assistantMessage = persistentMessage(id: assistantID),
+            let conversation = assistantMessage.conversation
+        else {
+            return
+        }
+
+        var timestamp = assistantMessage.timestamp
+        for execution in executions {
+            timestamp = timestamp.addingTimeInterval(0.000_001)
+            let toolCall = ToolCall(
+                providerCallID: execution.toolCall.id,
+                toolName: execution.toolCall.function.name,
+                argumentsJSON: execution.toolCall.function.arguments,
+                resultJSON: execution.result.displayContent ?? execution.result.content,
+                status: execution.result.isError ? .failed : .completed,
+                timestamp: timestamp,
+                message: nil
+            )
+            modelContext.insert(toolCall)
+            assistantMessage.toolCalls.append(toolCall)
+
+            timestamp = timestamp.addingTimeInterval(0.000_001)
+            let toolMessage = Message(
+                role: .tool,
+                content: execution.result.content,
+                toolCallID: execution.toolCall.id,
+                timestamp: timestamp,
+                conversation: conversation
+            )
+            modelContext.insert(toolMessage)
+        }
+
+        conversation.updatedAt = timestamp
+        messages = conversation.orderedMessages
+        saveContext()
     }
 
     private func updateMessage(
