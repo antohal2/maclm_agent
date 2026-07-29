@@ -6,8 +6,8 @@ struct MenuBarContentView: View {
     @Query(sort: \Conversation.updatedAt, order: .reverse)
     private var conversations: [Conversation]
 
-    @Environment(\.openWindow) private var openWindow
     @Bindable var viewModel: ChatViewModel
+    let sceneActions: SceneActions
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,6 +35,12 @@ struct MenuBarContentView: View {
             }
             .help("Новая беседа")
             .accessibilityLabel("Новая беседа")
+
+            Button(action: sceneActions.openSettings) {
+                Image(systemName: "gearshape")
+            }
+            .help("Настройки")
+            .accessibilityLabel("Настройки")
 
             Button(action: openMainWindow) {
                 Image(systemName: "macwindow")
@@ -85,7 +91,6 @@ struct MenuBarContentView: View {
     }
 
     private func openMainWindow() {
-        openWindow(id: "main")
-        NSApp.activate(ignoringOtherApps: true)
+        sceneActions.openMainWindow()
     }
 }

@@ -105,6 +105,23 @@ enum ProviderRoutingError: Error, LocalizedError {
     }
 }
 
+enum ProviderConnectionState {
+    case checking
+    case available
+    case unavailable
+
+    var title: String {
+        switch self {
+        case .checking:
+            "Проверка…"
+        case .available:
+            "Доступен"
+        case .unavailable:
+            "Недоступен"
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class ProviderCoordinator {
@@ -122,6 +139,16 @@ final class ProviderCoordinator {
             return "Провайдер не выбран"
         }
         return "\(selection.provider.displayName) · \(selection.model)"
+    }
+
+    var connectionState: ProviderConnectionState {
+        if isDiscovering {
+            return .checking
+        }
+        guard let selection, isDetected(selection) else {
+            return .unavailable
+        }
+        return .available
     }
 
     private let store: ProviderSelectionStore
