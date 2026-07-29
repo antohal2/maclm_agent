@@ -2,15 +2,28 @@ import Foundation
 
 actor AgentLoop {
     private let toolRegistry: ToolRegistry
+    private let confirmationCoordinator: ConfirmationCoordinator
     private let maximumIterations: Int
     private var isGenerating = false
 
     init(
-        toolRegistry: ToolRegistry = .readOnly,
+        toolRegistry: ToolRegistry = .all,
+        confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
         maximumIterations: Int = 8
     ) {
         self.toolRegistry = toolRegistry
+        self.confirmationCoordinator = confirmationCoordinator
         self.maximumIterations = max(1, maximumIterations)
+    }
+
+    func resolveConfirmation(
+        requestID: UUID,
+        decision: ConfirmationDecision
+    ) async {
+        await confirmationCoordinator.resolve(
+            requestID: requestID,
+            decision: decision
+        )
     }
 
     func streamResponse(
@@ -53,17 +66,15 @@ actor AgentLoop {
             var executions: [AgentToolCallExecution] = []
             for toolCall in turn.toolCalls {
                 try Task.checkCancellation()
-                let result = try await execute(toolCall)
-                executions.append(
-                    AgentToolCallExecution(
-                        toolCall: toolCall,
-                        result: result
-                    )
+                let execution = try await execute(
+                    toolCall,
+                    onEvent: onEvent
                 )
+                executions.append(execution)
                 history.append(
                     ChatMessage(
                         role: .tool,
-                        content: result.content,
+                        content: execution.result.content,
                         toolCallID: toolCall.id
                     )
                 )
@@ -109,30 +120,107 @@ actor AgentLoop {
         )
     }
 
-    private func execute(_ toolCall: ChatToolCall) async throws -> ToolExecutionResult {
+    private func execute(
+        _ toolCall: ChatToolCall,
+        onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
+    ) async throws -> AgentToolCallExecution {
         guard let tool = toolRegistry.tool(named: toolCall.function.name) else {
-            return .failure("Unknown tool: \(toolCall.function.name)")
-        }
-        guard tool.riskLevel == .safe else {
-            return .failure("Tool is not allowed without confirmation: \(tool.name)")
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: .failure("Unknown tool: \(toolCall.function.name)")
+            )
         }
         guard
             let data = toolCall.function.arguments.data(using: .utf8),
             let object = try? JSONSerialization.jsonObject(with: data),
             let arguments = object as? [String: Any]
         else {
-            return .failure(
-                "Invalid JSON arguments for \(tool.name): \(toolCall.function.arguments)"
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: .failure(
+                    "Invalid JSON arguments for \(tool.name): \(toolCall.function.arguments)"
+                )
             )
         }
 
+        let confirmation = try await confirmIfNeeded(
+            toolCall: toolCall,
+            riskLevel: tool.riskLevel,
+            onEvent: onEvent
+        )
+        if let rejection = confirmation.rejection {
+            return rejection
+        }
+
         do {
-            return try await tool.execute(arguments: arguments)
+            let result = try await tool.execute(arguments: arguments)
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: result,
+                confirmationDecision: confirmation.decision,
+                confirmationRequestID: confirmation.requestID
+            )
         } catch is CancellationError {
             throw CancellationError()
         } catch {
-            return .failure("Tool \(tool.name) failed: \(error.localizedDescription)")
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: .failure("Tool \(tool.name) failed: \(error.localizedDescription)"),
+                confirmationDecision: confirmation.decision,
+                confirmationRequestID: confirmation.requestID
+            )
         }
+    }
+
+    private func confirmIfNeeded(
+        toolCall: ChatToolCall,
+        riskLevel: RiskLevel,
+        onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
+    ) async throws -> ToolConfirmation {
+        guard riskLevel != .safe else {
+            return ToolConfirmation()
+        }
+
+        let request = ConfirmationRequest(
+            toolCall: toolCall,
+            riskLevel: riskLevel
+        )
+        await onEvent(.confirmationRequested(request))
+        let decision = try await confirmationCoordinator.waitForDecision(
+            requestID: request.id
+        )
+        guard decision == .approved else {
+            return ToolConfirmation(
+                decision: decision,
+                requestID: request.id,
+                rejection: AgentToolCallExecution(
+                    toolCall: toolCall,
+                    result: .failure(
+                        "User rejected execution of tool '\(toolCall.function.name)'. "
+                            + "Do not retry it without a new explicit request."
+                    ),
+                    confirmationDecision: decision,
+                    confirmationRequestID: request.id
+                )
+            )
+        }
+        return ToolConfirmation(decision: decision, requestID: request.id)
+    }
+}
+
+private struct ToolConfirmation {
+    let decision: ConfirmationDecision?
+    let requestID: UUID?
+    let rejection: AgentToolCallExecution?
+
+    init(
+        decision: ConfirmationDecision? = nil,
+        requestID: UUID? = nil,
+        rejection: AgentToolCallExecution? = nil
+    ) {
+        self.decision = decision
+        self.requestID = requestID
+        self.rejection = rejection
     }
 }
 
@@ -158,6 +246,7 @@ enum AgentLoopError: Error, LocalizedError, Sendable {
 enum AgentLoopEvent: Equatable, Sendable {
     case assistantResponseStarted
     case contentDelta(String)
+    case confirmationRequested(ConfirmationRequest)
     case toolCallsCompleted([AgentToolCallExecution])
     case done
 }
@@ -165,6 +254,20 @@ enum AgentLoopEvent: Equatable, Sendable {
 struct AgentToolCallExecution: Equatable, Sendable {
     let toolCall: ChatToolCall
     let result: ToolExecutionResult
+    let confirmationDecision: ConfirmationDecision?
+    let confirmationRequestID: UUID?
+
+    init(
+        toolCall: ChatToolCall,
+        result: ToolExecutionResult,
+        confirmationDecision: ConfirmationDecision? = nil,
+        confirmationRequestID: UUID? = nil
+    ) {
+        self.toolCall = toolCall
+        self.result = result
+        self.confirmationDecision = confirmationDecision
+        self.confirmationRequestID = confirmationRequestID
+    }
 }
 
 private struct ToolCallAccumulator {

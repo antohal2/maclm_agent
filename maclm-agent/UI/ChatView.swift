@@ -60,7 +60,8 @@ struct ChatView: View {
                                 message: message,
                                 isWaiting: viewModel.isWaitingForFirstToken
                                     && message.id == viewModel.generatingMessageID,
-                                horizontalInset: style.bubbleInset
+                                horizontalInset: style.bubbleInset,
+                                onConfirmationDecision: viewModel.resolveConfirmation
                             )
                             .id(message.id)
                         }
@@ -130,6 +131,7 @@ private struct MessageBubble: View {
     let message: Message
     let isWaiting: Bool
     let horizontalInset: CGFloat
+    let onConfirmationDecision: (UUID, ConfirmationDecision) -> Void
 
     var body: some View {
         HStack {
@@ -155,7 +157,13 @@ private struct MessageBubble: View {
                 }
 
                 ForEach(orderedToolCalls) { toolCall in
-                    ToolCallCard(toolCall: toolCall)
+                    if toolCall.status == .pending || toolCall.status == .approved {
+                        ConfirmationCard(toolCall: toolCall) { decision in
+                            onConfirmationDecision(toolCall.id, decision)
+                        }
+                    } else {
+                        ToolCallCard(toolCall: toolCall)
+                    }
                 }
             }
             .padding(12)

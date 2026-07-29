@@ -46,12 +46,14 @@ indirect enum JSONSchema: Codable, Equatable, Sendable {
         required: [String],
         description: String? = nil
     )
-    case string(description: String? = nil)
+    case string(description: String? = nil, enumValues: [String]? = nil)
+    case integer(description: String? = nil)
     case array(items: Self, description: String? = nil)
 
     private enum SchemaType: String, Codable {
         case object
         case string
+        case integer
         case array
     }
 
@@ -61,6 +63,7 @@ indirect enum JSONSchema: Codable, Equatable, Sendable {
         case properties
         case required
         case items
+        case enumValues = "enum"
     }
 
     init(from decoder: Decoder) throws {
@@ -82,7 +85,12 @@ indirect enum JSONSchema: Codable, Equatable, Sendable {
                 description: description
             )
         case .string:
-            self = .string(description: description)
+            self = try .string(
+                description: description,
+                enumValues: container.decodeIfPresent([String].self, forKey: .enumValues)
+            )
+        case .integer:
+            self = .integer(description: description)
         case .array:
             self = try .array(
                 items: container.decode(Self.self, forKey: .items),
@@ -100,8 +108,12 @@ indirect enum JSONSchema: Codable, Equatable, Sendable {
             try container.encode(properties, forKey: .properties)
             try container.encode(required, forKey: .required)
             try container.encodeIfPresent(description, forKey: .description)
-        case let .string(description):
+        case let .string(description, enumValues):
             try container.encode(SchemaType.string, forKey: .type)
+            try container.encodeIfPresent(description, forKey: .description)
+            try container.encodeIfPresent(enumValues, forKey: .enumValues)
+        case let .integer(description):
+            try container.encode(SchemaType.integer, forKey: .type)
             try container.encodeIfPresent(description, forKey: .description)
         case let .array(items, description):
             try container.encode(SchemaType.array, forKey: .type)
@@ -151,6 +163,20 @@ struct ToolRegistry: Sendable {
             ]
         )
     }
+
+    static var all: Self {
+        Self(
+            tools: [
+                ReadFileTool(),
+                ListDirectoryTool(),
+                SearchFilesTool(),
+                WriteFileTool(),
+                MoveFileTool(),
+                DeleteFileTool(),
+                RunShellTool(),
+            ]
+        )
+    }
 }
 
 enum ToolArgument {
@@ -172,5 +198,15 @@ enum ToolArgument {
             return .error(.failure("Argument '\(name)' must not be empty."))
         }
         return .value(trimmed)
+    }
+
+    static func requiredRawString(
+        named name: String,
+        in arguments: [String: Any]
+    ) -> StringValue {
+        guard let value = arguments[name] as? String else {
+            return .error(.failure("Argument '\(name)' must be a string."))
+        }
+        return .value(value)
     }
 }
