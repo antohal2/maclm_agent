@@ -4,10 +4,10 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-This repository currently contains the v0.1.0 application scaffold: a SwiftUI
-window, a menu bar extra, the initial layer-based source layout, and a unit-test
-target. Networking, model providers, persistence, and agent tools will be added
-in later steps.
+Version v0.1.1 provides a streaming chat with an LM Studio server at
+`http://localhost:1234/v1`. Responses are rendered in the main window as SSE
+chunks arrive. The provider boundary and message types already support future
+tool-call events, while conversation history remains in memory for this step.
 
 ## Requirements
 
