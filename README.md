@@ -4,7 +4,8 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-Version v0.1.6 supports native tool calling through LM Studio and Ollama. The app
+Version v0.1.0 completes the local-first MVP. It supports native tool calling
+through LM Studio and Ollama. The app
 discovers local servers at `http://localhost:1234` and
 `http://localhost:11434`, lists their models, and keeps the selected provider,
 model, and optional custom URL between launches. Conversations and messages are stored with
@@ -17,7 +18,11 @@ Dangerous tools can write, move, and trash files or run exact zsh commands with
 captured output and a timeout. Every dangerous call pauses until the user
 explicitly approves or rejects its complete arguments in the chat. Tool
 arguments, decisions, and results are saved with each conversation and shown
-inline.
+inline. The Settings window provides live provider status, manual URL/model
+override, persistent Light/Dark/Auto appearance, and a configurable global
+hotkey (Control-Shift-Space by default) that toggles the menu bar panel from
+any application. A tested Keychain service is ready for future secret-backed
+providers.
 
 ## Requirements
 

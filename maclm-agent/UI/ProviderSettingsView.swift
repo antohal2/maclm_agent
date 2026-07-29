@@ -41,7 +41,10 @@ struct ProviderSettingsView: View {
             }
         }
         .padding()
-        .frame(width: 420)
+        .task {
+            await coordinator.discoverIfNeeded()
+            syncManualFields()
+        }
     }
 
     private var header: some View {
@@ -53,6 +56,12 @@ struct ProviderSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                Label(
+                    coordinator.connectionState.title,
+                    systemImage: connectionStatusSymbol
+                )
+                .font(.caption)
+                .foregroundStyle(connectionStatusColor)
             }
 
             Spacer()
@@ -148,6 +157,10 @@ struct ProviderSettingsView: View {
                         model: manualModel
                     )
                     validationMessage = nil
+                    Task {
+                        await coordinator.refresh()
+                        syncManualFields()
+                    }
                 } catch {
                     validationMessage = error.localizedDescription
                 }
@@ -176,5 +189,27 @@ struct ProviderSettingsView: View {
         manualURL = selection.baseURL.absoluteString
         manualModel = selection.model
         validationMessage = nil
+    }
+
+    private var connectionStatusSymbol: String {
+        switch coordinator.connectionState {
+        case .checking:
+            "clock"
+        case .available:
+            "checkmark.circle.fill"
+        case .unavailable:
+            "xmark.circle.fill"
+        }
+    }
+
+    private var connectionStatusColor: Color {
+        switch coordinator.connectionState {
+        case .checking:
+            .secondary
+        case .available:
+            .green
+        case .unavailable:
+            .red
+        }
     }
 }
