@@ -1,15 +1,15 @@
 import Foundation
 
-struct LMStudioProvider: LLMProvider {
-    let name = "LM Studio"
+struct OllamaProvider: LLMProvider {
+    let name = "Ollama"
     let baseURL: URL
     let model: String
 
     private let session: URLSession
 
     init(
-        baseURL: URL = LLMProviderKind.lmStudio.defaultBaseURL,
-        model: String = "local-model",
+        baseURL: URL = LLMProviderKind.ollama.defaultBaseURL,
+        model: String,
         session: URLSession = .shared
     ) {
         self.baseURL = baseURL
@@ -67,7 +67,7 @@ struct LMStudioProvider: LLMProvider {
         _ bytes: URLSession.AsyncBytes,
         continuation: AsyncThrowingStream<ChatStreamEvent, Error>.Continuation
     ) async throws {
-        var parser = SSEParser()
+        var parser = OllamaNDJSONParser()
         var lineBuffer = Data()
 
         for try await byte in bytes {
@@ -104,19 +104,6 @@ struct LMStudioProvider: LLMProvider {
         return false
     }
 
-    private func mappedError(_ error: Error) -> Error {
-        switch error {
-        case is CancellationError:
-            CancellationError()
-        case let providerError as LLMProviderError:
-            providerError
-        case let urlError as URLError:
-            LLMProviderError.transport(urlError.localizedDescription)
-        default:
-            LLMProviderError.transport(error.localizedDescription)
-        }
-    }
-
     private func makeRequest(
         messages: [ChatMessage],
         tools: [ToolDefinition]
@@ -125,21 +112,45 @@ struct LMStudioProvider: LLMProvider {
             throw LLMProviderError.invalidBaseURL
         }
 
-        let endpoint = baseURL.lmStudioAPIBaseURL.appending(path: "chat/completions")
-        var request = URLRequest(url: endpoint)
+        var request = URLRequest(url: baseURL.appending(path: "api/chat"))
         request.httpMethod = "POST"
         request.timeoutInterval = 60
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        request.setValue("application/x-ndjson", forHTTPHeaderField: "Accept")
         request.httpBody = try JSONEncoder().encode(
-            ChatCompletionRequest(
+            OllamaChatRequest(
                 model: model,
-                messages: messages.map(RequestMessage.init),
+                messages: makeRequestMessages(messages),
                 stream: true,
                 tools: tools.isEmpty ? nil : tools
             )
         )
         return request
+    }
+
+    private func makeRequestMessages(_ messages: [ChatMessage]) -> [OllamaRequestMessage] {
+        var toolNamesByID: [String: String] = [:]
+
+        return messages.map { message in
+            let toolCalls = message.toolCalls?.enumerated().map { index, call in
+                toolNamesByID[call.id] = call.function.name
+                return OllamaRequestToolCall(
+                    type: call.type,
+                    function: OllamaRequestFunction(
+                        index: index,
+                        name: call.function.name,
+                        arguments: JSONValue(argumentsJSON: call.function.arguments)
+                    )
+                )
+            }
+            let toolName = message.toolCallID.flatMap { toolNamesByID[$0] ?? $0 }
+            return OllamaRequestMessage(
+                role: message.role,
+                content: message.content,
+                toolCalls: toolCalls,
+                toolName: toolName
+            )
+        }
     }
 
     private func readErrorMessage(from bytes: URLSession.AsyncBytes) async throws -> String {
@@ -158,38 +169,49 @@ struct LMStudioProvider: LLMProvider {
         }
         return message
     }
-}
 
-extension URL {
-    var lmStudioAPIBaseURL: URL {
-        lastPathComponent.lowercased() == "v1" ? self : appending(path: "v1")
+    private func mappedError(_ error: Error) -> Error {
+        switch error {
+        case is CancellationError:
+            CancellationError()
+        case let providerError as LLMProviderError:
+            providerError
+        case let urlError as URLError:
+            LLMProviderError.transport(urlError.localizedDescription)
+        default:
+            LLMProviderError.transport(error.localizedDescription)
+        }
     }
 }
 
-private struct ChatCompletionRequest: Encodable {
+private struct OllamaChatRequest: Encodable {
     let model: String
-    let messages: [RequestMessage]
+    let messages: [OllamaRequestMessage]
     let stream: Bool
     let tools: [ToolDefinition]?
 }
 
-private struct RequestMessage: Encodable {
+private struct OllamaRequestMessage: Encodable {
     let role: ChatRole
     let content: String
-    let toolCalls: [ChatToolCall]?
-    let toolCallID: String?
-
-    init(_ message: ChatMessage) {
-        role = message.role
-        content = message.content
-        toolCalls = message.toolCalls
-        toolCallID = message.toolCallID
-    }
+    let toolCalls: [OllamaRequestToolCall]?
+    let toolName: String?
 
     enum CodingKeys: String, CodingKey {
         case role
         case content
         case toolCalls = "tool_calls"
-        case toolCallID = "tool_call_id"
+        case toolName = "tool_name"
     }
+}
+
+private struct OllamaRequestToolCall: Encodable {
+    let type: String
+    let function: OllamaRequestFunction
+}
+
+private struct OllamaRequestFunction: Encodable {
+    let index: Int
+    let name: String
+    let arguments: JSONValue
 }

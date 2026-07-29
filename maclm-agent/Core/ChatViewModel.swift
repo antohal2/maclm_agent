@@ -11,6 +11,7 @@ final class ChatViewModel {
     private(set) var isGenerating = false
     private(set) var isWaitingForFirstToken = false
     private(set) var generatingMessageID: UUID?
+    let providerCoordinator: ProviderCoordinator
 
     var selectedConversationID: UUID? {
         selectedConversation?.id
@@ -19,6 +20,7 @@ final class ChatViewModel {
     var canSend: Bool {
         selectedConversation != nil
             && !isGenerating
+            && providerCoordinator.hasActiveProvider
             && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -28,11 +30,17 @@ final class ChatViewModel {
 
     init(
         modelContext: ModelContext,
-        agentLoop: AgentLoop = AgentLoop(provider: LMStudioProvider())
+        providerCoordinator: ProviderCoordinator = ProviderCoordinator(),
+        agentLoop: AgentLoop = AgentLoop()
     ) {
         self.modelContext = modelContext
+        self.providerCoordinator = providerCoordinator
         self.agentLoop = agentLoop
         restoreSelection()
+    }
+
+    func discoverProvidersIfNeeded() async {
+        await providerCoordinator.discoverIfNeeded()
     }
 
     @discardableResult
@@ -92,10 +100,17 @@ final class ChatViewModel {
 
         let generation = persistPrompt(content, in: conversation)
         generatingMessageID = generation.assistantID
-        startGeneration(
-            requestMessages: generation.requestMessages,
-            assistantID: generation.assistantID
-        )
+        do {
+            let provider = try providerCoordinator.makeProvider()
+            startGeneration(
+                requestMessages: generation.requestMessages,
+                assistantID: generation.assistantID,
+                provider: provider
+            )
+        } catch {
+            show(error: error, in: generation.assistantID)
+            finishGeneration()
+        }
     }
 
     private func persistPrompt(
@@ -138,11 +153,15 @@ final class ChatViewModel {
 
     private func startGeneration(
         requestMessages: [ChatMessage],
-        assistantID: UUID
+        assistantID: UUID,
+        provider: any LLMProvider
     ) {
-        generationTask = Task { [weak self, agentLoop, requestMessages] in
+        generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
-                try await agentLoop.streamResponse(to: requestMessages) { [weak self] event in
+                try await agentLoop.streamResponse(
+                    to: requestMessages,
+                    using: provider
+                ) { [weak self] event in
                     await self?.consume(event, assistantID: assistantID)
                 }
             } catch is CancellationError {
@@ -169,7 +188,7 @@ final class ChatViewModel {
             isWaitingForFirstToken = false
             updateMessage(id: assistantID) { message in
                 if message.content.isEmpty {
-                    message.content = "LM Studio завершил ответ без текста."
+                    message.content = "LLM-сервер завершил ответ без текста."
                 }
             }
         }

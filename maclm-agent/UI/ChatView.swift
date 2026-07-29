@@ -29,11 +29,18 @@ struct ChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if let statusMessage = viewModel.providerCoordinator.statusMessage {
+                providerStatus(message: statusMessage)
+                Divider()
+            }
             messageList
             Divider()
             composer
         }
         .navigationTitle(viewModel.selectedConversation?.title ?? "maclm-agent")
+        .task {
+            await viewModel.discoverProvidersIfNeeded()
+        }
     }
 
     private var messageList: some View {
@@ -44,7 +51,7 @@ struct ChatView: View {
                         ContentUnavailableView(
                             "Локальный ассистент",
                             systemImage: "brain",
-                            description: Text("Запустите сервер LM Studio и отправьте сообщение.")
+                            description: Text(emptyStateDescription)
                         )
                         .frame(maxWidth: .infinity, minHeight: style.emptyStateHeight)
                     } else {
@@ -73,7 +80,7 @@ struct ChatView: View {
     private var composer: some View {
         HStack(alignment: .bottom, spacing: 10) {
             TextField(
-                "Сообщение для LM Studio",
+                "Сообщение для локальной модели",
                 text: $viewModel.input,
                 axis: .vertical
             )
@@ -91,6 +98,27 @@ struct ChatView: View {
             .accessibilityLabel("Отправить")
         }
         .padding()
+    }
+
+    private var emptyStateDescription: String {
+        if viewModel.providerCoordinator.hasActiveProvider {
+            "Активен \(viewModel.providerCoordinator.activeProviderTitle). Отправьте сообщение."
+        } else {
+            "Запустите LM Studio или Ollama и выберите модель в меню провайдера."
+        }
+    }
+
+    private func providerStatus(message: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 }
 

@@ -1,15 +1,11 @@
 import Foundation
 
 actor AgentLoop {
-    private let provider: any LLMProvider
     private var isGenerating = false
-
-    init(provider: any LLMProvider) {
-        self.provider = provider
-    }
 
     func streamResponse(
         to messages: [ChatMessage],
+        using provider: any LLMProvider,
         onEvent: @escaping @Sendable (ChatStreamEvent) async -> Void
     ) async throws {
         guard !isGenerating else {

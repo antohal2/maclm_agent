@@ -9,6 +9,33 @@ protocol LLMProvider: Sendable {
     ) -> AsyncThrowingStream<ChatStreamEvent, Error>
 }
 
+enum LLMProviderKind: String, Codable, CaseIterable, Identifiable, Sendable {
+    case lmStudio
+    case ollama
+
+    var id: String {
+        rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .lmStudio:
+            "LM Studio"
+        case .ollama:
+            "Ollama"
+        }
+    }
+
+    var defaultBaseURL: URL {
+        switch self {
+        case .lmStudio:
+            URL(string: "http://localhost:1234")!
+        case .ollama:
+            URL(string: "http://localhost:11434")!
+        }
+    }
+}
+
 enum ChatRole: String, Codable, Sendable {
     case system
     case user
@@ -105,23 +132,29 @@ enum LLMProviderError: Error, Equatable, LocalizedError, Sendable {
     case invalidResponse
     case httpError(statusCode: Int, message: String)
     case invalidSSEPayload(String)
+    case invalidNDJSONPayload(String)
+    case providerResponse(String)
     case streamEndedWithoutDone
     case transport(String)
 
     var errorDescription: String? {
         switch self {
         case .invalidBaseURL:
-            "Некорректный базовый URL LM Studio."
+            "Некорректный базовый URL LLM-сервера."
         case .invalidResponse:
-            "LM Studio вернул некорректный HTTP-ответ."
+            "LLM-сервер вернул некорректный HTTP-ответ."
         case let .httpError(statusCode, message):
-            "LM Studio вернул HTTP \(statusCode): \(message)"
+            "LLM-сервер вернул HTTP \(statusCode): \(message)"
         case let .invalidSSEPayload(payload):
             "Не удалось разобрать поток LM Studio: \(payload)"
+        case let .invalidNDJSONPayload(payload):
+            "Не удалось разобрать поток Ollama: \(payload)"
+        case let .providerResponse(message):
+            "LLM-сервер вернул ошибку: \(message)"
         case .streamEndedWithoutDone:
-            "Соединение с LM Studio закрылось до завершения ответа."
+            "Соединение с LLM-сервером закрылось до завершения ответа."
         case let .transport(message):
-            "LM Studio недоступен: \(message)"
+            "LLM-сервер недоступен: \(message)"
         }
     }
 }
