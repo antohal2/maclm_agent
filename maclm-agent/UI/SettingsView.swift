@@ -21,6 +21,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
+
+            ClipboardActionsSettingsView()
+                .tabItem {
+                    Label("Действия с буфером", systemImage: "clipboard")
+                }
         }
         .frame(width: 520, height: 470)
     }

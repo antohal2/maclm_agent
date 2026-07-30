@@ -15,8 +15,10 @@ struct MacLMAgentApp: App {
             let container = try ModelContainer(
                 for: Conversation.self,
                 Message.self,
-                ToolCall.self
+                ToolCall.self,
+                ClipboardAction.self
             )
+            try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
             let viewModel = ChatViewModel(modelContext: container.mainContext)
             let appSettings = AppSettings()
@@ -56,6 +58,7 @@ struct MacLMAgentApp: App {
                 settings: settings,
                 hotKeyController: hotKeyController
             )
+            .modelContainer(modelContainer)
             .preferredColorScheme(settings.theme.colorScheme)
         }
     }

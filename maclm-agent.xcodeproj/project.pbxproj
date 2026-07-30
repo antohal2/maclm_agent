@@ -7,9 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0FB21F1A342772E15E2F83D8 /* ClipboardActionSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */; };
 		12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A3099DCC2211F043E4378 /* Conversation.swift */; };
 		138274F242431F46D9EC58BC /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE7398ECA365F5138E806E8 /* Core.swift */; };
+		140A8A215CD1EEB0AD2E54B3 /* DefaultClipboardActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */; };
 		176817B1CC643E75A47277CF /* OllamaProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C046215F215DF0CC1686F1E2 /* OllamaProvider.swift */; };
+		1CA5D7E86C7974E16745AE70 /* ClipboardActionTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */; };
 		2D67060156F6DFB6F4D3D213 /* SSEParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F231B04B4566BB6105DC1EF3 /* SSEParser.swift */; };
 		3183C907BBD4A99B13E5860E /* LMStudioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */; };
 		384F5E913BAC76779908249D /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5211EC914BE4690C2B0B08 /* ShortcutRecorder.swift */; };
@@ -21,6 +24,7 @@
 		44F880C8272BAE2B0725D44F /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628C0E0AE27881D1D6ED3CD7 /* KeychainService.swift */; };
 		46FD7E639CF55D3CAAA97694 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7D928A7CF4B09DF30D6FA8 /* ChatViewModel.swift */; };
 		4CDE003C80F81E2CA4706DC4 /* ToolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C508F8649E5A34F5599F4D9 /* ToolTests.swift */; };
+		57ABB2AD2CABC5B5E0D9E2D6 /* ClipboardAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */; };
 		58E9F2D5AEC5478BF5F64E16 /* Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171819761DB744C3E56AA499 /* Security.swift */; };
 		5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */; };
 		679FFE74EB7C0310E64B88CE /* DeleteFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C908B3755176AE72C5E947 /* DeleteFileTool.swift */; };
@@ -31,6 +35,8 @@
 		71BC198CAF60C144414AC111 /* ToolCallCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF89DD40946291B82206243 /* ToolCallCard.swift */; };
 		7D58DF163D482818E25D28E9 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F5F94DD0C6655E0949B69B /* Tools.swift */; };
 		7F978E119186397F41476F03 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03385E835E680CDDF7566DED /* Security.framework */; };
+		9849954988154EEA7048C17B /* ClipboardActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */; };
+		9913B2B13479E1ADA91E5972 /* ClipboardActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */; };
 		A5EE8B4368EB065F03A68BA2 /* ProviderDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */; };
 		A95A7A3DFD60902F9FD81BBA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C91D73A066E7938684668328 /* SettingsView.swift */; };
 		AAE87B1298940E3657B6AFFC /* MoveFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114BE49C5E20E1D4EA612B30 /* MoveFileTool.swift */; };
@@ -69,12 +75,16 @@
 		19C0373720418992928F49D9 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		1AF89DD40946291B82206243 /* ToolCallCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallCard.swift; sourceTree = "<group>"; };
 		1E9505329737F6B909EFA1C7 /* ListDirectoryTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListDirectoryTool.swift; sourceTree = "<group>"; };
+		330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionsSettingsView.swift; sourceTree = "<group>"; };
+		333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionSeeder.swift; sourceTree = "<group>"; };
 		34F727917869B9B5C8186223 /* ProviderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderSettingsView.swift; sourceTree = "<group>"; };
 		37F5F94DD0C6655E0949B69B /* Tools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tools.swift; sourceTree = "<group>"; };
 		388997488919851EE4EF1465 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionTests.swift; sourceTree = "<group>"; };
 		53EE6DAD4705F1077DCD7840 /* DangerousToolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DangerousToolTests.swift; sourceTree = "<group>"; };
 		620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMStudioProvider.swift; sourceTree = "<group>"; };
 		628C0E0AE27881D1D6ED3CD7 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionTemplate.swift; sourceTree = "<group>"; };
 		68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDiscovery.swift; sourceTree = "<group>"; };
 		6BBC58753B7CA69E1D2F38FA /* OllamaNDJSONParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaNDJSONParser.swift; sourceTree = "<group>"; };
 		6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLMAgentTests.swift; sourceTree = "<group>"; };
@@ -104,7 +114,9 @@
 		DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndKeychainTests.swift; sourceTree = "<group>"; };
 		E30C2ABA14D6698C7823FE00 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
 		E9936E6A8DD8E2727B4AF0C3 /* SearchFilesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFilesTool.swift; sourceTree = "<group>"; };
+		EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAction.swift; sourceTree = "<group>"; };
 		ED4F0123BC5C7F0347D8D885 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultClipboardActions.swift; sourceTree = "<group>"; };
 		F231B04B4566BB6105DC1EF3 /* SSEParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParser.swift; sourceTree = "<group>"; };
 		F2C96102770327439C7769C4 /* ToolCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCall.swift; sourceTree = "<group>"; };
 		F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
@@ -127,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				85401CE6557E769B5005815D /* ChatView.swift */,
+				330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */,
 				ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */,
 				E30C2ABA14D6698C7823FE00 /* ConversationListView.swift */,
 				A3DF5BCF95C6307A82F1856E /* MainWindowView.swift */,
@@ -163,6 +176,7 @@
 		B73E6A075621A6844E269AF9 /* maclm-agentTests */ = {
 			isa = PBXGroup;
 			children = (
+				48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */,
 				53EE6DAD4705F1077DCD7840 /* DangerousToolTests.swift */,
 				6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */,
 				DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */,
@@ -221,7 +235,10 @@
 			children = (
 				BAE50E7AB714973948F3E0EC /* AppSettings.swift */,
 				7E7D928A7CF4B09DF30D6FA8 /* ChatViewModel.swift */,
+				333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */,
+				6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */,
 				9BE7398ECA365F5138E806E8 /* Core.swift */,
+				F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */,
 				92A7AB91B2BE3F44707A2F97 /* ProviderCoordinator.swift */,
 			);
 			path = Core;
@@ -245,6 +262,7 @@
 		E586733EAD191D400B459995 /* Persistence */ = {
 			isa = PBXGroup;
 			children = (
+				EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */,
 				B97A3099DCC2211F043E4378 /* Conversation.swift */,
 				628C0E0AE27881D1D6ED3CD7 /* KeychainService.swift */,
 				BD2A3EE346D287B95D6C981D /* Message.swift */,
@@ -343,10 +361,15 @@
 				3A7E81D537E5BBC514258A44 /* AppSettings.swift in Sources */,
 				B7BD18EDE8251146330C5D7B /* ChatView.swift in Sources */,
 				46FD7E639CF55D3CAAA97694 /* ChatViewModel.swift in Sources */,
+				57ABB2AD2CABC5B5E0D9E2D6 /* ClipboardAction.swift in Sources */,
+				0FB21F1A342772E15E2F83D8 /* ClipboardActionSeeder.swift in Sources */,
+				1CA5D7E86C7974E16745AE70 /* ClipboardActionTemplate.swift in Sources */,
+				9849954988154EEA7048C17B /* ClipboardActionsSettingsView.swift in Sources */,
 				5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */,
 				12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */,
 				3C06D6B52570FFC14F0A603F /* ConversationListView.swift in Sources */,
 				138274F242431F46D9EC58BC /* Core.swift in Sources */,
+				140A8A215CD1EEB0AD2E54B3 /* DefaultClipboardActions.swift in Sources */,
 				679FFE74EB7C0310E64B88CE /* DeleteFileTool.swift in Sources */,
 				D4DE0EBADF9FE06EAF41E4AA /* GlobalHotKey.swift in Sources */,
 				44F880C8272BAE2B0725D44F /* KeychainService.swift in Sources */,
@@ -384,6 +407,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9913B2B13479E1ADA91E5972 /* ClipboardActionTests.swift in Sources */,
 				F499C7CE035D9C25D609421F /* DangerousToolTests.swift in Sources */,
 				41F8A003E2E8B428D0D9168B /* MacLMAgentTests.swift in Sources */,
 				FABA11777CBDC7880A0A9346 /* SettingsAndKeychainTests.swift in Sources */,
@@ -492,7 +516,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
 				SDKROOT = macosx;
@@ -515,7 +539,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
 				SDKROOT = macosx;
