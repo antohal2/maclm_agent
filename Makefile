@@ -4,7 +4,7 @@ CONFIGURATION ?= Debug
 DERIVED_DATA ?= /tmp/maclm-agent-DerivedData
 DESTINATION := platform=macOS,arch=arm64
 
-.PHONY: build test lint format run generate tools
+.PHONY: build test lint format run generate release tools
 
 build:
 	xcodebuild \
@@ -34,6 +34,9 @@ format: tools
 
 run: build
 	open "$(DERIVED_DATA)/Build/Products/$(CONFIGURATION)/maclm-agent.app"
+
+release:
+	./scripts/build_release.sh
 
 generate:
 	@command -v xcodegen >/dev/null || { \

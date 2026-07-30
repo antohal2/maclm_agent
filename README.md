@@ -38,8 +38,38 @@ make build
 make test
 make lint
 make run
+make release
 ```
 
 You can also open `maclm-agent.xcodeproj` in Xcode, select the `maclm-agent`
 scheme, and press Run. App Sandbox is intentionally disabled for this direct
 distribution project.
+
+`make release` creates a Release archive without requesting an Apple signing
+identity, copies the application from the archive, applies an ad-hoc signature,
+verifies it, and builds `dist/maclm-agent-0.1.0.dmg`. The DMG contains the
+application and an `/Applications` symlink for drag-to-install.
+
+## Установка
+
+1. Скачайте `maclm-agent-0.1.0.dmg` со страницы
+   [GitHub Releases](https://github.com/antohal2/maclm_agent/releases/tag/v0.1.0).
+2. Откройте DMG и перетащите `maclm-agent.app` в `/Applications`.
+3. Приложение подписано ad-hoc подписью, без Apple Developer ID, поэтому при
+   первом запуске macOS Gatekeeper может показать предупреждение «нельзя
+   проверить разработчика» или «приложение повреждено и не может быть открыто».
+   Это ожидаемо и не означает, что файл действительно повреждён. Разрешить
+   первый запуск можно одним из способов:
+
+   - **Finder:** щёлкните правой кнопкой по `maclm-agent.app` → «Открыть» →
+     подтвердите «Открыть». Это требуется только один раз.
+   - **Terminal:** снимите карантинный атрибут перед первым запуском:
+     `xattr -cr /Applications/maclm-agent.app`
+   - **System Settings:** после первой попытки запуска откройте
+     System Settings → Privacy & Security и нажмите «Открыть в любом случае»
+     внизу страницы.
+
+Developer ID signing and Apple notarization will be added after enrollment in
+the Apple Developer Program. The release script can then replace
+`codesign --sign -` with `codesign --sign "$DEVELOPER_ID_APPLICATION"` and add
+`notarytool` plus `stapler`.
