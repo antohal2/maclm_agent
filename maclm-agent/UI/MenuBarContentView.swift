@@ -5,14 +5,21 @@ import SwiftUI
 struct MenuBarContentView: View {
     @Query(sort: \Conversation.updatedAt, order: .reverse)
     private var conversations: [Conversation]
+    @Query(sort: \ClipboardAction.sortOrder)
+    private var clipboardActions: [ClipboardAction]
 
     @Bindable var viewModel: ChatViewModel
+    @Bindable var clipboardActionRunner: ClipboardActionRunner
     let sceneActions: SceneActions
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
+            if clipboardActionRunner.state != .idle {
+                clipboardActionStatus
+                Divider()
+            }
             ChatView(viewModel: viewModel, style: .compact)
         }
         .frame(width: 420, height: 560)
@@ -29,6 +36,8 @@ struct MenuBarContentView: View {
             conversationMenu
 
             Spacer(minLength: 8)
+
+            clipboardActionMenu
 
             Button(action: createConversation) {
                 Image(systemName: "square.and.pencil")
@@ -50,6 +59,96 @@ struct MenuBarContentView: View {
         }
         .buttonStyle(.borderless)
         .padding(12)
+    }
+
+    private var clipboardActionMenu: some View {
+        Menu {
+            Section("Действия с буфером") {
+                if enabledClipboardActions.isEmpty {
+                    Text("Нет включённых действий")
+                } else {
+                    ForEach(enabledClipboardActions) { action in
+                        Button {
+                            clipboardActionRunner.run(action: action)
+                        } label: {
+                            Label(action.name, systemImage: action.iconSystemName)
+                        }
+                    }
+                }
+            }
+        } label: {
+            if clipboardActionRunner.state.isRunning {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "clipboard")
+            }
+        }
+        .help("Применить действие к тексту в буфере")
+        .accessibilityLabel("Действия с буфером")
+        .disabled(clipboardActionRunner.state.isRunning)
+    }
+
+    private var clipboardActionStatus: some View {
+        HStack(alignment: .top, spacing: 8) {
+            statusIcon
+            Text(statusMessage)
+                .font(.caption)
+                .foregroundStyle(statusColor)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if !clipboardActionRunner.state.isRunning {
+                Button(action: clipboardActionRunner.dismissStatus) {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help("Скрыть статус")
+                .accessibilityLabel("Скрыть статус")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    @ViewBuilder
+    private var statusIcon: some View {
+        switch clipboardActionRunner.state {
+        case .idle:
+            EmptyView()
+        case .running:
+            ProgressView()
+                .controlSize(.small)
+        case .succeeded:
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .failed:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+        }
+    }
+
+    private var statusMessage: String {
+        switch clipboardActionRunner.state {
+        case .idle:
+            ""
+        case let .running(_, actionName):
+            "«\(actionName)»: обработка…"
+        case let .succeeded(actionName):
+            "«\(actionName)»: результат скопирован в буфер."
+        case let .failed(actionName, message):
+            "«\(actionName)»: \(message)"
+        }
+    }
+
+    private var statusColor: Color {
+        if case .failed = clipboardActionRunner.state {
+            return .red
+        }
+        return .secondary
+    }
+
+    private var enabledClipboardActions: [ClipboardAction] {
+        clipboardActions.filter(\.isEnabled)
     }
 
     private var conversationMenu: some View {

@@ -9,6 +9,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
     init(
         viewModel: ChatViewModel,
+        clipboardActionRunner: ClipboardActionRunner,
         modelContainer: ModelContainer,
         settings: AppSettings,
         hotKeyController: GlobalHotKeyController,
@@ -29,6 +30,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
         let content = MenuBarPanelRootView(
             viewModel: viewModel,
+            clipboardActionRunner: clipboardActionRunner,
             settings: settings,
             sceneActions: sceneActions
         )
@@ -69,12 +71,14 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
 private struct MenuBarPanelRootView: View {
     @Bindable var viewModel: ChatViewModel
+    @Bindable var clipboardActionRunner: ClipboardActionRunner
     @Bindable var settings: AppSettings
     let sceneActions: SceneActions
 
     var body: some View {
         MenuBarContentView(
             viewModel: viewModel,
+            clipboardActionRunner: clipboardActionRunner,
             sceneActions: sceneActions
         )
         .preferredColorScheme(settings.theme.colorScheme)

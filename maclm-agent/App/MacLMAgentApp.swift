@@ -21,6 +21,9 @@ struct MacLMAgentApp: App {
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
             let viewModel = ChatViewModel(modelContext: container.mainContext)
+            let clipboardActionRunner = ClipboardActionRunner(
+                providerSource: viewModel.providerCoordinator
+            )
             let appSettings = AppSettings()
             let globalHotKeyController = GlobalHotKeyController()
             let appSceneActions = SceneActions()
@@ -30,6 +33,7 @@ struct MacLMAgentApp: App {
             sceneActions = appSceneActions
             menuBarController = MenuBarController(
                 viewModel: viewModel,
+                clipboardActionRunner: clipboardActionRunner,
                 modelContainer: container,
                 settings: appSettings,
                 hotKeyController: globalHotKeyController,
