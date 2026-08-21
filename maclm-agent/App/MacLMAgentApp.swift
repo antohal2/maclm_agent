@@ -6,6 +6,7 @@ struct MacLMAgentApp: App {
     private let modelContainer: ModelContainer
     private let menuBarController: MenuBarController
     private let sceneActions: SceneActions
+    private let accessibilityPermissionService: SystemAccessibilityPermissionService
     @State private var chatViewModel: ChatViewModel
     @State private var settings: AppSettings
     @State private var hotKeyController: GlobalHotKeyController
@@ -21,10 +22,20 @@ struct MacLMAgentApp: App {
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
             let viewModel = ChatViewModel(modelContext: container.mainContext)
-            let clipboardActionRunner = ClipboardActionRunner(
-                providerSource: viewModel.providerCoordinator
-            )
             let appSettings = AppSettings()
+            let accessibilityPermissionService = SystemAccessibilityPermissionService()
+            self.accessibilityPermissionService = accessibilityPermissionService
+            let pasteService = SystemPasteService(
+                accessibilityPermissionService: accessibilityPermissionService
+            )
+            let frontmostApplicationService = SystemFrontmostApplicationService()
+            let clipboardActionRunner = ClipboardActionRunner(
+                providerSource: viewModel.providerCoordinator,
+                preferences: appSettings,
+                accessibilityPermissionService: accessibilityPermissionService,
+                pasteService: pasteService,
+                frontmostApplicationService: frontmostApplicationService
+            )
             let globalHotKeyController = GlobalHotKeyController()
             let appSceneActions = SceneActions()
             _chatViewModel = State(initialValue: viewModel)
@@ -37,7 +48,8 @@ struct MacLMAgentApp: App {
                 modelContainer: container,
                 settings: appSettings,
                 hotKeyController: globalHotKeyController,
-                sceneActions: appSceneActions
+                sceneActions: appSceneActions,
+                accessibilityPermissionService: accessibilityPermissionService
             )
         } catch {
             fatalError("Unable to initialize SwiftData: \(error.localizedDescription)")
@@ -60,7 +72,8 @@ struct MacLMAgentApp: App {
             SettingsView(
                 providerCoordinator: chatViewModel.providerCoordinator,
                 settings: settings,
-                hotKeyController: hotKeyController
+                hotKeyController: hotKeyController,
+                accessibilityPermissionService: accessibilityPermissionService
             )
             .modelContainer(modelContainer)
             .preferredColorScheme(settings.theme.colorScheme)

@@ -12,6 +12,7 @@ final class SettingsAndKeychainTests: XCTestCase {
         let initialSettings = AppSettings(defaults: defaults)
         XCTAssertEqual(initialSettings.theme, .automatic)
         XCTAssertEqual(initialSettings.shortcut, .defaultShortcut)
+        XCTAssertTrue(initialSettings.automaticallyPasteClipboardActionResults)
 
         let shortcut = GlobalShortcut(
             keyCode: 0,
@@ -19,10 +20,12 @@ final class SettingsAndKeychainTests: XCTestCase {
         )
         initialSettings.theme = .dark
         initialSettings.shortcut = shortcut
+        initialSettings.automaticallyPasteClipboardActionResults = false
 
         let restoredSettings = AppSettings(defaults: defaults)
         XCTAssertEqual(restoredSettings.theme, .dark)
         XCTAssertEqual(restoredSettings.shortcut, shortcut)
+        XCTAssertFalse(restoredSettings.automaticallyPasteClipboardActionResults)
     }
 
     func testKeychainServiceSaveReadUpdateAndDelete() throws {

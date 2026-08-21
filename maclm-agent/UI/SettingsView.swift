@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Bindable var providerCoordinator: ProviderCoordinator
     @Bindable var settings: AppSettings
     @Bindable var hotKeyController: GlobalHotKeyController
+    let accessibilityPermissionService: any AccessibilityPermissionService
 
     var body: some View {
         TabView {
@@ -22,10 +23,13 @@ struct SettingsView: View {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
 
-            ClipboardActionsSettingsView()
-                .tabItem {
-                    Label("Действия с буфером", systemImage: "clipboard")
-                }
+            ClipboardActionsSettingsView(
+                settings: settings,
+                accessibilityPermissionService: accessibilityPermissionService
+            )
+            .tabItem {
+                Label("Действия с буфером", systemImage: "clipboard")
+            }
         }
         .frame(width: 520, height: 470)
     }

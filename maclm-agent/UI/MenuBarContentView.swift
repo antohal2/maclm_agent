@@ -11,6 +11,7 @@ struct MenuBarContentView: View {
     @Bindable var viewModel: ChatViewModel
     @Bindable var clipboardActionRunner: ClipboardActionRunner
     let sceneActions: SceneActions
+    let accessibilityPermissionService: any AccessibilityPermissionService
 
     var body: some View {
         VStack(spacing: 0) {
@@ -97,6 +98,13 @@ struct MenuBarContentView: View {
                 .foregroundStyle(statusColor)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            if shouldOfferAccessibilitySettings {
+                Button("Настройки") {
+                    accessibilityPermissionService.openSystemSettings()
+                }
+                .controlSize(.small)
+            }
+
             if !clipboardActionRunner.state.isRunning {
                 Button(action: clipboardActionRunner.dismissStatus) {
                     Image(systemName: "xmark")
@@ -133,10 +141,38 @@ struct MenuBarContentView: View {
             ""
         case let .running(_, actionName):
             "«\(actionName)»: обработка…"
-        case let .succeeded(actionName):
-            "«\(actionName)»: результат скопирован в буфер."
+        case let .succeeded(actionName, outcome):
+            successMessage(actionName: actionName, outcome: outcome)
         case let .failed(actionName, message):
             "«\(actionName)»: \(message)"
+        }
+    }
+
+    private var shouldOfferAccessibilitySettings: Bool {
+        guard case let .succeeded(_, outcome) = clipboardActionRunner.state else {
+            return false
+        }
+        return outcome.pasteResult == .accessibilityDenied
+    }
+
+    private func successMessage(
+        actionName: String,
+        outcome: ClipboardActionOutcome
+    ) -> String {
+        switch outcome.pasteResult {
+        case .pasted:
+            "«\(actionName)»: результат вставлен."
+        case .disabled:
+            "«\(actionName)»: результат в буфере. Вставьте его вручную через ⌘V."
+        case .accessibilityDenied:
+            "«\(actionName)»: результат в буфере. Для авто-вставки нужен доступ "
+                + "к Универсальному доступу."
+        case .targetApplicationUnavailable:
+            "«\(actionName)»: результат в буфере. Не удалось вернуть фокус — вставьте "
+                + "его вручную через ⌘V."
+        case let .failed(message):
+            "«\(actionName)»: результат в буфере. Авто-вставка не выполнена: \(message) "
+                + "Вставьте его вручную через ⌘V."
         }
     }
 

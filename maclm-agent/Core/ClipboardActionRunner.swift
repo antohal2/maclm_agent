@@ -8,10 +8,35 @@ protocol LLMProviderProviding: AnyObject {
 
 extension ProviderCoordinator: LLMProviderProviding {}
 
+@MainActor
+protocol ClipboardActionPreferences: AnyObject {
+    var automaticallyPasteClipboardActionResults: Bool { get }
+}
+
+enum ClipboardActionPasteResult: Equatable {
+    case pasted
+    case disabled
+    case accessibilityDenied
+    case targetApplicationUnavailable
+    case failed(message: String)
+
+    var wasAutoPasted: Bool {
+        self == .pasted
+    }
+}
+
+struct ClipboardActionOutcome: Equatable {
+    let pasteResult: ClipboardActionPasteResult
+
+    var wasAutoPasted: Bool {
+        pasteResult.wasAutoPasted
+    }
+}
+
 enum ClipboardActionRunState: Equatable {
     case idle
     case running(actionID: UUID, actionName: String)
-    case succeeded(actionName: String)
+    case succeeded(actionName: String, outcome: ClipboardActionOutcome)
     case failed(actionName: String, message: String)
 
     var isRunning: Bool {
@@ -51,13 +76,29 @@ final class ClipboardActionRunner {
 
     private let providerSource: any LLMProviderProviding
     private let clipboard: any ClipboardAccess
+    private let preferences: any ClipboardActionPreferences
+    private let accessibilityPermissionService: any AccessibilityPermissionService
+    private let pasteService: any PasteService
+    private let frontmostApplicationService: any FrontmostApplicationService
 
     init(
         providerSource: any LLMProviderProviding,
+        preferences: any ClipboardActionPreferences,
+        accessibilityPermissionService: any AccessibilityPermissionService,
+        pasteService: any PasteService,
+        frontmostApplicationService: any FrontmostApplicationService,
         clipboard: any ClipboardAccess = SystemClipboard()
     ) {
         self.providerSource = providerSource
+        self.preferences = preferences
+        self.accessibilityPermissionService = accessibilityPermissionService
+        self.pasteService = pasteService
+        self.frontmostApplicationService = frontmostApplicationService
         self.clipboard = clipboard
+    }
+
+    func captureTargetApplication() {
+        frontmostApplicationService.captureTargetApplication()
     }
 
     @discardableResult
@@ -87,7 +128,10 @@ final class ClipboardActionRunner {
                         provider: provider
                     )
                     try clipboard.writeString(output)
-                    state = .succeeded(actionName: actionName)
+                    let outcome = ClipboardActionOutcome(
+                        pasteResult: performAutoPasteIfNeeded()
+                    )
+                    state = .succeeded(actionName: actionName, outcome: outcome)
                 } catch is CancellationError {
                     state = .idle
                 } catch {
@@ -111,6 +155,25 @@ final class ClipboardActionRunner {
             return
         }
         state = .idle
+    }
+
+    private func performAutoPasteIfNeeded() -> ClipboardActionPasteResult {
+        guard preferences.automaticallyPasteClipboardActionResults else {
+            return .disabled
+        }
+        guard accessibilityPermissionService.isTrusted else {
+            return .accessibilityDenied
+        }
+        guard frontmostApplicationService.activateTargetApplication() else {
+            return .targetApplicationUnavailable
+        }
+
+        do {
+            try pasteService.paste()
+            return .pasted
+        } catch {
+            return .failed(message: error.localizedDescription)
+        }
     }
 
     private func validatedTemplate(_ template: String) throws -> String {

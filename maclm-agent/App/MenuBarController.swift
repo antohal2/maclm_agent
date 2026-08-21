@@ -6,6 +6,7 @@ import SwiftUI
 final class MenuBarController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover: NSPopover
+    private let clipboardActionRunner: ClipboardActionRunner
 
     init(
         viewModel: ChatViewModel,
@@ -13,10 +14,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         modelContainer: ModelContainer,
         settings: AppSettings,
         hotKeyController: GlobalHotKeyController,
-        sceneActions: SceneActions
+        sceneActions: SceneActions,
+        accessibilityPermissionService: any AccessibilityPermissionService
     ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         popover = NSPopover()
+        self.clipboardActionRunner = clipboardActionRunner
         super.init()
 
         if let button = statusItem.button {
@@ -32,7 +35,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             viewModel: viewModel,
             clipboardActionRunner: clipboardActionRunner,
             settings: settings,
-            sceneActions: sceneActions
+            sceneActions: sceneActions,
+            accessibilityPermissionService: accessibilityPermissionService
         )
         .modelContainer(modelContainer)
         popover.contentViewController = NSHostingController(rootView: content)
@@ -59,6 +63,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         guard let button = statusItem.button else {
             return
         }
+        clipboardActionRunner.captureTargetApplication()
         NSApp.activate(ignoringOtherApps: true)
         popover.show(
             relativeTo: button.bounds,
@@ -74,12 +79,14 @@ private struct MenuBarPanelRootView: View {
     @Bindable var clipboardActionRunner: ClipboardActionRunner
     @Bindable var settings: AppSettings
     let sceneActions: SceneActions
+    let accessibilityPermissionService: any AccessibilityPermissionService
 
     var body: some View {
         MenuBarContentView(
             viewModel: viewModel,
             clipboardActionRunner: clipboardActionRunner,
-            sceneActions: sceneActions
+            sceneActions: sceneActions,
+            accessibilityPermissionService: accessibilityPermissionService
         )
         .preferredColorScheme(settings.theme.colorScheme)
     }

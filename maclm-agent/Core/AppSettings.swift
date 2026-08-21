@@ -40,6 +40,8 @@ final class AppSettings {
     private enum Key {
         static let theme = "appearance.theme"
         static let shortcut = "shortcuts.toggleMenuBar"
+        static let automaticallyPasteClipboardActionResults =
+            "clipboardActions.automaticallyPasteResults"
     }
 
     var theme: AppTheme {
@@ -57,6 +59,15 @@ final class AppSettings {
         }
     }
 
+    var automaticallyPasteClipboardActionResults: Bool {
+        didSet {
+            defaults.set(
+                automaticallyPasteClipboardActionResults,
+                forKey: Key.automaticallyPasteClipboardActionResults
+            )
+        }
+    }
+
     @ObservationIgnored
     private let defaults: UserDefaults
 
@@ -70,5 +81,10 @@ final class AppSettings {
             .data(forKey: Key.shortcut)
             .flatMap { try? JSONDecoder().decode(GlobalShortcut.self, from: $0) }
             ?? .defaultShortcut
+        automaticallyPasteClipboardActionResults = defaults.object(
+            forKey: Key.automaticallyPasteClipboardActionResults
+        ) as? Bool ?? true
     }
 }
+
+extension AppSettings: ClipboardActionPreferences {}
