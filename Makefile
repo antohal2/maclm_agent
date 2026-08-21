@@ -36,7 +36,15 @@ run: build
 	open "$(DERIVED_DATA)/Build/Products/$(CONFIGURATION)/maclm-agent.app"
 
 release:
-	./scripts/build_release.sh
+	@version="$(VERSION)"; \
+	if [ -z "$$version" ]; then \
+		version="$$(git describe --tags --exact-match --match 'v*' HEAD 2>/dev/null | sed 's/^v//')" || { \
+			echo "error: set VERSION when HEAD is not tagged (example: make release VERSION=0.2.4)" >&2; \
+			exit 1; \
+		}; \
+	fi; \
+	./scripts/build-release.sh "$$version"; \
+	./scripts/make-dmg.sh "$$version"
 
 generate:
 	@command -v xcodegen >/dev/null || { \
