@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Bindable var providerCoordinator: ProviderCoordinator
     @Bindable var settings: AppSettings
     @Bindable var hotKeyController: GlobalHotKeyController
+    @Bindable var clipboardHotkeyService: ClipboardHotkeyService
     let accessibilityPermissionService: any AccessibilityPermissionService
 
     var body: some View {
@@ -25,6 +26,7 @@ struct SettingsView: View {
 
             ClipboardActionsSettingsView(
                 settings: settings,
+                clipboardHotkeyService: clipboardHotkeyService,
                 accessibilityPermissionService: accessibilityPermissionService
             )
             .tabItem {
@@ -80,7 +82,10 @@ struct SettingsView: View {
     }
 
     private func updateShortcut(_ shortcut: GlobalShortcut) {
-        if hotKeyController.update(to: shortcut) {
+        if hotKeyController.update(
+            to: shortcut,
+            conflictingWith: settings.clipboardActionShortcut
+        ) {
             settings.shortcut = shortcut
         }
     }

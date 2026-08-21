@@ -6,6 +6,7 @@ struct ClipboardActionsSettingsView: View {
     @Query(sort: \ClipboardAction.sortOrder)
     private var actions: [ClipboardAction]
     @Bindable var settings: AppSettings
+    @Bindable var clipboardHotkeyService: ClipboardHotkeyService
     let accessibilityPermissionService: any AccessibilityPermissionService
     @State private var isAccessibilityTrusted = false
 
@@ -16,6 +17,34 @@ struct ClipboardActionsSettingsView: View {
                     "Вставлять результат автоматически",
                     isOn: $settings.automaticallyPasteClipboardActionResults
                 )
+
+                LabeledContent("Быстрый пикер") {
+                    HStack(spacing: 8) {
+                        ShortcutRecorder(
+                            shortcut: settings.clipboardActionShortcut,
+                            onShortcut: updateShortcut
+                        )
+                        .frame(width: 150)
+
+                        Button("Сбросить") {
+                            updateShortcut(.defaultClipboardActionShortcut)
+                        }
+                        .disabled(
+                            settings.clipboardActionShortcut
+                                == .defaultClipboardActionShortcut
+                        )
+                    }
+                }
+
+                Text("Нажмите поле и введите сочетание. По умолчанию — ⌘⇧Space.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let error = clipboardHotkeyService.registrationError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
 
                 if shouldShowAccessibilityWarning {
                     accessibilityWarning
@@ -29,7 +58,7 @@ struct ClipboardActionsSettingsView: View {
 
             Text(
                 "Действия применяются к содержимому буфера обмена. "
-                    + "Редактирование и вызов по хоткею появятся в следующих обновлениях."
+                    + "Редактирование действий появится в следующем обновлении."
             )
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -96,5 +125,14 @@ struct ClipboardActionsSettingsView: View {
 
     private func refreshAccessibilityStatus() {
         isAccessibilityTrusted = accessibilityPermissionService.isTrusted
+    }
+
+    private func updateShortcut(_ shortcut: GlobalShortcut) {
+        if clipboardHotkeyService.update(
+            to: shortcut,
+            conflictingWith: settings.shortcut
+        ) {
+            settings.clipboardActionShortcut = shortcut
+        }
     }
 }

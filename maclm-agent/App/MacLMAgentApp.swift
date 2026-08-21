@@ -10,6 +10,7 @@ struct MacLMAgentApp: App {
     @State private var chatViewModel: ChatViewModel
     @State private var settings: AppSettings
     @State private var hotKeyController: GlobalHotKeyController
+    @State private var clipboardHotkeyService: ClipboardHotkeyService
 
     init() {
         do {
@@ -37,10 +38,12 @@ struct MacLMAgentApp: App {
                 frontmostApplicationService: frontmostApplicationService
             )
             let globalHotKeyController = GlobalHotKeyController()
+            let clipboardHotkeyService = ClipboardHotkeyService()
             let appSceneActions = SceneActions()
             _chatViewModel = State(initialValue: viewModel)
             _settings = State(initialValue: appSettings)
             _hotKeyController = State(initialValue: globalHotKeyController)
+            _clipboardHotkeyService = State(initialValue: clipboardHotkeyService)
             sceneActions = appSceneActions
             menuBarController = MenuBarController(
                 viewModel: viewModel,
@@ -48,6 +51,7 @@ struct MacLMAgentApp: App {
                 modelContainer: container,
                 settings: appSettings,
                 hotKeyController: globalHotKeyController,
+                clipboardHotkeyService: clipboardHotkeyService,
                 sceneActions: appSceneActions,
                 accessibilityPermissionService: accessibilityPermissionService
             )
@@ -73,6 +77,7 @@ struct MacLMAgentApp: App {
                 providerCoordinator: chatViewModel.providerCoordinator,
                 settings: settings,
                 hotKeyController: hotKeyController,
+                clipboardHotkeyService: clipboardHotkeyService,
                 accessibilityPermissionService: accessibilityPermissionService
             )
             .modelContainer(modelContainer)

@@ -2,6 +2,22 @@
 
 All notable changes to `maclm-agent` are documented in this file.
 
+## [v0.2.3] - 2026-08-22
+
+### Added
+
+- Global `⌘⇧Space` shortcut for Clipboard Actions, configurable in Settings
+  with conflict detection and immediate re-registration.
+- Compact floating quick picker with clipboard preview, action search,
+  wraparound arrow navigation, `Return`, `Esc`, and `1`–`9` shortcuts.
+- Multi-display and full-screen panel placement, focus restoration, and toggle
+  behavior without requiring Accessibility access for the hotkey itself.
+
+### Changed
+
+- Carbon hotkey registration now routes multiple independent application
+  shortcuts through one event handler.
+
 ## [v0.1.0] - 2026-07-30
 
 First local-first MVP release for macOS 15+ on Apple Silicon.
@@ -28,3 +44,4 @@ certificate. Developer ID signing and Apple notarization with `notarytool` and
 `stapler` will be added after enrollment in the Apple Developer Program.
 
 [v0.1.0]: https://github.com/antohal2/maclm_agent/releases/tag/v0.1.0
+[v0.2.3]: https://github.com/antohal2/maclm_agent/releases/tag/v0.2.3

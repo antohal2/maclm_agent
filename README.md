@@ -4,8 +4,8 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-Version v0.1.0 completes the local-first MVP. It supports native tool calling
-through LM Studio and Ollama. The app
+Version v0.2.3 adds Clipboard Actions to the local-first MVP. It supports
+native tool calling through LM Studio and Ollama. The app
 discovers local servers at `http://localhost:1234` and
 `http://localhost:11434`, lists their models, and keeps the selected provider,
 model, and optional custom URL between launches. Conversations and messages are stored with
@@ -23,6 +23,14 @@ override, persistent Light/Dark/Auto appearance, and a configurable global
 hotkey (Control-Shift-Space by default) that toggles the menu bar panel from
 any application. A tested Keychain service is ready for future secret-backed
 providers.
+
+Clipboard Actions apply one of six built-in prompts to copied text through the
+selected local provider, replace the clipboard with the result, and optionally
+paste it back into the application that had focus. Press `⌘⇧Space` to open the
+floating quick picker on the display under the pointer. Search, arrow-key
+navigation, `Return`, `Esc`, and number keys `1`–`9` work without a mouse. The
+shortcut is configurable in Settings and does not require Accessibility access;
+only automatic paste requires that permission.
 
 ## Requirements
 
@@ -47,13 +55,13 @@ distribution project.
 
 `make release` creates a Release archive without requesting an Apple signing
 identity, copies the application from the archive, applies an ad-hoc signature,
-verifies it, and builds `dist/maclm-agent-0.1.0.dmg`. The DMG contains the
+verifies it, and builds `dist/maclm-agent-0.2.3.dmg`. The DMG contains the
 application and an `/Applications` symlink for drag-to-install.
 
 ## Установка
 
-1. Скачайте `maclm-agent-0.1.0.dmg` со страницы
-   [GitHub Releases](https://github.com/antohal2/maclm_agent/releases/tag/v0.1.0).
+1. Скачайте `maclm-agent-0.2.3.dmg` со страницы
+   [GitHub Releases](https://github.com/antohal2/maclm_agent/releases/tag/v0.2.3).
 2. Откройте DMG и перетащите `maclm-agent.app` в `/Applications`.
 3. Приложение подписано ad-hoc подписью, без Apple Developer ID, поэтому при
    первом запуске macOS Gatekeeper может показать предупреждение «нельзя

@@ -15,15 +15,21 @@ struct GlobalShortcut: Codable, Equatable, Sendable {
     let keyCode: UInt32
     let modifiers: ShortcutModifiers
 
-    /// Control-Shift-Space avoids the default macOS Spotlight and input-source
-    /// shortcuts while remaining reachable with one hand.
     static let defaultShortcut = Self(
         keyCode: UInt32(kVK_Space),
         modifiers: [.control, .shift]
     )
 
+    static let defaultClipboardActionShortcut = Self(
+        keyCode: UInt32(kVK_Space),
+        modifiers: [.command, .shift]
+    )
+
     var displayName: String {
         var result = ""
+        if modifiers.contains(.command) {
+            result += "⌘"
+        }
         if modifiers.contains(.control) {
             result += "⌃"
         }
@@ -32,9 +38,6 @@ struct GlobalShortcut: Codable, Equatable, Sendable {
         }
         if modifiers.contains(.shift) {
             result += "⇧"
-        }
-        if modifiers.contains(.command) {
-            result += "⌘"
         }
         return result + keyName
     }
@@ -108,22 +111,36 @@ struct GlobalShortcut: Codable, Equatable, Sendable {
 
 enum GlobalHotKeyError: Error, LocalizedError {
     case registrationFailed(OSStatus)
+    case conflictsWithOtherShortcut
 
     var errorDescription: String? {
         switch self {
         case let .registrationFailed(status):
-            "Не удалось зарегистрировать хоткей (код \(status)). Возможно, сочетание уже занято."
+            "Комбинация занята, выберите другую (код \(status))."
+        case .conflictsWithOtherShortcut:
+            "Комбинация уже назначена другому хоткею приложения."
         }
     }
 }
 
-private final class CarbonRegistration: @unchecked Sendable {
-    var hotKeyReference: EventHotKeyRef?
+enum HotKeyConflictValidator {
+    static func validate(
+        candidate: GlobalShortcut,
+        conflictingWith otherShortcut: GlobalShortcut
+    ) throws {
+        guard candidate != otherShortcut else {
+            throw GlobalHotKeyError.conflictsWithOtherShortcut
+        }
+    }
+}
+
+private final class CarbonResources: @unchecked Sendable {
     var eventHandlerReference: EventHandlerRef?
+    var hotKeyReferences: [UInt32: EventHotKeyRef] = [:]
 
     deinit {
-        if let hotKeyReference {
-            UnregisterEventHotKey(hotKeyReference)
+        for reference in hotKeyReferences.values {
+            UnregisterEventHotKey(reference)
         }
         if let eventHandlerReference {
             RemoveEventHandler(eventHandlerReference)
@@ -131,80 +148,38 @@ private final class CarbonRegistration: @unchecked Sendable {
     }
 }
 
+private let carbonHotKeySignature = OSType(0x4D4C_4D41)
+private let carbonHotKeyNotification = Notification.Name("maclm-agent.carbon-hotkey")
+
 @MainActor
-@Observable
-final class GlobalHotKeyController {
-    private(set) var registrationError: String?
-    var action: (() -> Void)?
+final class CarbonHotKeyRegistry: NSObject {
+    static let shared = CarbonHotKeyRegistry()
 
-    @ObservationIgnored
-    private let carbonRegistration = CarbonRegistration()
-    @ObservationIgnored
-    private var registeredShortcut: GlobalShortcut?
+    private let resources = CarbonResources()
+    private var actions: [UInt32: () -> Void] = [:]
 
-    init() {
+    override private init() {
+        super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hotKeyPressed),
+            name: carbonHotKeyNotification,
+            object: nil
+        )
         installEventHandler()
     }
 
-    func start(with shortcut: GlobalShortcut) {
-        do {
-            try register(shortcut)
-            registrationError = nil
-        } catch {
-            registrationError = error.localizedDescription
-        }
-    }
+    func register(
+        identifier: UInt32,
+        shortcut: GlobalShortcut,
+        action: @escaping () -> Void
+    ) throws {
+        unregister(identifier: identifier)
 
-    @discardableResult
-    func update(to shortcut: GlobalShortcut) -> Bool {
-        let previousShortcut = registeredShortcut
-        unregister()
-
-        do {
-            try register(shortcut)
-            registrationError = nil
-            return true
-        } catch {
-            registrationError = error.localizedDescription
-            if let previousShortcut {
-                try? register(previousShortcut)
-            }
-            return false
-        }
-    }
-
-    private func installEventHandler() {
-        var eventType = EventTypeSpec(
-            eventClass: OSType(kEventClassKeyboard),
-            eventKind: UInt32(kEventHotKeyPressed)
-        )
-        let callback: EventHandlerUPP = { _, _, userData in
-            guard let userData else {
-                return OSStatus(eventNotHandledErr)
-            }
-            let controller = Unmanaged<GlobalHotKeyController>
-                .fromOpaque(userData)
-                .takeUnretainedValue()
-            MainActor.assumeIsolated {
-                controller.action?()
-            }
-            return noErr
-        }
-        InstallEventHandler(
-            GetApplicationEventTarget(),
-            callback,
-            1,
-            &eventType,
-            Unmanaged.passUnretained(self).toOpaque(),
-            &carbonRegistration.eventHandlerReference
-        )
-    }
-
-    private func register(_ shortcut: GlobalShortcut) throws {
         var reference: EventHotKeyRef?
         let hotKeyID = EventHotKeyID(
-            signature: OSType(0x4D4C_4D41),
-            id: 1
+            signature: carbonHotKeySignature,
+            id: identifier
         )
         let status = RegisterEventHotKey(
             shortcut.keyCode,
@@ -217,16 +192,62 @@ final class GlobalHotKeyController {
         guard status == noErr, let reference else {
             throw GlobalHotKeyError.registrationFailed(status)
         }
-        carbonRegistration.hotKeyReference = reference
-        registeredShortcut = shortcut
+        resources.hotKeyReferences[identifier] = reference
+        actions[identifier] = action
     }
 
-    private func unregister() {
-        if let hotKeyReference = carbonRegistration.hotKeyReference {
-            UnregisterEventHotKey(hotKeyReference)
+    func unregister(identifier: UInt32) {
+        if let reference = resources.hotKeyReferences.removeValue(forKey: identifier) {
+            UnregisterEventHotKey(reference)
         }
-        carbonRegistration.hotKeyReference = nil
-        registeredShortcut = nil
+        actions.removeValue(forKey: identifier)
+    }
+
+    private func installEventHandler() {
+        var eventType = EventTypeSpec(
+            eventClass: OSType(kEventClassKeyboard),
+            eventKind: UInt32(kEventHotKeyPressed)
+        )
+        let callback: EventHandlerUPP = { _, event, _ in
+            guard let event else {
+                return OSStatus(eventNotHandledErr)
+            }
+            var hotKeyID = EventHotKeyID()
+            let status = GetEventParameter(
+                event,
+                EventParamName(kEventParamDirectObject),
+                EventParamType(typeEventHotKeyID),
+                nil,
+                MemoryLayout<EventHotKeyID>.size,
+                nil,
+                &hotKeyID
+            )
+            guard status == noErr, hotKeyID.signature == carbonHotKeySignature else {
+                return OSStatus(eventNotHandledErr)
+            }
+            NotificationCenter.default.post(
+                name: carbonHotKeyNotification,
+                object: nil,
+                userInfo: ["identifier": hotKeyID.id]
+            )
+            return noErr
+        }
+        InstallEventHandler(
+            GetApplicationEventTarget(),
+            callback,
+            1,
+            &eventType,
+            nil,
+            &resources.eventHandlerReference
+        )
+    }
+
+    @objc
+    private func hotKeyPressed(_ notification: Notification) {
+        guard let identifier = notification.userInfo?["identifier"] as? UInt32 else {
+            return
+        }
+        actions[identifier]?()
     }
 
     private func carbonModifiers(for modifiers: ShortcutModifiers) -> UInt32 {
@@ -244,5 +265,84 @@ final class GlobalHotKeyController {
             result |= UInt32(shiftKey)
         }
         return result
+    }
+}
+
+@MainActor
+@Observable
+final class GlobalHotKeyController {
+    private static let identifier: UInt32 = 1
+
+    private(set) var registrationError: String?
+    var action: (() -> Void)?
+
+    @ObservationIgnored
+    private let registry: CarbonHotKeyRegistry
+    @ObservationIgnored
+    private var registeredShortcut: GlobalShortcut?
+
+    init(registry: CarbonHotKeyRegistry = .shared) {
+        self.registry = registry
+    }
+
+    func start(with shortcut: GlobalShortcut) {
+        do {
+            try register(shortcut)
+            registrationError = nil
+        } catch {
+            registrationError = error.localizedDescription
+        }
+    }
+
+    @discardableResult
+    func update(
+        to shortcut: GlobalShortcut,
+        conflictingWith otherShortcut: GlobalShortcut? = nil
+    ) -> Bool {
+        do {
+            if let otherShortcut {
+                try HotKeyConflictValidator.validate(
+                    candidate: shortcut,
+                    conflictingWith: otherShortcut
+                )
+            }
+        } catch {
+            registrationError = error.localizedDescription
+            return false
+        }
+
+        let previousShortcut = registeredShortcut
+        unregister()
+
+        do {
+            try register(shortcut)
+            registrationError = nil
+            return true
+        } catch {
+            registrationError = error.localizedDescription
+            if let previousShortcut {
+                try? register(previousShortcut)
+            }
+            return false
+        }
+    }
+
+    func stop() {
+        unregister()
+    }
+
+    private func register(_ shortcut: GlobalShortcut) throws {
+        try registry.register(
+            identifier: Self.identifier,
+            shortcut: shortcut
+        ) { [weak self] in
+            self?.action?()
+        }
+        registeredShortcut = shortcut
+    }
+
+    private func unregister() {
+        registry.unregister(identifier: Self.identifier)
+        registeredShortcut = nil
     }
 }

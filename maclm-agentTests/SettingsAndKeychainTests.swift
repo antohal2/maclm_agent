@@ -12,6 +12,10 @@ final class SettingsAndKeychainTests: XCTestCase {
         let initialSettings = AppSettings(defaults: defaults)
         XCTAssertEqual(initialSettings.theme, .automatic)
         XCTAssertEqual(initialSettings.shortcut, .defaultShortcut)
+        XCTAssertEqual(
+            initialSettings.clipboardActionShortcut,
+            .defaultClipboardActionShortcut
+        )
         XCTAssertTrue(initialSettings.automaticallyPasteClipboardActionResults)
 
         let shortcut = GlobalShortcut(
@@ -20,12 +24,34 @@ final class SettingsAndKeychainTests: XCTestCase {
         )
         initialSettings.theme = .dark
         initialSettings.shortcut = shortcut
+        let clipboardShortcut = GlobalShortcut(
+            keyCode: 1,
+            modifiers: [.control, .shift]
+        )
+        initialSettings.clipboardActionShortcut = clipboardShortcut
         initialSettings.automaticallyPasteClipboardActionResults = false
 
         let restoredSettings = AppSettings(defaults: defaults)
         XCTAssertEqual(restoredSettings.theme, .dark)
         XCTAssertEqual(restoredSettings.shortcut, shortcut)
+        XCTAssertEqual(restoredSettings.clipboardActionShortcut, clipboardShortcut)
         XCTAssertFalse(restoredSettings.automaticallyPasteClipboardActionResults)
+    }
+
+    func testHotKeyConflictValidatorRejectsMainWindowShortcut() {
+        let shortcut = GlobalShortcut.defaultClipboardActionShortcut
+
+        XCTAssertThrowsError(
+            try HotKeyConflictValidator.validate(
+                candidate: shortcut,
+                conflictingWith: shortcut
+            )
+        ) { error in
+            XCTAssertEqual(
+                error.localizedDescription,
+                "Комбинация уже назначена другому хоткею приложения."
+            )
+        }
     }
 
     func testKeychainServiceSaveReadUpdateAndDelete() throws {

@@ -7,6 +7,9 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private let clipboardActionRunner: ClipboardActionRunner
+    private let hotKeyController: GlobalHotKeyController
+    private let clipboardHotkeyService: ClipboardHotkeyService
+    private let quickActionPickerController: QuickActionPickerController
 
     init(
         viewModel: ChatViewModel,
@@ -14,12 +17,19 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         modelContainer: ModelContainer,
         settings: AppSettings,
         hotKeyController: GlobalHotKeyController,
+        clipboardHotkeyService: ClipboardHotkeyService,
         sceneActions: SceneActions,
         accessibilityPermissionService: any AccessibilityPermissionService
     ) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         popover = NSPopover()
         self.clipboardActionRunner = clipboardActionRunner
+        self.hotKeyController = hotKeyController
+        self.clipboardHotkeyService = clipboardHotkeyService
+        quickActionPickerController = QuickActionPickerController(
+            modelContainer: modelContainer,
+            clipboardActionRunner: clipboardActionRunner
+        )
         super.init()
 
         if let button = statusItem.button {
@@ -48,6 +58,17 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             self?.togglePopover()
         }
         hotKeyController.start(with: settings.shortcut)
+        clipboardHotkeyService.action = { [weak self] in
+            self?.quickActionPickerController.toggle()
+        }
+        clipboardHotkeyService.start(with: settings.clipboardActionShortcut)
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillTerminate),
+            name: NSApplication.willTerminateNotification,
+            object: nil
+        )
     }
 
     @objc
@@ -57,6 +78,13 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         } else {
             showPopover()
         }
+    }
+
+    @objc
+    private func applicationWillTerminate() {
+        quickActionPickerController.close()
+        hotKeyController.stop()
+        clipboardHotkeyService.stop()
     }
 
     private func showPopover() {
