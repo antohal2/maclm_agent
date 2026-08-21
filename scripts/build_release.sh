@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly VERSION="0.2.3"
+readonly VERSION="0.2.4"
 readonly PRODUCT_NAME="maclm-agent"
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

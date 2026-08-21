@@ -2,6 +2,22 @@
 
 All notable changes to `maclm-agent` are documented in this file.
 
+## [v0.2.4] - 2026-08-22
+
+### Added
+
+- Full Clipboard Actions editor for creating, editing, deleting, enabling, and
+  reordering built-in and custom actions.
+- Live validation for action names, prompt templates, and SF Symbols, including
+  cursor-aware insertion of `{{input}}`.
+- Confirmed reset of all six built-in actions without modifying custom actions.
+
+### Changed
+
+- Clipboard Action persistence is centralized in `ClipboardActionStore`, with
+  stable built-in identifiers and migration from v0.2.0–v0.2.3 records.
+- Settings now use a master-detail layout sized for the action editor.
+
 ## [v0.2.3] - 2026-08-22
 
 ### Added
@@ -45,3 +61,4 @@ certificate. Developer ID signing and Apple notarization with `notarytool` and
 
 [v0.1.0]: https://github.com/antohal2/maclm_agent/releases/tag/v0.1.0
 [v0.2.3]: https://github.com/antohal2/maclm_agent/releases/tag/v0.2.3
+[v0.2.4]: https://github.com/antohal2/maclm_agent/releases/tag/v0.2.4

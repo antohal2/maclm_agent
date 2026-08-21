@@ -33,7 +33,7 @@ struct SettingsView: View {
                 Label("Действия с буфером", systemImage: "clipboard")
             }
         }
-        .frame(width: 520, height: 470)
+        .frame(width: 900, height: 680)
     }
 
     private var appearanceSettings: some View {

@@ -4,7 +4,7 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-Version v0.2.3 adds Clipboard Actions to the local-first MVP. It supports
+Version v0.2.4 completes Clipboard Actions for the local-first MVP. It supports
 native tool calling through LM Studio and Ollama. The app
 discovers local servers at `http://localhost:1234` and
 `http://localhost:11434`, lists their models, and keeps the selected provider,
@@ -32,6 +32,11 @@ navigation, `Return`, `Esc`, and number keys `1`–`9` work without a mouse. The
 shortcut is configurable in Settings and does not require Accessibility access;
 only automatic paste requires that permission.
 
+The Settings editor can create custom actions, edit or delete any action,
+enable or disable actions, reorder them with drag-and-drop, validate prompt
+templates and SF Symbols, and restore the six built-in actions without changing
+custom actions.
+
 ## Requirements
 
 - macOS 15.0 or later on Apple Silicon
@@ -55,13 +60,13 @@ distribution project.
 
 `make release` creates a Release archive without requesting an Apple signing
 identity, copies the application from the archive, applies an ad-hoc signature,
-verifies it, and builds `dist/maclm-agent-0.2.3.dmg`. The DMG contains the
+verifies it, and builds `dist/maclm-agent-0.2.4.dmg`. The DMG contains the
 application and an `/Applications` symlink for drag-to-install.
 
 ## Установка
 
-1. Скачайте `maclm-agent-0.2.3.dmg` со страницы
-   [GitHub Releases](https://github.com/antohal2/maclm_agent/releases/tag/v0.2.3).
+1. Скачайте `maclm-agent-0.2.4.dmg` со страницы
+   [GitHub Releases](https://github.com/antohal2/maclm_agent/releases/tag/v0.2.4).
 2. Откройте DMG и перетащите `maclm-agent.app` в `/Applications`.
 3. Приложение подписано ad-hoc подписью, без Apple Developer ID, поэтому при
    первом запуске macOS Gatekeeper может показать предупреждение «нельзя
