@@ -33,6 +33,7 @@ final class ChatViewModel {
     var canSend: Bool {
         selectedConversation != nil
             && !isGenerating
+            && currentRunner?.isRestoringCheckpoint != true
             && providerCoordinator.hasActiveProvider
             && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -157,6 +158,7 @@ final class ChatViewModel {
 
     func send() {
         guard let conversation = selectedConversation, ComposerRules.canSubmit(input), !isGenerating else { return }
+        guard currentRunner?.isRestoringCheckpoint != true else { return }
         let content = input
         input = ""
         registry.runner(for: conversation).send(content)

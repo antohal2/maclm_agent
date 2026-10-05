@@ -34,7 +34,15 @@ struct ConfirmationCard: View {
             Text(actionDescription)
                 .font(.callout)
 
+            if let preview = toolCall.filePreview {
+                FilePreviewView(toolName: toolCall.toolName, preview: preview)
+            }
+
             if isDelete {
+                if toolCall.filePreview?.canRestore == false {
+                    Text(String(localized: "Объект можно восстановить из Корзины вручную")).font(.caption)
+                        .foregroundStyle(.red)
+                }
                 Text(String(localized: "Объект будет перемещён в Корзину. Это изменение файловой системы."))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.red)

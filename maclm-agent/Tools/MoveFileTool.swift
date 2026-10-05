@@ -2,7 +2,7 @@ import Foundation
 
 struct MoveFileTool: Tool {
     let name = "move_file"
-    let description = "Move a file or directory from one path to another."
+    let description = "Move a file or directory from one path to another, replacing an existing destination."
     static let baseRiskLevel = RiskLevel.caution
     static let isPolicyEnforceable = true
 
@@ -46,11 +46,18 @@ struct MoveFileTool: Tool {
         guard FileManager.default.fileExists(atPath: sourceURL.path) else {
             return .failure("Source not found: \(sourceURL.path)")
         }
-        guard !FileManager.default.fileExists(atPath: destinationURL.path) else {
-            return .failure("Destination already exists: \(destinationURL.path)")
+        let sourceOperation = CheckpointFileState.operationPath(sourceURL.path)
+        let destinationOperation = CheckpointFileState.operationPath(destinationURL.path)
+        guard sourceOperation != destinationOperation,
+              !destinationOperation.hasPrefix(sourceOperation + "/"),
+              !sourceOperation.hasPrefix(destinationOperation + "/") else {
+            return .failure("Source and destination must be distinct, non-nested paths.")
         }
 
         do {
+            if (try? FileManager.default.attributesOfItem(atPath: destinationURL.path)) != nil {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
             try FileManager.default.moveItem(at: sourceURL, to: destinationURL)
             return .success(
                 content: "Moved \(sourceURL.path) to \(destinationURL.path)."

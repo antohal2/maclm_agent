@@ -17,6 +17,7 @@ final class SessionRunner {
     private(set) var traceEndings: [UUID: TraceRunEnd] = [:]
     private(set) var lastRunCancelled = false
     private(set) var lastRunEndedAt: Date?
+    var isRestoringCheckpoint = false
     private(set) var isGenerating = false
     private(set) var isWaitingForFirstToken = false
     private(set) var generatingMessageID: UUID?
@@ -49,7 +50,7 @@ final class SessionRunner {
     }
 
     func send(_ content: String) {
-        guard canStart(), ComposerRules.canSubmit(content), !isGenerating else { return }
+        guard canStart(), ComposerRules.canSubmit(content), !isRestoringCheckpoint, !isGenerating else { return }
         autoTitles.cancelTitle(for: conversation)
         isGenerating = true
         lastRunCancelled = false
@@ -73,7 +74,7 @@ final class SessionRunner {
     }
 
     func retry(after user: Message) {
-        guard !isGenerating, canStart(), user.role == .user,
+        guard !isGenerating, !isRestoringCheckpoint, canStart(), user.role == .user,
               !messages.flatMap(\.toolCalls).contains(where: { $0.status == .pending || $0.status == .approved }),
               let index = messages.firstIndex(where: { $0.id == user.id }) else { return }
         autoTitles.cancelTitle(for: conversation)
@@ -312,6 +313,7 @@ extension SessionRunner {
             } else {
                 timestamp = timestamp.addingTimeInterval(0.000_001)
                 toolCall = ToolCall(
+                    id: execution.persistentCallID ?? UUID(),
                     providerCallID: execution.toolCall.id,
                     toolName: execution.toolCall.function.name,
                     argumentsJSON: execution.toolCall.function.arguments,
@@ -395,6 +397,7 @@ extension SessionRunner {
         )
         toolCall.confirmationRiskRawValue = request.riskLevel.rawValue
         toolCall.confirmationRiskReason = request.riskReason
+        toolCall.filePreview = request.filePreview
         modelContext.insert(toolCall)
         assistantMessage.toolCalls.append(toolCall)
         conversation.updatedAt = toolCall.timestamp

@@ -22,3 +22,10 @@ extension Conversation {
         title == Self.defaultTitle ? String(localized: "Новая беседа") : title
     }
 }
+
+
+extension AuditDecision {
+    var interfaceLabel: String {
+        self == .userInitiated ? String(localized: "Действие пользователя") : rawValue
+    }
+}

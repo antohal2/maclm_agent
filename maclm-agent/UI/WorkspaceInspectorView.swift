@@ -93,6 +93,14 @@ struct WorkspaceInspectorView: View {
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }
+                if let conversation = viewModel.selectedConversation {
+                    GroupBox(String(localized: "Чекпоинты")) {
+                        CheckpointsView(
+                            conversation: conversation,
+                            runner: viewModel.registry.runner(for: conversation)
+                        )
+                    }
+                }
                 GroupBox(String(localized: "Файлы")) {
                     if let path = viewModel.selectedConversation?.project?.workingDirectoryPath {
                         WorkspaceDirectoryView(url: URL(fileURLWithPath: path)).id(path)
@@ -139,7 +147,7 @@ private struct ConversationAuditPreview: View {
                     Text(entry.timestamp, style: .time)
                     Text(entry.toolName)
                     Text(entry.riskLevel == .safe ? "safe" : entry.riskLevel == .caution ? "caution" : "dangerous")
-                    Text(entry.decisionRaw)
+                    Text(entry.decision.interfaceLabel)
                 }.font(.caption)
             }
             Button(String(localized: "Открыть журнал…")) {

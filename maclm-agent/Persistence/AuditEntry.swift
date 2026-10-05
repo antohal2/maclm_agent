@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-enum AuditDecision: String, Codable, CaseIterable, Sendable { case approved, rejected, auto, blocked }
+enum AuditDecision: String, Codable, CaseIterable, Sendable { case approved, rejected, auto, blocked, userInitiated }
 enum AuditOutcome: String, Codable, Sendable { case success, failure, cancelled, notExecuted }
 
 @Model final class AuditEntry {
@@ -28,6 +28,8 @@ enum AuditOutcome: String, Codable, Sendable { case success, failure, cancelled,
     var errorDescription: String?
     var durationMilliseconds: Int?
     var conversationID: UUID?
+    var checkpointID: UUID? = nil
+    var toolCallID: UUID? = nil
 
     init(_ record: AuditRecord) {
         id = record.id
@@ -43,6 +45,8 @@ enum AuditOutcome: String, Codable, Sendable { case success, failure, cancelled,
         errorDescription = record.errorDescription
         durationMilliseconds = record.durationMilliseconds
         conversationID = record.conversationID
+        checkpointID = record.checkpointID
+        toolCallID = record.toolCallID
     }
 
     var record: AuditRecord {
@@ -59,7 +63,9 @@ enum AuditOutcome: String, Codable, Sendable { case success, failure, cancelled,
             resultSummary: resultSummary,
             errorDescription: errorDescription,
             durationMilliseconds: durationMilliseconds,
-            conversationID: conversationID
+            conversationID: conversationID,
+            checkpointID: checkpointID,
+            toolCallID: toolCallID
         )
     }
 }
@@ -78,6 +84,8 @@ struct AuditRecord: Codable, Sendable {
     var errorDescription: String?
     var durationMilliseconds: Int?
     var conversationID: UUID?
+    var checkpointID: UUID? = nil
+    var toolCallID: UUID? = nil
 }
 
 enum AuditSanitizer {
@@ -141,6 +149,8 @@ enum AuditSanitizer {
 
 struct AuditFilter: Equatable, Sendable {
     var conversationID: UUID?
+    var checkpointID: UUID? = nil
+    var toolCallID: UUID? = nil
     var start: Date?
     var end: Date?
     var tool = ""

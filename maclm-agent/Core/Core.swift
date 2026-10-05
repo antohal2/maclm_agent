@@ -9,6 +9,9 @@ actor AgentLoop {
     private let riskContext: @MainActor @Sendable () -> ToolRiskContext
     private let securityRules: @MainActor @Sendable () throws -> [SecurityRuleSnapshot]
     private let auditSink: @MainActor @Sendable (AuditRecord) throws -> Void
+    private let checkpoints: CheckpointService?
+    private let checkpointSink: @MainActor @Sendable (CheckpointSnapshot) throws -> Void
+    private let checkpointMaintenance: @MainActor @Sendable () async throws -> Void
     private let maximumIterations: Int
     private var isGenerating = false
 
@@ -16,6 +19,9 @@ actor AgentLoop {
         toolRegistry: ToolRegistry = .all,
         confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
         maximumIterations: Int = 8,
+        checkpoints: CheckpointService? = nil,
+        checkpointSink: @escaping @MainActor @Sendable (CheckpointSnapshot) throws -> Void = { _ in },
+        checkpointMaintenance: @escaping @MainActor @Sendable () async throws -> Void = {},
         sessionPermissions: SessionPermissions = SessionPermissions(),
         riskContext: @escaping @MainActor @Sendable () -> ToolRiskContext = {
             ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
@@ -25,6 +31,9 @@ actor AgentLoop {
             DefaultSecurityRules.rules
         }
     ) {
+        self.checkpoints = checkpoints
+        self.checkpointSink = checkpointSink
+        self.checkpointMaintenance = checkpointMaintenance
         self.auditSink = auditSink
         self.sessionPermissions = sessionPermissions
         self.riskContext = riskContext
@@ -38,6 +47,9 @@ actor AgentLoop {
         AgentLoop(
             toolRegistry: toolRegistry,
             maximumIterations: maximumIterations,
+            checkpoints: checkpoints,
+            checkpointSink: checkpointSink,
+            checkpointMaintenance: checkpointMaintenance,
             sessionPermissions: sessionPermissions,
             riskContext: riskContext,
             auditSink: auditSink,
@@ -50,9 +62,10 @@ actor AgentLoop {
         decision: ConfirmationDecision,
         rememberForSession: Bool = false
     ) async {
-        if decision == .approved, rememberForSession,
-           let request = pendingConfirmations[requestID],
-           let (invocation, epoch) = pendingContexts[requestID] {
+        if
+            decision == .approved, rememberForSession,
+            let request = pendingConfirmations[requestID],
+            let (invocation, epoch) = pendingContexts[requestID] {
             await sessionPermissions.remember(
                 conversationID: invocation.conversationID, toolName: request.toolCall.function.name,
                 riskLevel: request.riskLevel, expectedEpoch: epoch
@@ -181,16 +194,21 @@ actor AgentLoop {
                 .map(\.value.chatToolCall)
         )
     }
+}
 
+/// Execution keeps its policy checks in one actor, separate from streaming orchestration.
+extension AgentLoop {
     private func execute(
         _ toolCall: ChatToolCall,
         invocation: ToolInvocationContext,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AgentToolCallExecution {
+        let persistentCallID = UUID()
         var audit = AuditRecord(
             toolName: toolCall.function.name,
             argumentsJSON: AuditSanitizer.arguments(toolCall.function.arguments, toolName: toolCall.function.name),
-            conversationID: invocation.conversationID
+            conversationID: invocation.conversationID,
+            toolCallID: persistentCallID
         )
         let execution: Result<AgentToolCallExecution, Error>
         do {
@@ -211,7 +229,9 @@ actor AgentLoop {
             execution = .failure(error)
         }
         try await auditSink(audit)
-        return try execution.get()
+        var result = try execution.get()
+        result.persistentCallID = persistentCallID
+        return result
     }
 
     private func executeAudited(
@@ -297,10 +317,60 @@ actor AgentLoop {
                 result: .failure(policyDecision.explanation ?? "Вызов запрещён правилом безопасности.")
             )
         }
+        return try await executeAllowed(
+            .init(
+                tool: tool,
+                toolCall: toolCall,
+                arguments: arguments,
+                executionArguments: executionArguments,
+                invocation: invocation,
+                policy: policy,
+                assessment: assessment
+            ),
+            audit: &audit, onEvent: onEvent
+        )
+    }
+
+    private func executeAllowed(
+        _ operation: EvaluatedToolOperation,
+        audit: inout AuditRecord,
+        onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
+    ) async throws -> AgentToolCallExecution {
+        let tool = operation.tool, toolCall = operation.toolCall
+        let executionArguments = operation.executionArguments
+        let invocation = operation.invocation, policy = operation.policy
+        let assessment = operation.assessment
+        var prepared: PreparedFileOperation?
+        if let checkpoints, FilePreviewService.covered.contains(tool.name) {
+            let strings = executionArguments.compactMapValues { $0 as? String }
+            do {
+                prepared = try await FilePreviewService.prepare(
+                    tool: tool.name,
+                    arguments: strings,
+                    policy: policy,
+                    checkpoints: checkpoints
+                )
+            } catch CheckpointError.unavailable {
+                // Never promise rollback or execute against an unknown approved state.
+                prepared = .init(
+                    preview: .init(
+                        kind: "unavailable",
+                        paths: [],
+                        rollbackReason: CheckpointError.unavailable.rawValue
+                    ),
+                    plan: .init(fingerprints: [], bytes: 0, reason: .unavailable)
+                )
+            } catch {
+                audit.errorDescription = error.localizedDescription
+                return AgentToolCallExecution(toolCall: toolCall, result: .failure(error.localizedDescription))
+            }
+        }
         let confirmation = try await confirmIfNeeded(
             toolCall: toolCall,
             assessment: assessment,
             invocation: invocation,
+            callID: audit.toolCallID ?? UUID(),
+            prepared: prepared,
             onEvent: onEvent
         )
         audit.decision = confirmation
@@ -318,8 +388,64 @@ actor AgentLoop {
             let elapsed = started.duration(to: .now).components
             audit.durationMilliseconds = Int(elapsed.seconds * 1000 + elapsed.attoseconds / 1_000_000_000_000_000)
         }
+        return try await executeCheckpointed(operation, prepared: prepared, confirmation: confirmation, audit: &audit)
+    }
+
+    private func executeCheckpointed(
+        _ operation: EvaluatedToolOperation,
+        prepared: PreparedFileOperation?,
+        confirmation: ToolConfirmation,
+        audit: inout AuditRecord
+    ) async throws -> AgentToolCallExecution {
+        let tool = operation.tool, toolCall = operation.toolCall
+        let arguments = operation.arguments, executionArguments = operation.executionArguments
+        let invocation = operation.invocation, policy = operation.policy
+        var checkpoint: CheckpointSnapshot?
+        var executionBegan = false
         do {
-            let result = try await tool.execute(arguments: executionArguments, invocation: invocation, policy: policy)
+            if let checkpoints, let prepared {
+                guard !prepared.plan.fingerprints.isEmpty else { throw CheckpointError.unavailable }
+                let freshPolicy = try await SecurityPolicyEngine(rules: securityRules(), invocation: invocation)
+                guard freshPolicy.decision(for: tool, arguments: arguments).isAllowed
+                else { throw CheckpointError.blocked }
+                try await checkpoints.verify(prepared.plan, policy: freshPolicy)
+                if prepared.plan.canRestore {
+                    let value = try await checkpoints.create(
+                        tool: tool.name,
+                        conversationID: invocation.conversationID,
+                        expected: prepared.plan,
+                        policy: freshPolicy
+                    )
+                    do { try await checkpointSink(value) }
+                    catch { try? await checkpoints.discard(value.id); throw error }
+                    checkpoint = value
+                    audit.checkpointID = value.id
+                }
+                try Task.checkCancellation()
+                // Detect changed symlink parents/targets, not only changed bytes.
+                let currentPaths = try CheckpointFileState.paths(
+                    tool: tool.name,
+                    arguments: executionArguments.compactMapValues { $0 as? String }
+                )
+                guard currentPaths == prepared.plan.fingerprints.map(\.path) else { throw CheckpointError.changed }
+                try await checkpoints.verify(prepared.plan, policy: freshPolicy)
+            }
+            // A fresh JSON object has no non-Sendable aliases to the actor's operation snapshot.
+            let encodedArguments = try JSONSerialization.data(withJSONObject: executionArguments)
+            let toolArguments = try JSONSerialization.jsonObject(with: encodedArguments) as? [String: Any] ?? [:]
+            executionBegan = true
+            let result = try await tool.execute(arguments: toolArguments, invocation: invocation, policy: policy)
+            if let checkpoints, let checkpoint {
+                do {
+                    let completed = try await checkpoints.complete(checkpoint)
+                    try await checkpointSink(completed)
+                    try await checkpointMaintenance()
+                } catch {
+                    // The pre-operation snapshot is durable. Maintenance failure must not
+                    // report that an already executed tool failed or change its model result.
+                    NSLog("Checkpoint finalization failed: %@", error.localizedDescription)
+                }
+            }
             audit.outcome = result.isError ? .failure : .success
             let summary = AuditSanitizer.summary(result, toolName: tool.name, arguments: executionArguments)
             audit.resultSummary = summary.0
@@ -331,8 +457,16 @@ actor AgentLoop {
                 confirmationRequestID: confirmation.requestID
             )
         } catch is CancellationError {
+            await cleanUpCheckpoint(checkpoint, executionBegan: executionBegan)
+            if !executionBegan {
+                audit.checkpointID = nil
+            }
             throw CancellationError()
         } catch {
+            await cleanUpCheckpoint(checkpoint, executionBegan: executionBegan)
+            if !executionBegan {
+                audit.checkpointID = nil
+            }
             audit.outcome = .failure
             audit.errorDescription = AuditSanitizer.truncate(error.localizedDescription)
             return AgentToolCallExecution(
@@ -344,29 +478,43 @@ actor AgentLoop {
         }
     }
 
+    private func cleanUpCheckpoint(_ checkpoint: CheckpointSnapshot?, executionBegan: Bool) async {
+        guard let checkpoints, let checkpoint else { return }
+        if executionBegan {
+            _ = try? await checkpoints.complete(checkpoint)
+        } else {
+            try? await checkpoints.discard(checkpoint.id); try? await checkpointMaintenance()
+        }
+    }
+
     private func confirmIfNeeded(
         toolCall: ChatToolCall,
         assessment: RiskAssessment,
         invocation: ToolInvocationContext,
+        callID: UUID,
+        prepared: PreparedFileOperation?,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> ToolConfirmation {
         guard assessment.level.requiresConfirmation else {
             return ToolConfirmation()
         }
 
-        if await sessionPermissions.allows(
-            conversationID: invocation.conversationID,
-            toolName: toolCall.function.name,
-            riskLevel: assessment.level,
-            expectedEpoch: invocation.permissionEpoch
-        ) {
+        if
+            prepared?.plan.canRestore != false, await sessionPermissions.allows(
+                conversationID: invocation.conversationID,
+                toolName: toolCall.function.name,
+                riskLevel: assessment.level,
+                expectedEpoch: invocation.permissionEpoch
+            ) {
             return ToolConfirmation(decision: .approved)
         }
 
         let request = ConfirmationRequest(
+            id: callID,
             toolCall: toolCall,
             riskLevel: assessment.level,
-            riskReason: assessment.reason
+            riskReason: assessment.reason,
+            filePreview: prepared?.preview
         )
         pendingConfirmations[request.id] = request
         pendingContexts[request.id] = (invocation, invocation.permissionEpoch)
@@ -398,102 +546,12 @@ actor AgentLoop {
     }
 }
 
-private struct ToolConfirmation {
-    let decision: ConfirmationDecision?
-    let requestID: UUID?
-    let rejection: AgentToolCallExecution?
-
-    init(
-        decision: ConfirmationDecision? = nil,
-        requestID: UUID? = nil,
-        rejection: AgentToolCallExecution? = nil
-    ) {
-        self.decision = decision
-        self.requestID = requestID
-        self.rejection = rejection
-    }
-}
-
-private struct AssistantTurn {
-    let content: String
-    let toolCalls: [ChatToolCall]
-}
-
-enum AgentLoopError: Error, LocalizedError, Sendable {
-    case alreadyGenerating
-    case maximumIterationsReached(Int)
-
-    var errorDescription: String? {
-        switch self {
-        case .alreadyGenerating:
-            "Предыдущий ответ ещё генерируется."
-        case let .maximumIterationsReached(limit):
-            "Агент остановлен после \(limit) итераций вызова инструментов."
-        }
-    }
-}
-
-enum AgentLoopEvent: Equatable, Sendable {
-    case assistantResponseStarted
-    case contentDelta(String)
-    case confirmationRequested(ConfirmationRequest)
-    case toolExecutionStarted(toolName: String)
-    case toolCallsCompleted([AgentToolCallExecution])
-    case done
-}
-
-struct AgentToolCallExecution: Equatable, Sendable {
+private struct EvaluatedToolOperation {
+    let tool: any Tool
     let toolCall: ChatToolCall
-    let result: ToolExecutionResult
-    let confirmationDecision: ConfirmationDecision?
-    let confirmationRequestID: UUID?
-
-    init(
-        toolCall: ChatToolCall,
-        result: ToolExecutionResult,
-        confirmationDecision: ConfirmationDecision? = nil,
-        confirmationRequestID: UUID? = nil
-    ) {
-        self.toolCall = toolCall
-        self.result = result
-        self.confirmationDecision = confirmationDecision
-        self.confirmationRequestID = confirmationRequestID
-    }
-}
-
-private struct ToolCallAccumulator {
-    private var id: String?
-    private var type: String?
-    private var functionName = ""
-    private var arguments = ""
-
-    mutating func append(_ delta: ToolCallDelta) {
-        if id == nil {
-            id = delta.id
-        }
-        if type == nil {
-            type = delta.type
-        }
-        if let name = delta.functionName {
-            if functionName.isEmpty {
-                functionName = name
-            } else if name != functionName {
-                functionName += name
-            }
-        }
-        if let argumentsDelta = delta.argumentsDelta {
-            arguments += argumentsDelta
-        }
-    }
-
-    var chatToolCall: ChatToolCall {
-        ChatToolCall(
-            id: id ?? "call_\(UUID().uuidString)",
-            type: type ?? "function",
-            function: ChatToolFunction(
-                name: functionName,
-                arguments: arguments.isEmpty ? "{}" : arguments
-            )
-        )
-    }
+    let arguments: [String: Any]
+    let executionArguments: [String: Any]
+    let invocation: ToolInvocationContext
+    let policy: SecurityPolicyEngine
+    let assessment: RiskAssessment
 }

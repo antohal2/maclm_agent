@@ -53,7 +53,7 @@ struct AuditLogView: View {
                 Picker(String(localized: "Решение"), selection: $filter.decision) {
                     Text(String(localized: "Все")).tag(nil as AuditDecision?)
                     ForEach(AuditDecision.allCases, id: \.self) { decision in
-                        Text(decision.rawValue).tag(Optional(decision))
+                        Text(decision.interfaceLabel).tag(Optional(decision))
                     }
                 }
             }
@@ -72,7 +72,7 @@ struct AuditLogView: View {
                 }
                 TableColumn(String(localized: "Инструмент"), value: \.toolName)
                 TableColumn(String(localized: "Уровень")) { Text(String(describing: $0.riskLevel)) }
-                TableColumn(String(localized: "Решение")) { Text($0.decision.rawValue) }
+                TableColumn(String(localized: "Решение")) { Text($0.decision.interfaceLabel) }
                 TableColumn(String(localized: "Исход")) { Text($0.outcome.rawValue) }
             }
             HStack {

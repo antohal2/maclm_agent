@@ -10,13 +10,16 @@ struct ConfirmationRequest: Identifiable, Equatable, Sendable {
     let toolCall: ChatToolCall
     let riskReason: String?
     let riskLevel: RiskLevel
+    let filePreview: FilePreview?
 
     init(
         id: UUID = UUID(),
         toolCall: ChatToolCall,
         riskLevel: RiskLevel,
-        riskReason: String? = nil
+        riskReason: String? = nil,
+        filePreview: FilePreview? = nil
     ) {
+        self.filePreview = filePreview
         self.id = id
         self.toolCall = toolCall
         self.riskLevel = riskLevel

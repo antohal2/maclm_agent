@@ -6,6 +6,7 @@ struct MacLMAgentApp: App {
     @NSApplicationDelegateAdaptor(SessionApplicationDelegate.self) private var applicationDelegate
     private let sessionNotifications: SessionNotifications
     private let sessionPermissions: SessionPermissions
+    private let checkpointStore: CheckpointStore
     private let modelContainer: ModelContainer
     private let menuBarController: MenuBarController
     private let sceneActions: SceneActions
@@ -27,10 +28,12 @@ struct MacLMAgentApp: App {
                 ClipboardAction.self,
                 SecurityRule.self,
                 AuditEntry.self,
+                Checkpoint.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: testHost)
             )
-            guard let bundleID = Bundle.main.bundleIdentifier,
-                  let storeURL = container.configurations.first?.url else {
+            guard
+                let bundleID = Bundle.main.bundleIdentifier,
+                let storeURL = container.configurations.first?.url else {
                 throw CocoaError(.validationMissingMandatoryProperty)
             }
             try ApplicationProtection.ensure(context: container.mainContext, storeURL: storeURL, bundleID: bundleID)
@@ -41,6 +44,20 @@ struct MacLMAgentApp: App {
             let permissions = SessionPermissions()
             sessionPermissions = permissions
             let appSettings = AppSettings()
+            let checkpointRoot = testHost
+                ? FileManager.default.temporaryDirectory.appendingPathComponent("maclm-test-host-" + UUID().uuidString)
+                : FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent(bundleID).appendingPathComponent("Checkpoints")
+            let checkpointService =
+                CheckpointService(root: URL(fileURLWithPath: PathCanonicalizer.canonicalize(checkpointRoot.path)))
+            let checkpoints = CheckpointStore(service: checkpointService, context: policyContext)
+            checkpointStore = checkpoints
+            if !testHost {
+                Task { do { try await checkpoints.maintain() } catch { NSLog(
+                    "Checkpoint maintenance failed: %@",
+                    error.localizedDescription
+                ) } }
+            }
             let retentionDays = appSettings.auditRetentionDays
             Task {
                 let maintenance = await AuditMaintenance.background(container: container)
@@ -52,7 +69,11 @@ struct MacLMAgentApp: App {
             }
             let viewModel = ChatViewModel(
                 modelContext: policyContext,
-                agentLoop: AgentLoop(sessionPermissions: permissions, riskContext: {
+                agentLoop: AgentLoop(checkpoints: checkpointService, checkpointSink: { value in
+                    try checkpoints.persist(value)
+                }, checkpointMaintenance: {
+                    try await checkpoints.maintain()
+                }, sessionPermissions: permissions, riskContext: {
                     ToolRiskContext(allowedDirectories: appSettings.allowedDirectories)
                 }, auditSink: { record in
                     policyContext.insert(AuditEntry(record))
@@ -127,12 +148,14 @@ struct MacLMAgentApp: App {
             .preferredColorScheme(settings.theme.colorScheme)
         }
         .modelContainer(modelContainer)
+        .environment(\.checkpointStore, checkpointStore)
 
         Window("Журнал аудита", id: "audit") {
             AuditLogView()
                 .preferredColorScheme(settings.theme.colorScheme)
         }
         .modelContainer(modelContainer)
+        .environment(\.checkpointStore, checkpointStore)
         .commands { AuditCommands() }
 
         Settings {
@@ -145,6 +168,7 @@ struct MacLMAgentApp: App {
                 accessibilityPermissionService: accessibilityPermissionService
             )
             .modelContainer(modelContainer)
+            .environment(\.checkpointStore, checkpointStore)
             .preferredColorScheme(settings.theme.colorScheme)
         }
     }

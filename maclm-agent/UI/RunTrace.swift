@@ -58,8 +58,9 @@ enum RunTraceGrouping {
             if index == turns.count - 1, active, let last = turns[index].steps.last, last.toolCalls.isEmpty {
                 turns[index].liveResponse = turns[index].steps.removeLast()
             }
-            if !unfinished, let last = turns[index].steps.last, last.toolCalls.isEmpty,
-               !last.content.hasPrefix("Ошибка:") || turns[index].end?.failed == false {
+            if
+                !unfinished, let last = turns[index].steps.last, last.toolCalls.isEmpty,
+                !last.content.hasPrefix("Ошибка:") || turns[index].end?.failed == false {
                 turns[index].final = turns[index].steps.removeLast()
             }
         }
@@ -74,20 +75,22 @@ struct TraceIncidents: Equatable {
     var errors = 0
 
     static func count(calls: [ToolCall], audits: [AuditEntry]) -> Self {
-        // Audit ids are independent of provider/confirmation ids. Match in execution
-        // order using sanitized arguments, consuming each record at most once.
+        // Prefer stable ToolCall ids; retain the legacy heuristic for old audit entries.
         var remaining = audits.sorted { $0.timestamp < $1.timestamp }
         var result = Self()
         for call in calls.sorted(by: { $0.timestamp < $1.timestamp }) {
             let arguments = AuditSanitizer.arguments(call.argumentsJSON, toolName: call.toolName)
-            let index = remaining.firstIndex { $0.toolName == call.toolName && $0.argumentsJSON == arguments
-                && $0.timestamp >= (call.message?.timestamp ?? .distantPast)
-            }
+            let exact = remaining.firstIndex { $0.toolCallID == call.id }
+            let index = exact ?? remaining
+                .firstIndex { $0.toolCallID == nil && $0.toolName == call.toolName && $0.argumentsJSON == arguments
+                    && $0.timestamp >= (call.message?.timestamp ?? .distantPast)
+                }
             let audit = index.map { remaining.remove(at: $0) }
             if audit?.decision == .blocked {
                 result.blocked += 1
-            } else if audit?
-                .decision == .rejected || (call.status == .rejected && call.resultJSON != "Cancelled by user") {
+            } else if
+                audit?
+                    .decision == .rejected || (call.status == .rejected && call.resultJSON != "Cancelled by user") {
                 result.rejected += 1
             }
             if audit?.decision == .approved, audit?.riskLevel == .dangerous {

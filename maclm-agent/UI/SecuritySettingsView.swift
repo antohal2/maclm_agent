@@ -15,6 +15,7 @@ struct SecuritySettingsView: View {
 
     var body: some View {
         Form {
+            CheckpointSettingsView()
             Section { SecurityRulesSettingsView() }
             Section(String(localized: "Разрешённые директории · allowed_dirs")) {
                 Text(String(localized: """
