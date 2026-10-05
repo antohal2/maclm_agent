@@ -48,11 +48,22 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack(spacing: 14) {
                     if visibleMessages.isEmpty {
-                        ContentUnavailableView(
-                            "Локальный ассистент",
-                            systemImage: "brain",
-                            description: Text(emptyStateDescription)
-                        )
+                        VStack(spacing: 14) {
+                            Image(systemName: "brain").font(.largeTitle)
+                            Text("Локальный ассистент").font(.title2)
+                            Text(emptyStateDescription)
+                                .font(.caption).foregroundStyle(.secondary)
+                                .lineLimit(1).truncationMode(.middle)
+                            ForEach([
+                                "Найди самые большие файлы в папке Загрузки",
+                                "Прочитай файл и кратко перескажи его содержание",
+                                "Что ты умеешь делать с файлами?"
+                            ], id: \.self) { suggestion in
+                                Button(suggestion) { viewModel.input = suggestion }
+                                    .buttonStyle(.plain)
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
                         .frame(maxWidth: .infinity, minHeight: style.emptyStateHeight)
                     } else {
                         ForEach(visibleMessages) { message in
@@ -68,6 +79,8 @@ struct ChatView: View {
                     }
                 }
                 .padding()
+                .frame(maxWidth: 760)
+                .frame(maxWidth: .infinity)
             }
             .onChange(of: visibleMessages.last?.content) {
                 guard let messageID = visibleMessages.last?.id else {
@@ -83,33 +96,17 @@ struct ChatView: View {
     }
 
     private var composer: some View {
-        HStack(alignment: .bottom, spacing: 10) {
-            TextField(
-                "Сообщение для локальной модели",
-                text: $viewModel.input,
-                axis: .vertical
-            )
-            .textFieldStyle(.roundedBorder)
-            .lineLimit(1 ... 6)
-            .onSubmit(viewModel.send)
-
-            Button(action: viewModel.send) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title2)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(viewModel.canSend ? Color.accentColor : Color.secondary)
-            .disabled(!viewModel.canSend)
-            .accessibilityLabel("Отправить")
-        }
-        .padding()
+        ComposerView(viewModel: viewModel)
+            .padding()
+            .frame(maxWidth: 760)
+            .frame(maxWidth: .infinity)
     }
 
     private var emptyStateDescription: String {
-        if viewModel.providerCoordinator.hasActiveProvider {
-            "Активен \(viewModel.providerCoordinator.activeProviderTitle). Отправьте сообщение."
+        if let selection = viewModel.providerCoordinator.selection {
+            "\(selection.provider.displayName) · \(ComposerRules.shortModelName(selection.model))"
         } else {
-            "Запустите LM Studio или Ollama и выберите модель в меню провайдера."
+            "Провайдер недоступен — запустите LM Studio или Ollama."
         }
     }
 

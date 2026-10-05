@@ -7,7 +7,6 @@ struct MainWindowView: View {
 
     @Bindable var viewModel: ChatViewModel
     let sceneActions: SceneActions
-    @State private var isShowingProviderSettings = false
 
     var body: some View {
         NavigationSplitView {
@@ -24,22 +23,6 @@ struct MainWindowView: View {
             sceneActions.openSettingsAction = {
                 openSettings()
                 NSApp.activate(ignoringOtherApps: true)
-            }
-        }
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    isShowingProviderSettings.toggle()
-                } label: {
-                    Label(
-                        viewModel.providerCoordinator.activeProviderTitle,
-                        systemImage: "server.rack"
-                    )
-                }
-                .help("Выбрать LLM-провайдер")
-                .popover(isPresented: $isShowingProviderSettings) {
-                    ProviderSettingsView(coordinator: viewModel.providerCoordinator)
-                }
             }
         }
     }

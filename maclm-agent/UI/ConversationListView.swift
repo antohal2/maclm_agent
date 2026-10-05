@@ -26,6 +26,7 @@ struct ConversationListView: View {
                 .tag(conversation.id)
             }
         }
+        .listStyle(.sidebar)
         .navigationTitle("Беседы")
         .toolbar {
             Button(action: createConversation) {

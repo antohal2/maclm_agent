@@ -309,6 +309,7 @@ actor AgentLoop {
         let decision = try await confirmationCoordinator.waitForDecision(
             requestID: request.id
         )
+        try Task.checkCancellation()
         guard decision == .approved else {
             return ToolConfirmation(
                 decision: decision,

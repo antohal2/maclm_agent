@@ -26,16 +26,19 @@ final class ChatViewModel {
 
     private let modelContext: ModelContext
     private let agentLoop: AgentLoop
+    private let providerFactory: (() throws -> any LLMProvider)?
     private var generationTask: Task<Void, Never>?
 
     init(
         modelContext: ModelContext,
         providerCoordinator: ProviderCoordinator = ProviderCoordinator(),
-        agentLoop: AgentLoop = AgentLoop()
+        agentLoop: AgentLoop = AgentLoop(),
+        providerFactory: (() throws -> any LLMProvider)? = nil
     ) {
         self.modelContext = modelContext
         self.providerCoordinator = providerCoordinator
         self.agentLoop = agentLoop
+        self.providerFactory = providerFactory
         restoreSelection()
     }
 
@@ -85,9 +88,9 @@ final class ChatViewModel {
     }
 
     func send() {
-        let content = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let content = input
         guard
-            !content.isEmpty,
+            ComposerRules.canSubmit(content),
             !isGenerating,
             let conversation = selectedConversation
         else {
@@ -101,7 +104,7 @@ final class ChatViewModel {
         let generation = persistPrompt(content, in: conversation)
         generatingMessageID = generation.assistantID
         do {
-            let provider = try providerCoordinator.makeProvider()
+            let provider = try providerFactory?() ?? providerCoordinator.makeProvider()
             startGeneration(
                 requestMessages: generation.requestMessages,
                 assistantID: generation.assistantID,
@@ -110,6 +113,16 @@ final class ChatViewModel {
         } catch {
             show(error: error, in: generation.assistantID)
             finishGeneration()
+        }
+    }
+
+    func stopGeneration() {
+        guard isGenerating else { return }
+        generationTask?.cancel()
+        // Resolve visible requests as Reject as well as cancelling their waiter.
+        let calls = generatingMessageID.flatMap { persistentMessage(id: $0) }?.toolCalls ?? []
+        for call in calls where call.status == .pending {
+            resolveConfirmation(toolCallID: call.id, decision: .rejected)
         }
     }
 
@@ -190,10 +203,17 @@ final class ChatViewModel {
                 ) { [weak self] event in
                     await self?.consume(event, assistantID: assistantID)
                 }
+                try Task.checkCancellation()
             } catch is CancellationError {
-                self?.removeEmptyMessage(id: assistantID)
+                self?.completeCancelledCalls()
+                self?.removeEmptyMessage(id: self?.generatingMessageID ?? assistantID)
             } catch {
-                self?.show(error: error, in: assistantID)
+                if Task.isCancelled {
+                    self?.completeCancelledCalls()
+                    self?.removeEmptyMessage(id: self?.generatingMessageID ?? assistantID)
+                } else {
+                    self?.show(error: error, in: assistantID)
+                }
             }
 
             self?.finishGeneration()
@@ -219,6 +239,7 @@ final class ChatViewModel {
             isWaitingForFirstToken = false
             persist(executions, assistantID: generatingMessageID ?? assistantID)
         case .done:
+            guard !Task.isCancelled else { return }
             isWaitingForFirstToken = false
             updateMessage(id: generatingMessageID ?? assistantID) { message in
                 if message.content.isEmpty {
@@ -368,8 +389,24 @@ private extension ChatViewModel {
         saveContext()
     }
 
+    private func completeCancelledCalls() {
+        guard let id = generatingMessageID, let message = persistentMessage(id: id) else { return }
+        for call in message.toolCalls where call.resultJSON == nil {
+            call.resultJSON = "Cancelled by user"
+            call.status = .rejected
+            if let conversation = message.conversation {
+                modelContext.insert(Message(role: .tool, content: "Cancelled by user",
+                    toolCallID: call.providerCallID, timestamp: Date(), conversation: conversation))
+            }
+        }
+        if selectedConversationID == message.conversation?.id {
+            messages = message.conversation?.orderedMessages ?? []
+        }
+        saveContext()
+    }
+
     private func removeEmptyMessage(id: UUID) {
-        guard let message = persistentMessage(id: id), message.content.isEmpty else {
+        guard let message = persistentMessage(id: id), message.content.isEmpty, message.toolCalls.isEmpty else {
             return
         }
 
