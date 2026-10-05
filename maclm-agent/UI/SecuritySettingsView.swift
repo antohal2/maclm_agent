@@ -14,6 +14,7 @@ struct SecuritySettingsView: View {
 
     var body: some View {
         Form {
+            Section { SecurityRulesSettingsView() }
             Section("Разрешённые директории · allowed_dirs") {
                 Text("Запись и перемещение внутри этих папок получают уровень caution: разрешение можно запомнить на сессию. Вне них — dangerous с подтверждением каждого вызова.")
                     .font(.callout)
