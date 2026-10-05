@@ -91,3 +91,56 @@ extension ChatViewModel {
         restoreSelection()
     }
 }
+
+extension ChatViewModel {
+    var canRetryMessage: Bool {
+        !isGenerating && !messages.flatMap(\.toolCalls).contains { $0.status == .pending || $0.status == .approved }
+    }
+
+    func retryMessage(_ message: Message) {
+        guard canRetryMessage, let conversation = selectedConversation,
+              message.conversation?.id == conversation.id else { return }
+        registry.runner(for: conversation).retry(after: message)
+    }
+
+    @discardableResult
+    func fork(at response: Message) -> Conversation? {
+        guard let source = selectedConversation,
+              let index = messages.firstIndex(where: { $0.id == response.id }),
+              response.role == .assistant, response.toolCalls.isEmpty,
+              RunTraceGrouping.group(messages, active: isGenerating, endings: currentRunner?.traceEndings ?? [:])
+              .contains(where: { $0.final?.id == response.id })
+        else { return nil }
+        let branch = Conversation(title: source.title + String(localized: " — ветка"))
+        branch.project = source.project
+        branch.titleIsManual = true
+        modelContext.insert(branch)
+        for original in messages.prefix(index + 1) {
+            let copy = Message(
+                role: original.role,
+                content: original.content,
+                toolCallID: original.toolCallID,
+                timestamp: original.timestamp,
+                conversation: branch
+            )
+            modelContext.insert(copy)
+            for call in original.toolCalls {
+                let cloned = ToolCall(
+                    providerCallID: call.providerCallID,
+                    toolName: call.toolName,
+                    argumentsJSON: call.argumentsJSON,
+                    resultJSON: call.resultJSON,
+                    status: call.status,
+                    timestamp: call.timestamp,
+                    message: copy
+                )
+                cloned.confirmationRiskRawValue = call.confirmationRiskRawValue
+                cloned.confirmationRiskReason = call.confirmationRiskReason
+                modelContext.insert(cloned)
+            }
+        }
+        saveContext()
+        selectConversation(branch)
+        return branch
+    }
+}

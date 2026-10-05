@@ -6,6 +6,7 @@ import SwiftData
 @Observable
 final class ChatViewModel {
     var input = ""
+    var expandedTraceIDs: Set<UUID> = []
     private(set) var selectedConversation: Conversation?
     var messages: [Message] {
         selectedConversation?.orderedMessages ?? []

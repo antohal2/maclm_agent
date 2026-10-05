@@ -14,6 +14,9 @@ final class SessionRunner {
         conversation.orderedMessages
     }
 
+    private(set) var traceEndings: [UUID: TraceRunEnd] = [:]
+    private(set) var lastRunCancelled = false
+    private(set) var lastRunEndedAt: Date?
     private(set) var isGenerating = false
     private(set) var isWaitingForFirstToken = false
     private(set) var generatingMessageID: UUID?
@@ -49,6 +52,8 @@ final class SessionRunner {
         guard canStart(), ComposerRules.canSubmit(content), !isGenerating else { return }
         autoTitles.cancelTitle(for: conversation)
         isGenerating = true
+        lastRunCancelled = false
+        lastRunEndedAt = nil
         status = .running
         isWaitingForFirstToken = true
         let generation = persistPrompt(content, in: conversation)
@@ -63,6 +68,39 @@ final class SessionRunner {
         } catch {
             show(error: error, in: generation.assistantID)
             autoTitles.applyFallbackTitle(conversation)
+            finishGeneration(cancelled: false)
+        }
+    }
+
+    func retry(after user: Message) {
+        guard !isGenerating, canStart(), user.role == .user,
+              !messages.flatMap(\.toolCalls).contains(where: { $0.status == .pending || $0.status == .approved }),
+              let index = messages.firstIndex(where: { $0.id == user.id }) else { return }
+        autoTitles.cancelTitle(for: conversation)
+        let history = Array(messages.prefix(index + 1))
+        traceEndings = traceEndings.filter { key, _ in history.contains { $0.id == key } }
+        traceEndings.removeValue(forKey: user.id)
+        for message in messages.dropFirst(index + 1) {
+            modelContext.delete(message)
+        }
+        let assistant = Message(role: .assistant, content: "", timestamp: Date(), conversation: conversation)
+        modelContext.insert(assistant)
+        conversation.updatedAt = assistant.timestamp
+        isGenerating = true
+        lastRunCancelled = false
+        lastRunEndedAt = nil
+        status = .running
+        isWaitingForFirstToken = true
+        generatingMessageID = assistant.id
+        saveContext()
+        do {
+            try startGeneration(
+                requestMessages: history.map(\.chatMessage),
+                assistantID: assistant.id,
+                provider: providerFactory()
+            )
+        } catch {
+            show(error: error, in: assistant.id)
             finishGeneration(cancelled: false)
         }
     }
@@ -210,6 +248,7 @@ final class SessionRunner {
             guard !Task.isCancelled else { return }
             isWaitingForFirstToken = false
             updateMessage(id: generatingMessageID ?? assistantID) { message in
+                message.timestamp = Date()
                 if message.content.isEmpty {
                     message.content = "LLM-сервер завершил ответ без текста."
                 }
@@ -221,6 +260,9 @@ final class SessionRunner {
         status = .failed(message: error.localizedDescription)
         isWaitingForFirstToken = false
         updateMessage(id: generatingMessageID ?? assistantID) { message in
+            if message.toolCalls.isEmpty {
+                message.timestamp = Date()
+            }
             message.content = "Ошибка: \(error.localizedDescription)"
         }
     }
@@ -280,6 +322,7 @@ extension SessionRunner {
                 assistantMessage.toolCalls.append(toolCall)
             }
 
+            snapshotRisk(for: toolCall, conversation: conversation)
             toolCall.resultJSON = execution.result.displayContent ?? execution.result.content
             if execution.confirmationDecision == .rejected {
                 toolCall.status = .rejected
@@ -300,6 +343,22 @@ extension SessionRunner {
 
         conversation.updatedAt = timestamp
         saveContext()
+    }
+
+    private func snapshotRisk(for toolCall: ToolCall, conversation: Conversation) {
+        if toolCall.confirmationRiskRawValue == nil {
+            let id = conversation.id
+            let name = toolCall.toolName
+            let arguments = AuditSanitizer.arguments(toolCall.argumentsJSON, toolName: name)
+            let records = (try? modelContext.fetch(FetchDescriptor<AuditEntry>(
+                predicate: #Predicate { $0.conversationID == id && $0.toolName == name },
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            ))) ?? []
+            if let record = records.first(where: { $0.argumentsJSON == arguments }) {
+                toolCall.confirmationRiskRawValue = record.riskRaw
+                toolCall.confirmationRiskReason = record.elevationReason
+            }
+        }
     }
 
     private func confirmedToolCall(
@@ -383,6 +442,16 @@ extension SessionRunner {
     }
 
     private func finishGeneration(cancelled: Bool) {
+        lastRunCancelled = cancelled
+        lastRunEndedAt = Date()
+        if let user = messages.last(where: { $0.role == .user }) {
+            let failed = if case .failed = status {
+                true
+            } else {
+                false
+            }
+            traceEndings[user.id] = TraceRunEnd(timestamp: Date(), cancelled: cancelled, failed: failed)
+        }
         generationToken = nil
         isGenerating = false
         isWaitingForFirstToken = false

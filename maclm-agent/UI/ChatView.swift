@@ -1,3 +1,5 @@
+import AppKit
+import SwiftData
 import SwiftUI
 
 enum ChatViewStyle {
@@ -26,6 +28,9 @@ enum ChatViewStyle {
 struct ChatView: View {
     @Bindable var viewModel: ChatViewModel
     var style: ChatViewStyle = .mainWindow
+    @Environment(\.openWindow) private var openWindow
+    @State private var turns: [TraceTurn] = []
+    @State private var retryTarget: Message?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,6 +43,29 @@ struct ChatView: View {
             composer
         }
         .navigationTitle(viewModel.selectedConversation?.interfaceTitle ?? "maclm-agent")
+        .onChange(of: traceSignature, initial: true) { rebuildTrace() }
+        .alert(String(localized: "Повторить"), isPresented: Binding(
+            get: { retryTarget != nil }, set: {
+                if !$0 {
+                    retryTarget = nil
+                }
+            }
+        )) {
+            Button(String(localized: "Повторить"), role: .destructive) {
+                if let target = retryTarget {
+                    viewModel.retryMessage(target)
+                }
+                retryTarget = nil
+            }
+            Button(String(localized: "Отмена"), role: .cancel) { retryTarget = nil }
+        } message: {
+            Text(
+                String(
+                    // swiftlint:disable:next line_length
+                    localized: "Ответы после этого сообщения будут удалены. Уже выполненные действия с файлами не отменяются"
+                )
+            )
+        }
         .task {
             await viewModel.discoverProvidersIfNeeded()
         }
@@ -66,15 +94,15 @@ struct ChatView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: style.emptyStateHeight)
                     } else {
-                        ForEach(visibleMessages) { message in
-                            MessageBubble(
-                                message: message,
-                                isWaiting: viewModel.isWaitingForFirstToken
-                                    && message.id == viewModel.generatingMessageID,
-                                horizontalInset: style.bubbleInset,
-                                onConfirmationDecision: viewModel.resolveConfirmation
-                            )
-                            .id(message.id)
+                        ForEach(turns) { turn in
+                            bubble(turn.user, final: false)
+                            RunTraceView(turn: turn, viewModel: viewModel)
+                            if let final = turn.final {
+                                bubble(final, final: true)
+                            }
+                            if let live = turn.liveResponse {
+                                bubble(live, final: false)
+                            }
                         }
                     }
                 }
@@ -93,6 +121,50 @@ struct ChatView: View {
 
     private var visibleMessages: [Message] {
         viewModel.messages.filter { $0.role != .tool }
+    }
+
+    private var traceSignature: TraceRevision {
+        TraceRevision(
+            conversationID: viewModel.selectedConversationID,
+            active: viewModel.isGenerating,
+            cancelled: viewModel.currentRunner?.lastRunCancelled ?? false,
+            status: String(describing: viewModel.currentRunner?.status),
+            messages: viewModel.messages.map(TraceMessageRevision.init)
+        )
+    }
+
+    private func rebuildTrace() {
+        let failed = if case .failed = viewModel.currentRunner?.status {
+            true
+        } else {
+            false
+        }
+        turns = RunTraceGrouping.group(
+            viewModel.messages,
+            active: viewModel.isGenerating,
+            failed: failed,
+            cancelled: viewModel.currentRunner?.lastRunCancelled ?? false,
+            endings: viewModel.currentRunner?.traceEndings ?? [:]
+        )
+    }
+
+    private func bubble(_ message: Message, final: Bool) -> some View {
+        MessageActionBubble(
+            message: message,
+            isWaiting: viewModel.isWaitingForFirstToken
+                && message.id == viewModel.generatingMessageID,
+            horizontalInset: style.bubbleInset,
+            isFinal: final,
+            canRetry: viewModel.canRetryMessage,
+            retry: { retryTarget = message },
+            fork: {
+                if viewModel.fork(at: message) != nil {
+                    openWindow(id: "main")
+                }
+            },
+            onConfirmationDecision: viewModel.resolveConfirmation
+        )
+        .id(message.id)
     }
 
     private var composer: some View {
@@ -124,7 +196,49 @@ struct ChatView: View {
     }
 }
 
-private struct MessageBubble: View {
+private struct MessageActionBubble: View {
+    let message: Message
+    let isWaiting: Bool
+    let horizontalInset: CGFloat
+    let isFinal: Bool
+    let canRetry: Bool
+    let retry: () -> Void
+    let fork: () -> Void
+    let onConfirmationDecision: (UUID, ConfirmationDecision, Bool) -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            MessageBubble(
+                message: message,
+                isWaiting: isWaiting,
+                horizontalInset: horizontalInset,
+                onConfirmationDecision: onConfirmationDecision
+            )
+            HStack { actions }
+                .buttonStyle(.borderless).font(.caption)
+                .opacity(hovering ? 1 : 0)
+                .accessibilityHidden(!hovering)
+        }
+        .onHover { hovering = $0 }
+        .contextMenu { actions }
+    }
+
+    @ViewBuilder private var actions: some View {
+        Button(String(localized: "Копировать")) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(message.content, forType: .string)
+        }
+        if message.role == .user {
+            Button(String(localized: "Повторить"), action: retry).disabled(!canRetry)
+        }
+        if isFinal {
+            Button(String(localized: "Ветка"), action: fork)
+        }
+    }
+}
+
+struct MessageBubble: View {
     let message: Message
     let isWaiting: Bool
     let horizontalInset: CGFloat

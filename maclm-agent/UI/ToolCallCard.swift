@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ToolCallCard: View {
     let toolCall: ToolCall
+    var rawResult: String?
 
     @State private var isArgumentsExpanded = false
     @State private var isResultExpanded = false
@@ -17,17 +18,44 @@ struct ToolCallCard: View {
                 statusLabel
             }
 
-            DisclosureGroup(String(localized: "Аргументы"), isExpanded: $isArgumentsExpanded) {
+            let risk = toolCall.confirmationRiskLevel
+            Group {
+                Label(
+                    risk == .dangerous ? String(localized: "Опасно · dangerous")
+                        : risk == .caution ? String(localized: "Осторожно · caution") :
+                        String(localized: "Безопасно · safe"),
+                    systemImage: risk == .dangerous ? "exclamationmark.shield.fill"
+                        : risk == .caution ? "exclamationmark.triangle.fill" : "checkmark.shield"
+                )
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(risk == .dangerous ? Color.red : risk == .caution ? Color.orange : Color.green)
+            }
+            if risk == .dangerous {
                 payloadText(prettyJSON(toolCall.argumentsJSON))
+            } else {
+                DisclosureGroup(String(localized: "Аргументы"), isExpanded: $isArgumentsExpanded) {
+                    payloadText(prettyJSON(toolCall.argumentsJSON))
+                }
             }
 
-            DisclosureGroup(String(localized: "Результат"), isExpanded: $isResultExpanded) {
-                payloadText(toolCall.resultJSON ?? String(localized: "Ожидание результата…"))
-            }
-            .onChange(of: toolCall.status, initial: true) { _, status in
-                if status == .failed {
-                    isResultExpanded = true
+            let result = rawResult ?? toolCall.resultJSON ?? String(localized: "Ожидание результата…")
+            if toolCall.toolName == "run_shell", let data = result.data(using: .utf8),
+               let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                Text(
+                    "exitCode: \(output["exitCode"] as? Int ?? -1) · timedOut: \(output["timedOut"] as? Bool ?? false)"
+                )
+                .font(.caption.monospaced())
+                if let note = output["lifecycleNote"] as? String {
+                    payloadText(note)
                 }
+            }
+            let output = resultText(result)
+            let lines = output.components(separatedBy: "\n")
+            payloadText(isResultExpanded ? output : lines.prefix(20).joined(separator: "\n"))
+            if lines.count > 20 {
+                Button(isResultExpanded ? String(localized: "Свернуть") : String(localized: "Показать всё")) {
+                    isResultExpanded.toggle()
+                }.font(.caption)
             }
         }
         .padding(10)
@@ -36,6 +64,13 @@ struct ToolCallCard: View {
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(.separator.opacity(0.45))
         }
+    }
+
+    private func resultText(_ raw: String) -> String {
+        guard toolCall.toolName == "run_shell", let data = raw.data(using: .utf8),
+              let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return raw }
+        return "stdout:\n" + (output["stdout"] as? String ?? "")
+            + "\nstderr:\n" + (output["stderr"] as? String ?? "")
     }
 
     private var statusLabel: some View {
