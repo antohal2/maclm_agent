@@ -7,6 +7,7 @@ actor AgentLoop {
     private var pendingConfirmations: [UUID: ConfirmationRequest] = [:]
     private let riskContext: @MainActor @Sendable () -> ToolRiskContext
     private let securityRules: @MainActor @Sendable () throws -> [SecurityRuleSnapshot]
+    private let auditSink: @MainActor @Sendable (AuditRecord) throws -> Void
     private let maximumIterations: Int
     private var isGenerating = false
 
@@ -18,10 +19,12 @@ actor AgentLoop {
         riskContext: @escaping @MainActor @Sendable () -> ToolRiskContext = {
             ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
         },
+        auditSink: @escaping @MainActor @Sendable (AuditRecord) throws -> Void = { _ in },
         securityRules: @escaping @MainActor @Sendable () throws -> [SecurityRuleSnapshot] = {
             DefaultSecurityRules.rules
         }
     ) {
+        self.auditSink = auditSink
         self.sessionPermissions = sessionPermissions
         self.riskContext = riskContext
         self.securityRules = securityRules
@@ -36,7 +39,8 @@ actor AgentLoop {
         rememberForSession: Bool = false
     ) async {
         if decision == .approved, rememberForSession,
-           let request = pendingConfirmations[requestID] {
+           let request = pendingConfirmations[requestID]
+        {
             await sessionPermissions.remember(
                 toolName: request.toolCall.function.name, riskLevel: request.riskLevel
             )
@@ -50,6 +54,7 @@ actor AgentLoop {
     func streamResponse(
         to messages: [ChatMessage],
         using provider: any LLMProvider,
+        conversationID: UUID? = nil,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
         guard !isGenerating else {
@@ -85,12 +90,22 @@ actor AgentLoop {
             )
 
             var executions: [AgentToolCallExecution] = []
-            for toolCall in turn.toolCalls {
-                try Task.checkCancellation()
-                let execution = try await execute(
-                    toolCall,
-                    onEvent: onEvent
-                )
+            for (index, toolCall) in turn.toolCalls.enumerated() {
+                let execution: AgentToolCallExecution
+                do {
+                    execution = try await execute(toolCall, conversationID: conversationID, onEvent: onEvent)
+                } catch is CancellationError {
+                    // The model may request several calls in one turn. Record the remaining
+                    // calls too; cancellation prevents them from reaching any tool.
+                    for pending in turn.toolCalls.dropFirst(index + 1) {
+                        do {
+                            _ = try await execute(pending, conversationID: conversationID, onEvent: onEvent)
+                        } catch is CancellationError {
+                            continue
+                        }
+                    }
+                    throw CancellationError()
+                }
                 executions.append(execution)
                 history.append(
                     ChatMessage(
@@ -143,9 +158,39 @@ actor AgentLoop {
 
     private func execute(
         _ toolCall: ChatToolCall,
+        conversationID: UUID?,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AgentToolCallExecution {
+        var audit = AuditRecord(
+            toolName: toolCall.function.name,
+            argumentsJSON: AuditSanitizer.arguments(toolCall.function.arguments, toolName: toolCall.function.name),
+            conversationID: conversationID
+        )
+        let execution: Result<AgentToolCallExecution, Error>
+        do {
+            execution = try await .success(executeAudited(toolCall, audit: &audit, onEvent: onEvent))
+        } catch {
+            if error is CancellationError {
+                audit.outcome = .cancelled
+                audit.errorDescription = "Cancelled by user"
+            } else {
+                audit.outcome = .failure
+                audit.errorDescription = AuditSanitizer.truncate(error.localizedDescription)
+            }
+            execution = .failure(error)
+        }
+        try await auditSink(audit)
+        return try execution.get()
+    }
+
+    private func executeAudited(
+        _ toolCall: ChatToolCall,
+        audit: inout AuditRecord,
+        onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
+    ) async throws -> AgentToolCallExecution {
+        audit.outcome = .failure
         guard let tool = toolRegistry.tool(named: toolCall.function.name) else {
+            audit.errorDescription = "Unknown tool: \(toolCall.function.name)"
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure("Unknown tool: \(toolCall.function.name)")
@@ -156,6 +201,7 @@ actor AgentLoop {
             let object = try? JSONSerialization.jsonObject(with: data),
             let arguments = object as? [String: Any]
         else {
+            audit.errorDescription = "Invalid JSON arguments"
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure(
@@ -164,37 +210,61 @@ actor AgentLoop {
             )
         }
 
+        let context = await riskContext()
+        var assessment = ToolRiskEvaluator.evaluate(tool, arguments: arguments, context: context)
+        audit.riskLevel = assessment.level
+        audit.elevationReason = assessment.reason
         let policy: SecurityPolicyEngine
         do {
             policy = try await SecurityPolicyEngine(rules: securityRules())
         } catch {
+            audit.errorDescription = "Unable to load security rules: \(error.localizedDescription)"
             // A failed store read must never silently disable policy enforcement.
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure("Unable to load security rules: \(error.localizedDescription)")
             )
         }
+        let executionArguments = policy.executionArguments(for: tool, arguments: arguments)
+        assessment = ToolRiskEvaluator.evaluate(tool, arguments: executionArguments, context: context)
+        audit.riskLevel = assessment.level
+        audit.elevationReason = assessment.reason
+        try Task.checkCancellation()
         let policyDecision = policy.decision(for: tool, arguments: arguments)
+        audit.matchedRuleDescription = policyDecision.explanation.map { AuditSanitizer.truncate($0) }
         guard policyDecision.isAllowed else {
+            audit.decision = .blocked
+            audit.outcome = .notExecuted
+            audit.resultSummary = AuditSanitizer.truncate(policyDecision.explanation ?? "Blocked")
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure(policyDecision.explanation ?? "Вызов запрещён правилом безопасности.")
             )
         }
-        let executionArguments = policy.executionArguments(for: tool, arguments: arguments)
-        let context = await riskContext()
-        let assessment = ToolRiskEvaluator.evaluate(tool, arguments: executionArguments, context: context)
         let confirmation = try await confirmIfNeeded(
             toolCall: toolCall,
             assessment: assessment,
             onEvent: onEvent
         )
+        audit.decision = confirmation
+            .requestID == nil ? .auto : (confirmation.decision == .approved ? .approved : .rejected)
         if let rejection = confirmation.rejection {
+            audit.outcome = .notExecuted
+            audit.resultSummary = "User rejected execution"
             return rejection
         }
 
+        let started = ContinuousClock.now
+        defer {
+            let elapsed = started.duration(to: .now).components
+            audit.durationMilliseconds = Int(elapsed.seconds * 1000 + elapsed.attoseconds / 1_000_000_000_000_000)
+        }
         do {
             let result = try await tool.execute(arguments: executionArguments, policy: policy)
+            audit.outcome = result.isError ? .failure : .success
+            let summary = AuditSanitizer.summary(result, toolName: tool.name, arguments: executionArguments)
+            audit.resultSummary = summary.0
+            audit.errorDescription = summary.1
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: result,
@@ -204,6 +274,8 @@ actor AgentLoop {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
+            audit.outcome = .failure
+            audit.errorDescription = AuditSanitizer.truncate(error.localizedDescription)
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure("Tool \(tool.name) failed: \(error.localizedDescription)"),

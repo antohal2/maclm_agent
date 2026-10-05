@@ -2,6 +2,17 @@
 
 All notable changes to `maclm-agent` are documented in this file.
 
+## [v0.3.3] - 2026-10-05
+
+### Added
+
+- Local SwiftData audit entries for every AgentLoop tool call, including policy
+  blocks, user rejections, automatic approvals, failures and cancellation.
+- Paged audit viewer with date/tool/risk/decision filters, argument search,
+  details, and filtered streaming JSONL export.
+- Configurable audit retention (90 days by default) and confirmed journal clearing.
+- Bounded argument/result storage; read_file contents excluded from audit results.
+
 ## [v0.2.4] - 2026-08-22
 
 ### Added

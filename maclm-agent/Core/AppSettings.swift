@@ -46,6 +46,10 @@ final class AppSettings {
             "clipboardActions.automaticallyPasteResults"
     }
 
+    var auditRetentionDays: Int {
+        didSet { defaults.set(auditRetentionDays, forKey: "security.auditRetentionDays") }
+    }
+
     var allowedDirectories: [String] {
         didSet { defaults.set(allowedDirectories, forKey: Key.allowedDirectories) }
     }
@@ -113,6 +117,7 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        auditRetentionDays = defaults.object(forKey: "security.auditRetentionDays") as? Int ?? 90
         allowedDirectories = defaults.stringArray(forKey: Key.allowedDirectories) ?? []
         theme = defaults
             .string(forKey: Key.theme)

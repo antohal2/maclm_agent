@@ -180,11 +180,13 @@ final class ChatViewModel {
         assistantID: UUID,
         provider: any LLMProvider
     ) {
+        let conversationID = selectedConversationID
         generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
                 try await agentLoop.streamResponse(
                     to: requestMessages,
-                    using: provider
+                    using: provider,
+                    conversationID: conversationID
                 ) { [weak self] event in
                     await self?.consume(event, assistantID: assistantID)
                 }

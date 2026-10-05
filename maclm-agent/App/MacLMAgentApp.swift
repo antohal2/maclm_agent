@@ -20,7 +20,8 @@ struct MacLMAgentApp: App {
                 Message.self,
                 ToolCall.self,
                 ClipboardAction.self,
-                SecurityRule.self
+                SecurityRule.self,
+                AuditEntry.self
             )
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
@@ -29,10 +30,22 @@ struct MacLMAgentApp: App {
             let permissions = SessionPermissions()
             sessionPermissions = permissions
             let appSettings = AppSettings()
+            let retentionDays = appSettings.auditRetentionDays
+            Task {
+                let maintenance = await AuditMaintenance.background(container: container)
+                do {
+                    try await maintenance.prune(days: retentionDays)
+                } catch {
+                    NSLog("Audit retention failed: %@", error.localizedDescription)
+                }
+            }
             let viewModel = ChatViewModel(
                 modelContext: policyContext,
                 agentLoop: AgentLoop(sessionPermissions: permissions, riskContext: {
                     ToolRiskContext(allowedDirectories: appSettings.allowedDirectories)
+                }, auditSink: { record in
+                    policyContext.insert(AuditEntry(record))
+                    try policyContext.save()
                 }, securityRules: {
                     try SecurityRuleSeeder.snapshots(context: policyContext)
                 })
@@ -84,6 +97,13 @@ struct MacLMAgentApp: App {
             .preferredColorScheme(settings.theme.colorScheme)
         }
         .modelContainer(modelContainer)
+
+        Window("Журнал аудита", id: "audit") {
+            AuditLogView()
+                .preferredColorScheme(settings.theme.colorScheme)
+        }
+        .modelContainer(modelContainer)
+        .commands { AuditCommands() }
 
         Settings {
             SettingsView(
