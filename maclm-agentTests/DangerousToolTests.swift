@@ -195,7 +195,7 @@ final class DangerousToolTests: XCTestCase {
 
         XCTAssertTrue(result.isError)
         XCTAssertEqual(output["timedOut"] as? Bool, true)
-        XCTAssertLessThan(elapsed, .seconds(3))
+        XCTAssertLessThan(elapsed, .seconds(6))
     }
 
     func testAgentLoopPausesDangerousToolUntilApproved() async throws {

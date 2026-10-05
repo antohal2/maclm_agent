@@ -127,9 +127,12 @@ enum AuditSanitizer {
            let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let code = output["exitCode"] as? Int, let timedOut = output["timedOut"] as? Bool
         {
-            let summary = "exitCode: \(code)\ntimedOut: \(timedOut)"
+            var summary = "exitCode: \(code)\ntimedOut: \(timedOut)"
                 + "\nstdout:\n\(truncate(output["stdout"] as? String ?? ""))"
                 + "\nstderr:\n\(truncate(output["stderr"] as? String ?? ""))"
+            if let note = output["lifecycleNote"] as? String {
+                summary += "\n" + truncate(note)
+            }
             return (summary, timedOut ? "Shell command timeout" : (code != 0 ? "Shell exit code: \(code)" : nil))
         }
         let summary = truncate(result.displayContent ?? result.content)
