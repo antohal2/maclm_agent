@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Bindable var settings: AppSettings
     @Bindable var hotKeyController: GlobalHotKeyController
     @Bindable var clipboardHotkeyService: ClipboardHotkeyService
+    let sessionPermissions: SessionPermissions
     let accessibilityPermissionService: any AccessibilityPermissionService
 
     var body: some View {
@@ -13,6 +14,9 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Provider", systemImage: "server.rack")
                 }
+
+            SecuritySettingsView(settings: settings, sessionPermissions: sessionPermissions)
+                .tabItem { Label("Безопасность", systemImage: "shield") }
 
             appearanceSettings
                 .tabItem {

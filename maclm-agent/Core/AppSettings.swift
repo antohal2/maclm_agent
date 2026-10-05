@@ -50,6 +50,31 @@ final class AppSettings {
         didSet { defaults.set(allowedDirectories, forKey: Key.allowedDirectories) }
     }
 
+    @discardableResult
+    func addAllowedDirectory(_ path: String) -> Bool {
+        let canonical = PathCanonicalizer.canonicalize(path)
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: canonical, isDirectory: &isDirectory),
+              isDirectory.boolValue else { return false }
+        let caseSensitive = PathCanonicalizer.isCaseSensitive(canonical)
+        guard !allowedDirectories.contains(where: {
+            let existing = PathCanonicalizer.canonicalize($0)
+            return caseSensitive ? existing == canonical : existing.lowercased() == canonical.lowercased()
+        }) else { return false }
+        allowedDirectories.append(canonical)
+        return true
+    }
+
+    func removeAllowedDirectory(at index: Int) {
+        guard allowedDirectories.indices.contains(index) else { return }
+        allowedDirectories.remove(at: index)
+    }
+
+    static func isBroadDirectory(_ path: String) -> Bool {
+        let canonical = PathCanonicalizer.canonicalize(path)
+        return canonical == "/" || canonical == PathCanonicalizer.canonicalize(NSHomeDirectory())
+    }
+
     var theme: AppTheme {
         didSet {
             defaults.set(theme.rawValue, forKey: Key.theme)

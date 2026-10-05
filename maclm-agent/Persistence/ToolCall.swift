@@ -16,9 +16,17 @@ final class ToolCall {
     var toolName: String
     var argumentsJSON: String
     var resultJSON: String?
+    // Effective risk snapshot for confirmation display; session grants are never persisted.
+    var confirmationRiskRawValue: Int? = nil
+    var confirmationRiskReason: String? = nil
     private var statusRawValue: String
     var timestamp: Date
     var message: Message?
+
+    var confirmationRiskLevel: RiskLevel {
+        // Legacy pending records have no snapshot: display them conservatively.
+        RiskLevel(rawValue: confirmationRiskRawValue ?? RiskLevel.dangerous.rawValue) ?? .dangerous
+    }
 
     var status: ToolCallStatus {
         get {

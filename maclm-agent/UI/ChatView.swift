@@ -131,7 +131,7 @@ private struct MessageBubble: View {
     let message: Message
     let isWaiting: Bool
     let horizontalInset: CGFloat
-    let onConfirmationDecision: (UUID, ConfirmationDecision) -> Void
+    let onConfirmationDecision: (UUID, ConfirmationDecision, Bool) -> Void
 
     var body: some View {
         HStack {
@@ -158,8 +158,8 @@ private struct MessageBubble: View {
 
                 ForEach(orderedToolCalls) { toolCall in
                     if toolCall.status == .pending || toolCall.status == .approved {
-                        ConfirmationCard(toolCall: toolCall) { decision in
-                            onConfirmationDecision(toolCall.id, decision)
+                        ConfirmationCard(toolCall: toolCall) { decision, remember in
+                            onConfirmationDecision(toolCall.id, decision, remember)
                         }
                     } else {
                         ToolCallCard(toolCall: toolCall)

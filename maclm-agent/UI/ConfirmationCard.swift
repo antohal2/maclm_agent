@@ -2,18 +2,28 @@ import SwiftUI
 
 struct ConfirmationCard: View {
     let toolCall: ToolCall
-    let onDecision: (ConfirmationDecision) -> Void
+    let onDecision: (ConfirmationDecision, Bool) -> Void
+    @State private var isArgumentsExpanded = false
+    @State private var rememberForSession = false
+
+    private var riskLevel: RiskLevel { toolCall.confirmationRiskLevel }
+    private var isDangerous: Bool { riskLevel == .dangerous }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Image(systemName: isDelete ? "trash.slash.fill" : "exclamationmark.shield.fill")
+                Image(systemName: isDangerous ? "exclamationmark.shield.fill" : "exclamationmark.triangle.fill")
                     .foregroundStyle(accentColor)
-                Text("Требуется подтверждение")
+                Text(isDangerous ? "Опасно · dangerous" : "Осторожно · caution")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Text(toolCall.toolName)
                     .font(.caption.monospaced().weight(.semibold))
+            }
+
+            if isDangerous {
+                Text(dangerousReason)
+                    .font(.callout.weight(.semibold))
             }
 
             Text(actionDescription)
@@ -25,16 +35,27 @@ struct ConfirmationCard: View {
                     .foregroundStyle(.red)
             }
 
-            argumentDetails
+            if isDangerous {
+                argumentDetails
+            } else {
+                DisclosureGroup("Аргументы", isExpanded: $isArgumentsExpanded) {
+                    argumentDetails
+                }
+            }
 
             if toolCall.status == .pending {
+                if riskLevel.canBeRemembered {
+                    Toggle("Не спрашивать снова в этой сессии", isOn: $rememberForSession)
+                        .toggleStyle(.checkbox)
+                        .font(.callout)
+                }
                 HStack {
                     Button("Reject", role: .destructive) {
-                        onDecision(.rejected)
+                        onDecision(.rejected, false)
                     }
                     Spacer()
                     Button("Approve") {
-                        onDecision(.approved)
+                        onDecision(.approved, riskLevel.canBeRemembered && rememberForSession)
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -69,7 +90,7 @@ struct ConfirmationCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(7)
-                        .background(.black.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                        .background(.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
                 }
             }
         }
@@ -139,12 +160,24 @@ struct ConfirmationCard: View {
         }
     }
 
+    private var dangerousReason: String {
+        if let reason = toolCall.confirmationRiskReason, !reason.isEmpty { return reason }
+        switch toolCall.toolName {
+        case "run_shell":
+            return "аргумент — произвольный код, политика неприменима"
+        case "delete_file":
+            return "Перемещение в Корзину требует отдельного подтверждения."
+        default:
+            return "Инструмент имеет базовый уровень dangerous и требует отдельного подтверждения."
+        }
+    }
+
     private var isDelete: Bool {
         toolCall.toolName == "delete_file"
     }
 
     private var accentColor: Color {
-        isDelete ? .red : .orange
+        isDangerous ? .red : .orange
     }
 }
 

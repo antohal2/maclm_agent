@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct MacLMAgentApp: App {
+    private let sessionPermissions: SessionPermissions
     private let modelContainer: ModelContainer
     private let menuBarController: MenuBarController
     private let sceneActions: SceneActions
@@ -25,13 +26,17 @@ struct MacLMAgentApp: App {
             try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
             let policyContext = container.mainContext
+            let permissions = SessionPermissions()
+            sessionPermissions = permissions
+            let appSettings = AppSettings()
             let viewModel = ChatViewModel(
                 modelContext: policyContext,
-                agentLoop: AgentLoop(securityRules: {
+                agentLoop: AgentLoop(sessionPermissions: permissions, riskContext: {
+                    ToolRiskContext(allowedDirectories: appSettings.allowedDirectories)
+                }, securityRules: {
                     try SecurityRuleSeeder.snapshots(context: policyContext)
                 })
             )
-            let appSettings = AppSettings()
             let accessibilityPermissionService = SystemAccessibilityPermissionService()
             self.accessibilityPermissionService = accessibilityPermissionService
             let pasteService = SystemPasteService(
@@ -86,6 +91,7 @@ struct MacLMAgentApp: App {
                 settings: settings,
                 hotKeyController: hotKeyController,
                 clipboardHotkeyService: clipboardHotkeyService,
+                sessionPermissions: sessionPermissions,
                 accessibilityPermissionService: accessibilityPermissionService
             )
             .modelContainer(modelContainer)

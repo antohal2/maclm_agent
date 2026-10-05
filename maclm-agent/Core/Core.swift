@@ -3,6 +3,9 @@ import Foundation
 actor AgentLoop {
     private let toolRegistry: ToolRegistry
     private let confirmationCoordinator: ConfirmationCoordinator
+    private let sessionPermissions: SessionPermissions
+    private var pendingConfirmations: [UUID: ConfirmationRequest] = [:]
+    private let riskContext: @MainActor @Sendable () -> ToolRiskContext
     private let securityRules: @MainActor @Sendable () throws -> [SecurityRuleSnapshot]
     private let maximumIterations: Int
     private var isGenerating = false
@@ -11,10 +14,16 @@ actor AgentLoop {
         toolRegistry: ToolRegistry = .all,
         confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
         maximumIterations: Int = 8,
+        sessionPermissions: SessionPermissions = SessionPermissions(),
+        riskContext: @escaping @MainActor @Sendable () -> ToolRiskContext = {
+            ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
+        },
         securityRules: @escaping @MainActor @Sendable () throws -> [SecurityRuleSnapshot] = {
             DefaultSecurityRules.rules
         }
     ) {
+        self.sessionPermissions = sessionPermissions
+        self.riskContext = riskContext
         self.securityRules = securityRules
         self.toolRegistry = toolRegistry
         self.confirmationCoordinator = confirmationCoordinator
@@ -23,8 +32,15 @@ actor AgentLoop {
 
     func resolveConfirmation(
         requestID: UUID,
-        decision: ConfirmationDecision
+        decision: ConfirmationDecision,
+        rememberForSession: Bool = false
     ) async {
+        if decision == .approved, rememberForSession,
+           let request = pendingConfirmations[requestID] {
+            await sessionPermissions.remember(
+                toolName: request.toolCall.function.name, riskLevel: request.riskLevel
+            )
+        }
         await confirmationCoordinator.resolve(
             requestID: requestID,
             decision: decision
@@ -166,9 +182,7 @@ actor AgentLoop {
             )
         }
         let executionArguments = policy.executionArguments(for: tool, arguments: arguments)
-        let context = await MainActor.run {
-            ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
-        }
+        let context = await riskContext()
         let assessment = ToolRiskEvaluator.evaluate(tool, arguments: executionArguments, context: context)
         let confirmation = try await confirmIfNeeded(
             toolCall: toolCall,
@@ -208,11 +222,17 @@ actor AgentLoop {
             return ToolConfirmation()
         }
 
+        if await sessionPermissions.allows(toolName: toolCall.function.name, riskLevel: assessment.level) {
+            return ToolConfirmation(decision: .approved)
+        }
+
         let request = ConfirmationRequest(
             toolCall: toolCall,
             riskLevel: assessment.level,
             riskReason: assessment.reason
         )
+        pendingConfirmations[request.id] = request
+        defer { pendingConfirmations.removeValue(forKey: request.id) }
         await onEvent(.confirmationRequested(request))
         let decision = try await confirmationCoordinator.waitForDecision(
             requestID: request.id

@@ -115,7 +115,8 @@ final class ChatViewModel {
 
     func resolveConfirmation(
         toolCallID: UUID,
-        decision: ConfirmationDecision
+        decision: ConfirmationDecision,
+        rememberForSession: Bool = false
     ) {
         guard
             let toolCall = persistentToolCall(id: toolCallID),
@@ -130,7 +131,8 @@ final class ChatViewModel {
         Task { [agentLoop] in
             await agentLoop.resolveConfirmation(
                 requestID: toolCallID,
-                decision: decision
+                decision: decision,
+                rememberForSession: rememberForSession
             )
         }
     }
@@ -342,6 +344,8 @@ private extension ChatViewModel {
             timestamp: lastTimestamp.addingTimeInterval(0.000_001),
             message: nil
         )
+        toolCall.confirmationRiskRawValue = request.riskLevel.rawValue
+        toolCall.confirmationRiskReason = request.riskReason
         modelContext.insert(toolCall)
         assistantMessage.toolCalls.append(toolCall)
         conversation.updatedAt = toolCall.timestamp
