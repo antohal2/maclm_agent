@@ -58,6 +58,11 @@ struct SettingsView: View {
                 }
                 Text(String(localized: "Применится после перезапуска")).font(.caption).foregroundStyle(.secondary)
             }
+            Section(String(localized: "Уведомления")) {
+                Toggle(String(localized: "О завершении сессии"), isOn: $settings.notifySessionCompletion)
+                Toggle(String(localized: "О запросе подтверждения"), isOn: $settings.notifySessionApproval)
+                Button(String(localized: "Разрешить уведомления…")) { SessionNotifications.requestPermission() }
+            }
             Section(String(localized: "Глобальный хоткей")) {
                 LabeledContent(String(localized: "Показать или скрыть панель")) {
                     ShortcutRecorder(

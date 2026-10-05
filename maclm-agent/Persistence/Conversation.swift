@@ -9,6 +9,7 @@ final class Conversation {
     var title: String
     var createdAt: Date
     var project: Project?
+    var hasUnreadResult: Bool = false
     var isPinned: Bool = false
     var isArchived: Bool = false
     var titleIsManual: Bool = false

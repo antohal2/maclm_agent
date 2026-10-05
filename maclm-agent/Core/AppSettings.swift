@@ -46,6 +46,24 @@ final class AppSettings {
             "clipboardActions.automaticallyPasteResults"
     }
 
+    var notifySessionCompletion: Bool {
+        didSet {
+            defaults.set(notifySessionCompletion, forKey: "notifications.completion")
+            if notifySessionCompletion, !oldValue {
+                SessionNotifications.requestPermission()
+            }
+        }
+    }
+
+    var notifySessionApproval: Bool {
+        didSet {
+            defaults.set(notifySessionApproval, forKey: "notifications.approval")
+            if notifySessionApproval, !oldValue {
+                SessionNotifications.requestPermission()
+            }
+        }
+    }
+
     var interfaceLanguage: String {
         didSet {
             defaults.set(interfaceLanguage, forKey: "interface.language")
@@ -128,6 +146,8 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        notifySessionCompletion = defaults.object(forKey: "notifications.completion") as? Bool ?? true
+        notifySessionApproval = defaults.object(forKey: "notifications.approval") as? Bool ?? true
         interfaceLanguage = defaults.string(forKey: "interface.language") ?? "system"
         auditRetentionDays = defaults.object(forKey: "security.auditRetentionDays") as? Int ?? 90
         allowedDirectories = defaults.stringArray(forKey: Key.allowedDirectories) ?? []

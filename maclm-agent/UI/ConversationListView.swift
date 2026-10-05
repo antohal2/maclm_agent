@@ -150,6 +150,11 @@ struct ConversationListView: View {
                 Image(systemName: "archivebox").foregroundStyle(.secondary)
             }
             Text(conversation.interfaceTitle).lineLimit(2)
+            Spacer()
+            SessionStatusIndicator(
+                status: viewModel.registry.runners[conversation.id]?.status ?? .idle,
+                unread: conversation.hasUnreadResult
+            )
         }
         .tag(conversation.id)
         .contextMenu {
@@ -179,5 +184,26 @@ struct ConversationListView: View {
                 viewModel.selectConversation(conversation)
             }
         })
+    }
+}
+
+private struct SessionStatusIndicator: View {
+    let status: SessionStatus
+    let unread: Bool
+    var body: some View {
+        HStack(spacing: 4) {
+            switch status {
+            case .running, .toolRunning: ProgressView().controlSize(.mini)
+            case .needsApproval: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
+            case .failed: Image(systemName: "xmark.octagon.fill").foregroundStyle(.red)
+            case .idle: EmptyView()
+            }
+            if unread {
+                Image(systemName: "circle.fill").font(.system(size: 7)).foregroundStyle(.blue)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(status.title + (unread ? ", " + String(localized: "Непрочитанный результат") : ""))
+        .help(status.title)
     }
 }

@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct MacLMAgentApp: App {
+    @NSApplicationDelegateAdaptor(SessionApplicationDelegate.self) private var applicationDelegate
+    private let sessionNotifications: SessionNotifications
     private let sessionPermissions: SessionPermissions
     private let modelContainer: ModelContainer
     private let menuBarController: MenuBarController
@@ -15,6 +17,8 @@ struct MacLMAgentApp: App {
 
     init() {
         do {
+            let testHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+                || NSClassFromString("XCTestCase") != nil
             let container = try ModelContainer(
                 for: Conversation.self,
                 Project.self,
@@ -22,7 +26,8 @@ struct MacLMAgentApp: App {
                 ToolCall.self,
                 ClipboardAction.self,
                 SecurityRule.self,
-                AuditEntry.self
+                AuditEntry.self,
+                configurations: ModelConfiguration(isStoredInMemoryOnly: testHost)
             )
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
@@ -72,6 +77,11 @@ struct MacLMAgentApp: App {
             _hotKeyController = State(initialValue: globalHotKeyController)
             _clipboardHotkeyService = State(initialValue: clipboardHotkeyService)
             sceneActions = appSceneActions
+            sessionNotifications = SessionNotifications(
+                settings: appSettings,
+                viewModel: viewModel,
+                sceneActions: appSceneActions
+            )
             menuBarController = MenuBarController(
                 viewModel: viewModel,
                 clipboardActionRunner: clipboardActionRunner,
@@ -93,8 +103,10 @@ struct MacLMAgentApp: App {
         Window("maclm-agent", id: "main") {
             MainWindowView(
                 viewModel: chatViewModel,
-                sceneActions: sceneActions
+                sceneActions: sceneActions,
+                sessionNotifications: sessionNotifications
             )
+            .onAppear { applicationDelegate.registry = chatViewModel.registry }
             .preferredColorScheme(settings.theme.colorScheme)
         }
         .modelContainer(modelContainer)

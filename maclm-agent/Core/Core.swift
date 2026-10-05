@@ -33,14 +33,24 @@ actor AgentLoop {
         self.maximumIterations = max(1, maximumIterations)
     }
 
+    nonisolated func independentRun() -> AgentLoop {
+        AgentLoop(
+            toolRegistry: toolRegistry,
+            maximumIterations: maximumIterations,
+            sessionPermissions: sessionPermissions,
+            riskContext: riskContext,
+            auditSink: auditSink,
+            securityRules: securityRules
+        )
+    }
+
     func resolveConfirmation(
         requestID: UUID,
         decision: ConfirmationDecision,
         rememberForSession: Bool = false
     ) async {
         if decision == .approved, rememberForSession,
-           let request = pendingConfirmations[requestID]
-        {
+           let request = pendingConfirmations[requestID] {
             await sessionPermissions.remember(
                 toolName: request.toolCall.function.name, riskLevel: request.riskLevel
             )
@@ -254,6 +264,8 @@ actor AgentLoop {
             return rejection
         }
 
+        await onEvent(.toolExecutionStarted(toolName: tool.name))
+        try Task.checkCancellation()
         let started = ContinuousClock.now
         defer {
             let elapsed = started.duration(to: .now).components
@@ -368,6 +380,7 @@ enum AgentLoopEvent: Equatable, Sendable {
     case assistantResponseStarted
     case contentDelta(String)
     case confirmationRequested(ConfirmationRequest)
+    case toolExecutionStarted(toolName: String)
     case toolCallsCompleted([AgentToolCallExecution])
     case done
 }
