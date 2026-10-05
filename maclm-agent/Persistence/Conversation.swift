@@ -8,6 +8,10 @@ final class Conversation {
     @Attribute(.unique) var id: UUID
     var title: String
     var createdAt: Date
+    var project: Project?
+    var isPinned: Bool = false
+    var isArchived: Bool = false
+    var titleIsManual: Bool = false
     var updatedAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \Message.conversation)
@@ -37,14 +41,6 @@ final class Conversation {
     }
 
     static func generatedTitle(from content: String, limit: Int = 40) -> String {
-        let normalized = content
-            .split(whereSeparator: \.isWhitespace)
-            .joined(separator: " ")
-        guard !normalized.isEmpty else {
-            return defaultTitle
-        }
-
-        let prefix = String(normalized.prefix(limit))
-        return normalized.count > limit ? "\(prefix)…" : prefix
+        ConversationTitle.fallback(content, limit: limit)
     }
 }

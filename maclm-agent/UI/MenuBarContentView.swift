@@ -190,7 +190,7 @@ struct MenuBarContentView: View {
     private var conversationMenu: some View {
         Menu {
             Section(String(localized: "Все беседы")) {
-                ForEach(conversations) { conversation in
+                ForEach(SessionOrdering.sorted(conversations)) { conversation in
                     Button {
                         viewModel.selectConversation(conversation)
                     } label: {

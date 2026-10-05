@@ -24,20 +24,27 @@ final class ChatViewModel {
             && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private let modelContext: ModelContext
+    let modelContext: ModelContext
     private let agentLoop: AgentLoop
+    let autoTitles: AutoTitleService
     private let providerFactory: (() throws -> any LLMProvider)?
+    private(set) var generatingConversationID: UUID?
+    private var generationToken: UUID?
+    private var deferredDeletions: [Conversation] = []
+    private var deferredProjectDeletions: [Project] = []
     private var generationTask: Task<Void, Never>?
 
     init(
         modelContext: ModelContext,
         providerCoordinator: ProviderCoordinator = ProviderCoordinator(),
         agentLoop: AgentLoop = AgentLoop(),
-        providerFactory: (() throws -> any LLMProvider)? = nil
+        providerFactory: (() throws -> any LLMProvider)? = nil,
+        titleTimeout: Duration = .seconds(20)
     ) {
         self.modelContext = modelContext
         self.providerCoordinator = providerCoordinator
         self.agentLoop = agentLoop
+        autoTitles = AutoTitleService(context: modelContext, timeout: titleTimeout)
         self.providerFactory = providerFactory
         restoreSelection()
     }
@@ -47,8 +54,9 @@ final class ChatViewModel {
     }
 
     @discardableResult
-    func createConversation() -> Conversation {
+    func createConversation(project: Project? = nil) -> Conversation {
         let conversation = Conversation()
+        conversation.project = project
         modelContext.insert(conversation)
         saveContext()
         selectConversation(conversation)
@@ -60,31 +68,53 @@ final class ChatViewModel {
         messages = conversation.orderedMessages
     }
 
-    func renameConversation(_ conversation: Conversation, to title: String) {
-        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty else {
-            return
+    func toggleArchive(_ conversation: Conversation) {
+        if generatingConversationID == conversation.id {
+            stopGeneration()
         }
+        conversation.isArchived.toggle()
+        saveContext()
+    }
 
-        conversation.title = trimmedTitle
-        conversation.updatedAt = Date()
+    func deleteProject(_ project: Project, includingConversations: Bool = false) {
+        let sessions = project.conversations
+        if includingConversations {
+            for conversation in sessions {
+                deleteConversation(conversation)
+            }
+            if sessions.contains(where: { $0.id == generatingConversationID }) {
+                deferredProjectDeletions.append(project)
+                return
+            }
+        } else {
+            for conversation in sessions {
+                conversation.project = nil
+            }
+        }
+        modelContext.delete(project)
         saveContext()
     }
 
     func deleteConversation(_ conversation: Conversation) {
+        autoTitles.cancelTitle(for: conversation)
+        if generatingConversationID == conversation.id {
+            stopGeneration()
+            if !deferredDeletions.contains(where: { $0.id == conversation.id }) {
+                deferredDeletions.append(conversation)
+            }
+            return
+        }
+        removeConversation(conversation)
+    }
+
+    private func removeConversation(_ conversation: Conversation) {
         if selectedConversationID == conversation.id {
             selectedConversation = nil
             messages = []
         }
         modelContext.delete(conversation)
         saveContext()
-    }
-
-    func ensureConversationSelected() {
-        guard selectedConversation == nil else {
-            return
-        }
-        restoreSelection()
+        ensureConversationSelected()
     }
 
     func send() {
@@ -97,7 +127,9 @@ final class ChatViewModel {
             return
         }
 
+        autoTitles.cancelTitle(for: conversation)
         input = ""
+        generatingConversationID = conversation.id
         isGenerating = true
         isWaitingForFirstToken = true
 
@@ -112,6 +144,7 @@ final class ChatViewModel {
             )
         } catch {
             show(error: error, in: generation.assistantID)
+            autoTitles.applyFallbackTitle(conversation)
             finishGeneration()
         }
     }
@@ -155,13 +188,6 @@ final class ChatViewModel {
         in conversation: Conversation
     ) -> (requestMessages: [ChatMessage], assistantID: UUID) {
         let previousMessages = conversation.orderedMessages
-        let hasUserMessages = previousMessages.contains { $0.role == .user }
-        let shouldGenerateTitle = !hasUserMessages
-            && conversation.title == Conversation.defaultTitle
-        if shouldGenerateTitle {
-            conversation.title = Conversation.generatedTitle(from: content)
-        }
-
         let lastTimestamp = previousMessages.last?.timestamp ?? .distantPast
         let userTimestamp = max(Date(), lastTimestamp.addingTimeInterval(0.000_001))
         let userMessage = Message(
@@ -172,7 +198,12 @@ final class ChatViewModel {
         )
         modelContext.insert(userMessage)
 
-        let requestMessages = previousMessages.map(\.chatMessage) + [userMessage.chatMessage]
+        let prompt = SystemPromptBuilder.build(
+            projectName: conversation.project?.name,
+            instructions: conversation.project?.instructions ?? ""
+        )
+        let systemMessages = prompt.isEmpty ? [] : [ChatMessage(role: .system, content: prompt)]
+        let requestMessages = systemMessages + previousMessages.map(\.chatMessage) + [userMessage.chatMessage]
         let assistantMessage = Message(
             role: .assistant,
             content: "",
@@ -182,7 +213,9 @@ final class ChatViewModel {
         modelContext.insert(assistantMessage)
 
         conversation.updatedAt = assistantMessage.timestamp
-        messages = conversation.orderedMessages
+        if selectedConversationID == conversation.id {
+            messages = conversation.orderedMessages
+        }
         saveContext()
 
         return (requestMessages, assistantMessage.id)
@@ -193,7 +226,9 @@ final class ChatViewModel {
         assistantID: UUID,
         provider: any LLMProvider
     ) {
-        let conversationID = selectedConversationID
+        let conversationID = generatingConversationID
+        let token = UUID()
+        generationToken = token
         generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
                 try await agentLoop.streamResponse(
@@ -201,9 +236,11 @@ final class ChatViewModel {
                     using: provider,
                     conversationID: conversationID
                 ) { [weak self] event in
+                    guard await self?.generationToken == token else { return }
                     await self?.consume(event, assistantID: assistantID)
                 }
                 try Task.checkCancellation()
+                self?.autoTitles.requestTitle(conversationID: conversationID, provider: provider)
             } catch is CancellationError {
                 self?.completeCancelledCalls()
                 self?.removeEmptyMessage(id: self?.generatingMessageID ?? assistantID)
@@ -216,7 +253,15 @@ final class ChatViewModel {
                 }
             }
 
-            self?.finishGeneration()
+            if let self, self.generationToken == token {
+                if let conversationID, !self.autoTitles.hasRequest(for: conversationID) {
+                    let descriptor = FetchDescriptor<Conversation>(predicate: #Predicate { $0.id == conversationID })
+                    if let conversation = try? self.modelContext.fetch(descriptor).first {
+                        self.autoTitles.applyFallbackTitle(conversation)
+                    }
+                }
+                self.finishGeneration()
+            }
         }
     }
 
@@ -276,7 +321,9 @@ final class ChatViewModel {
         conversation.updatedAt = message.timestamp
         generatingMessageID = message.id
         isWaitingForFirstToken = true
-        messages = conversation.orderedMessages
+        if selectedConversationID == conversation.id {
+            messages = conversation.orderedMessages
+        }
         saveContext()
     }
 }
@@ -331,7 +378,9 @@ private extension ChatViewModel {
         }
 
         conversation.updatedAt = timestamp
-        messages = conversation.orderedMessages
+        if selectedConversationID == conversation.id {
+            messages = conversation.orderedMessages
+        }
         saveContext()
     }
 
@@ -372,7 +421,9 @@ private extension ChatViewModel {
         modelContext.insert(toolCall)
         assistantMessage.toolCalls.append(toolCall)
         conversation.updatedAt = toolCall.timestamp
-        messages = conversation.orderedMessages
+        if selectedConversationID == conversation.id {
+            messages = conversation.orderedMessages
+        }
         saveContext()
     }
 
@@ -395,8 +446,13 @@ private extension ChatViewModel {
             call.resultJSON = "Cancelled by user"
             call.status = .rejected
             if let conversation = message.conversation {
-                modelContext.insert(Message(role: .tool, content: "Cancelled by user",
-                    toolCallID: call.providerCallID, timestamp: Date(), conversation: conversation))
+                modelContext.insert(Message(
+                    role: .tool,
+                    content: "Cancelled by user",
+                    toolCallID: call.providerCallID,
+                    timestamp: Date(),
+                    conversation: conversation
+                ))
             }
         }
         if selectedConversationID == message.conversation?.id {
@@ -417,49 +473,22 @@ private extension ChatViewModel {
         saveContext()
     }
 
-    private func persistentMessage(id: UUID) -> Message? {
-        let descriptor = FetchDescriptor<Message>(
-            predicate: #Predicate { message in
-                message.id == id
-            }
-        )
-        return try? modelContext.fetch(descriptor).first
-    }
-
-    private func persistentToolCall(id: UUID) -> ToolCall? {
-        let descriptor = FetchDescriptor<ToolCall>(
-            predicate: #Predicate { toolCall in
-                toolCall.id == id
-            }
-        )
-        return try? modelContext.fetch(descriptor).first
-    }
-
     private func finishGeneration() {
+        generationToken = nil
+        generatingConversationID = nil
         isGenerating = false
         isWaitingForFirstToken = false
         generatingMessageID = nil
         generationTask = nil
-    }
-
-    private func restoreSelection() {
-        var descriptor = FetchDescriptor<Conversation>(
-            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
-        )
-        descriptor.fetchLimit = 1
-
-        if let conversation = try? modelContext.fetch(descriptor).first {
-            selectConversation(conversation)
-        } else {
-            createConversation()
+        let conversations = deferredDeletions
+        deferredDeletions = []
+        for conversation in conversations {
+            removeConversation(conversation)
         }
-    }
-
-    private func saveContext() {
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("SwiftData save failed: \(error.localizedDescription)")
+        for project in deferredProjectDeletions {
+            modelContext.delete(project)
         }
+        deferredProjectDeletions = []
+        saveContext()
     }
 }

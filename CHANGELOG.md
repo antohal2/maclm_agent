@@ -2,6 +2,17 @@
 
 All notable changes to `maclm-agent` are documented in this file.
 
+## [v0.4.2] - 2026-10-05
+
+### Added
+
+- Projects with optional working folders and instructions, grouped session
+  sidebar, pinning, archive, move, rename, and confirmed deletion.
+- Independent local-model conversation titles with cleanup, cancellation,
+  a 20-second timeout, and a word-boundary fallback.
+- Additive SwiftData migration verified on a copy of the previous real store
+  and a synthetic v0.4.1 fixture. Audit entries survive conversation deletion.
+
 ## [v0.3.3] - 2026-10-05
 
 ### Added

@@ -17,6 +17,7 @@ struct MacLMAgentApp: App {
         do {
             let container = try ModelContainer(
                 for: Conversation.self,
+                Project.self,
                 Message.self,
                 ToolCall.self,
                 ClipboardAction.self,
