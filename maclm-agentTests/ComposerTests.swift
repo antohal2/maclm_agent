@@ -135,7 +135,10 @@ private struct ComposerWaitingTool: Tool {
     let description = "Test only"
     static let baseRiskLevel: RiskLevel = .dangerous
     var parametersSchema: JSONSchema { .object(properties: [:], required: []) }
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(
+        arguments: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult {
         await probe.start()
         do { try await Task.sleep(for: .seconds(60)) }
         catch { await probe.cancel(); throw error }

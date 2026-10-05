@@ -29,6 +29,11 @@ struct MacLMAgentApp: App {
                 AuditEntry.self,
                 configurations: ModelConfiguration(isStoredInMemoryOnly: testHost)
             )
+            guard let bundleID = Bundle.main.bundleIdentifier,
+                  let storeURL = container.configurations.first?.url else {
+                throw CocoaError(.validationMissingMandatoryProperty)
+            }
+            try ApplicationProtection.ensure(context: container.mainContext, storeURL: storeURL, bundleID: bundleID)
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
             try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
@@ -93,7 +98,19 @@ struct MacLMAgentApp: App {
                 accessibilityPermissionService: accessibilityPermissionService
             )
         } catch {
-            fatalError("Unable to initialize SwiftData: \(error.localizedDescription)")
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = String(localized: "Не удалось запустить приложение")
+            alert
+                .informativeText =
+                String(
+                    localized: """
+                    Не удалось открыть хранилище или обеспечить защиту данных: \
+                    \(error.localizedDescription)
+                    """
+                )
+            alert.runModal()
+            exit(EXIT_FAILURE)
         }
     }
 

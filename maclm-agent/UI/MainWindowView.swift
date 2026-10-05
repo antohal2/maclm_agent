@@ -9,11 +9,21 @@ struct MainWindowView: View {
     let sceneActions: SceneActions
     let sessionNotifications: SessionNotifications
 
+    @AppStorage("workspace.inspectorPresented") private var inspectorPresented = false
+
     var body: some View {
         NavigationSplitView {
             ConversationListView(viewModel: viewModel)
         } detail: {
             ChatView(viewModel: viewModel)
+        }
+        .inspector(isPresented: $inspectorPresented) { WorkspaceInspectorView(viewModel: viewModel) }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { inspectorPresented.toggle() } label: {
+                    Label(String(localized: "Инспектор"), systemImage: "sidebar.right")
+                }
+            }
         }
         .frame(minWidth: 760, minHeight: 480)
         .background(MainWindowObserver(notifications: sessionNotifications))

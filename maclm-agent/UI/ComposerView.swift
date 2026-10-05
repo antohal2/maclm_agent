@@ -19,6 +19,7 @@ enum ComposerRules {
 struct ComposerView: View {
     @Bindable var viewModel: ChatViewModel
     @FocusState private var isFocused: Bool
+    @State private var policyPresented = false
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -41,6 +42,22 @@ struct ComposerView: View {
                     return .handled
                 }
             HStack {
+                Button { policyPresented.toggle() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "shield")
+                        Text(viewModel.selectedConversation?.project?.workingDirectoryPath == nil
+                            ? String(localized: "Глобально") : String(localized: "Проект"))
+                        if let id = viewModel.selectedConversationID {
+                            let count = viewModel.sessionPermissions.permissions(for: id).count
+                            if count > 0 {
+                                Text(count.description)
+                            }
+                        }
+                    }.font(.caption)
+                }.buttonStyle(.plain)
+                    .popover(isPresented: $policyPresented) {
+                        SessionPolicyView(viewModel: viewModel).padding().frame(width: 320)
+                    }
                 Spacer(minLength: 0)
                 Button {
                     UserDefaults.standard.set("models", forKey: "settings.selectedTab")
@@ -72,6 +89,16 @@ struct ComposerView: View {
                     .isGenerating ? String(localized: "Остановить") : String(localized: "Отправить"))
                 .help(viewModel
                     .isGenerating ? String(localized: "Остановить генерацию") : String(localized: "Отправить"))
+            }
+            if let project = viewModel.selectedConversation?.project {
+                HStack {
+                    Text(project.name)
+                    if let path = project.workingDirectoryPath,
+                       let branch = GitHeadReader.read(workingDirectory: path) {
+                        Text(branch)
+                    }
+                    Spacer()
+                }.font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
         }
         .padding(12)

@@ -11,18 +11,28 @@ protocol Tool: Sendable {
     static var isPolicyEnforceable: Bool { get }
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult
-    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult
+    func execute(arguments: [String: Any], invocation: ToolInvocationContext) async throws -> ToolExecutionResult
+    func execute(
+        arguments: [String: Any],
+        invocation: ToolInvocationContext,
+        policy: SecurityPolicyEngine
+    ) async throws -> ToolExecutionResult
 }
 
 extension Tool {
-    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult {
-        try await execute(arguments: arguments)
+    func execute(
+        arguments: [String: Any],
+        invocation: ToolInvocationContext,
+        policy _: SecurityPolicyEngine
+    ) async throws -> ToolExecutionResult {
+        try await execute(arguments: arguments, invocation: invocation)
     }
 
-    static var isPolicyEnforceable: Bool { false }
+    static var isPolicyEnforceable: Bool {
+        false
+    }
 
-    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+    func computeRisk(arguments _: [String: Any], context _: ToolRiskContext) -> RiskAssessment {
         RiskAssessment(level: Self.baseRiskLevel)
     }
 }
@@ -146,10 +156,10 @@ struct ToolRegistry: Sendable {
 
     mutating func register(_ tool: any Tool) {
         #if DEBUG
-        if !type(of: tool).isPolicyEnforceable,
-           type(of: tool).baseRiskLevel < .dangerous {
-            assertionFailure("Universal tool '\(tool.name)' must declare baseRiskLevel .dangerous.")
-        }
+            if !type(of: tool).isPolicyEnforceable,
+               type(of: tool).baseRiskLevel < .dangerous {
+                assertionFailure("Universal tool '\(tool.name)' must declare baseRiskLevel .dangerous.")
+            }
         #endif
         toolsByName[tool.name] = tool
     }

@@ -8,11 +8,25 @@ extension ChatViewModel {
     }
 
     func moveConversation(_ conversation: Conversation, to project: Project?) {
+        if conversation.project?.id != project?.id {
+            sessionPermissions.reset(conversationID: conversation.id)
+        }
         conversation.project = project
         saveContext()
     }
 
+    func resetProjectPermissions(_ project: Project) {
+        for conversation in project.conversations {
+            sessionPermissions.reset(conversationID: conversation.id)
+        }
+    }
+
     func saveProject(_ project: Project) {
+        let path = project.workingDirectoryPath ?? ""
+        if let previous = savedProjectDirectories[project.id], previous != path {
+            resetProjectPermissions(project)
+        }
+        savedProjectDirectories[project.id] = path
         modelContext.insert(project)
         saveContext()
     }

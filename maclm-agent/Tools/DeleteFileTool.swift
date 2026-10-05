@@ -6,7 +6,7 @@ struct DeleteFileTool: Tool {
     static let baseRiskLevel = RiskLevel.dangerous
     static let isPolicyEnforceable = true
 
-    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+    func computeRisk(arguments: [String: Any], context _: ToolRiskContext) -> RiskAssessment {
         guard let path = arguments["path"] as? String else {
             return RiskAssessment(level: .dangerous)
         }
@@ -34,7 +34,7 @@ struct DeleteFileTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(arguments: [String: Any], invocation _: ToolInvocationContext) async throws -> ToolExecutionResult {
         let path: String
         switch ToolArgument.requiredString(named: "path", in: arguments) {
         case let .value(value):

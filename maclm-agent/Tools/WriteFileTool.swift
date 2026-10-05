@@ -30,7 +30,7 @@ struct WriteFileTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(arguments: [String: Any], invocation _: ToolInvocationContext) async throws -> ToolExecutionResult {
         do {
             let request = try WriteFileRequest(arguments: arguments)
             try request.execute()

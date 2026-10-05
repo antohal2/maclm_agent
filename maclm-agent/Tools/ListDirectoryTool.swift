@@ -15,11 +15,19 @@ struct ListDirectoryTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
-        try await execute(arguments: arguments, policy: SecurityPolicyEngine(rules: []))
+    func execute(arguments: [String: Any], invocation: ToolInvocationContext) async throws -> ToolExecutionResult {
+        try await execute(
+            arguments: arguments,
+            invocation: invocation,
+            policy: SecurityPolicyEngine(rules: [], invocation: invocation)
+        )
     }
 
-    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult {
+    func execute(
+        arguments: [String: Any],
+        invocation _: ToolInvocationContext,
+        policy: SecurityPolicyEngine
+    ) async throws -> ToolExecutionResult {
         let path: String
         switch ToolArgument.requiredString(named: "path", in: arguments) {
         case let .value(value):

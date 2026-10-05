@@ -580,7 +580,6 @@
       }
     },
     "Все беседы": {
-      "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
@@ -2178,7 +2177,6 @@
       }
     },
     "Открыть журнал…": {
-      "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
@@ -6087,6 +6085,422 @@
           "stringUnit": {
             "state": "translated",
             "value": "Approval required: %@"
+          }
+        }
+      }
+    },
+    "Защитное правило нельзя изменить или отключить.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Защитное правило нельзя изменить или отключить."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protection rules cannot be changed or disabled."
+          }
+        }
+      }
+    },
+    "Защита данных и конфигурации приложения": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Защита данных и конфигурации приложения"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application data and configuration protection"
+          }
+        }
+      }
+    },
+    "Разрешённая зона: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешённая зона: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allowed zone: %@"
+          }
+        }
+      }
+    },
+    "Действующих block-правил: %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действующих block-правил: %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active block rules: %lld"
+          }
+        }
+      }
+    },
+    "Периметр и правила действуют на файловые инструменты. Чтение вне зоны ограничивают только block-правила. run_shell не ограничен периметром: читайте команду на карточке подтверждения.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Периметр и правила действуют на файловые инструменты. Чтение вне зоны ограничивают только block-правила. run_shell не ограничен периметром: читайте команду на карточке подтверждения."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The perimeter and rules apply to file tools. Reads outside the zone are restricted only by block rules. run_shell bypasses the perimeter: read the command on its confirmation card."
+          }
+        }
+      }
+    },
+    "Отозвать": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отозвать"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revoke"
+          }
+        }
+      }
+    },
+    "Сбросить все": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбросить все"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset all"
+          }
+        }
+      }
+    },
+    "Рабочая папка не задана": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рабочая папка не задана"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No working directory"
+          }
+        }
+      }
+    },
+    "Переместить в проект…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переместить в проект…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to project…"
+          }
+        }
+      }
+    },
+    "Нет проектов": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет проектов"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No projects"
+          }
+        }
+      }
+    },
+    "Безопасность сессии": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Безопасность сессии"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session security"
+          }
+        }
+      }
+    },
+    "Аудит": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аудит"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audit"
+          }
+        }
+      }
+    },
+    "Ещё %lld": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ещё %lld"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more"
+          }
+        }
+      }
+    },
+    "Инспектор": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Инспектор"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inspector"
+          }
+        }
+      }
+    },
+    "Глобально": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Глобально"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global"
+          }
+        }
+      }
+    },
+    "Область правил": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Область правил"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule scope"
+          }
+        }
+      }
+    },
+    "Глобальные": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Глобальные"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global"
+          }
+        }
+      }
+    },
+    "Фильтр беседы: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фильтр беседы: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversation filter: %@"
+          }
+        }
+      }
+    },
+    "Глобальные правила": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Глобальные правила"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global rules"
+          }
+        }
+      }
+    },
+    "Изменить папку…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменить папку…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change directory…"
+          }
+        }
+      }
+    },
+    "Файлы": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        }
+      }
+    },
+    "Показать в Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать в Finder"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        }
+      }
+    },
+    "Проект": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проект"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project"
+          }
+        }
+      }
+    },
+    "Не удалось запустить приложение": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось запустить приложение"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to start the application"
+          }
+        }
+      }
+    },
+    "Не удалось открыть хранилище или обеспечить защиту данных: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось открыть хранилище или обеспечить защиту данных: %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to open the store or protect application data: %@"
+          }
+        }
+      }
+    },
+    "allowed_dirs действуют только в беседах без проектного периметра. В проекте с рабочей папкой используются папка проекта и его allow-правила.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allowed_dirs действуют только в беседах без проектного периметра. В проекте с рабочей папкой используются папка проекта и его allow-правила."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "allowed_dirs apply only to conversations without a project perimeter. Projects with a working directory use that directory and their own allow rules."
           }
         }
       }

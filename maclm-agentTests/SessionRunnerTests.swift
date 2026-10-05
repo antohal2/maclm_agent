@@ -214,7 +214,10 @@ private struct SessionTestTool: Tool {
         .object(properties: [:], required: [])
     }
 
-    func execute(arguments _: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(
+        arguments _: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult {
         try await Task.sleep(for: .milliseconds(80))
         return .success(content: "result")
     }

@@ -23,7 +23,7 @@ struct RunShellTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(arguments: [String: Any], invocation _: ToolInvocationContext) async throws -> ToolExecutionResult {
         let command: String
         switch ToolArgument.requiredRawString(named: "command", in: arguments) {
         case let .value(value):

@@ -69,7 +69,10 @@ struct ConversationListView: View {
             }
         }
         .sheet(isPresented: $showProjectEditor) {
-            ProjectEditorView(project: editingProject) { project in
+            ProjectEditorView(
+                project: editingProject,
+                onDirectoryChange: viewModel.resetProjectPermissions
+            ) { project in
                 if editingProject == nil {
                     project.sortOrder = (projects.map(\.sortOrder).max() ?? -1) + 1
                 }

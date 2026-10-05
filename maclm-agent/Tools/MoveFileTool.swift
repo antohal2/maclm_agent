@@ -24,7 +24,7 @@ struct MoveFileTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(arguments: [String: Any], invocation _: ToolInvocationContext) async throws -> ToolExecutionResult {
         let sourcePath: String
         switch ToolArgument.requiredString(named: "from", in: arguments) {
         case let .value(value):

@@ -135,7 +135,10 @@ private struct RegressionTool: Tool {
         .object(properties: [:], required: [])
     }
 
-    func execute(arguments _: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(
+        arguments _: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult {
         .success(content: "result")
     }
 }
@@ -148,7 +151,10 @@ private struct RegressionApprovalTool: Tool {
         .object(properties: [:], required: [])
     }
 
-    func execute(arguments _: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(
+        arguments _: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult {
         .success(content: "result")
     }
 }

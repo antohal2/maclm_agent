@@ -5,9 +5,17 @@ enum RiskLevel: Int, Codable, Comparable, CaseIterable, Sendable {
     case caution = 1
     case dangerous = 2
 
-    static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
-    var requiresConfirmation: Bool { self != .safe }
-    var canBeRemembered: Bool { self == .caution }
+    static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    var requiresConfirmation: Bool {
+        self != .safe
+    }
+
+    var canBeRemembered: Bool {
+        self == .caution
+    }
 }
 
 struct RiskAssessment: Equatable, Sendable {
@@ -22,10 +30,14 @@ struct RiskAssessment: Equatable, Sendable {
 
 struct ToolRiskContext: Sendable {
     var allowedDirectories: [String] = []
+    var projectPolicy: SecurityPolicyEngine?
 
     func contains(_ path: String?) -> Bool {
         guard let path, !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return false
+        }
+        if let projectPolicy {
+            return projectPolicy.isInProjectAllowedZone(path)
         }
         let target = normalized(path)
         return allowedDirectories.contains { directory in
@@ -46,7 +58,9 @@ struct ToolRiskContext: Sendable {
             ancestor.deleteLastPathComponent()
         }
         var resolved = ancestor.resolvingSymlinksInPath()
-        for component in suffix { resolved.appendPathComponent(component) }
+        for component in suffix {
+            resolved.appendPathComponent(component)
+        }
         return resolved.standardizedFileURL.path
     }
 }
@@ -57,8 +71,21 @@ enum ToolRiskEvaluator {
     static func evaluate(
         _ tool: any Tool,
         arguments: [String: Any],
-        context: ToolRiskContext
+        context: ToolRiskContext,
+        invocation: ToolInvocationContext
     ) -> RiskAssessment {
+        var context = context
+        if invocation.workingDirectory != nil {
+            if let policy = context.projectPolicy {
+                guard policy.invocation == invocation else {
+                    return RiskAssessment(level: .dangerous, reason: "несогласованный контекст проектной политики")
+                }
+            } else {
+                context.projectPolicy = SecurityPolicyEngine(rules: [], invocation: invocation)
+            }
+        } else {
+            context.projectPolicy = nil
+        }
         let computed = tool.computeRisk(arguments: arguments, context: context)
         let level = max(type(of: tool).baseRiskLevel, computed.level)
         guard type(of: tool).isPolicyEnforceable else {

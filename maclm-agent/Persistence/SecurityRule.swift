@@ -19,10 +19,19 @@ final class SecurityRule {
     var isBuiltIn: Bool
     var ruleDescription: String
     var createdAt: Date
+    var project: Project?
+    var isMandatory: Bool = false
 
-    init(dimension: RuleDimension, pattern: String, action: RuleAction,
-         isEnabled: Bool = true, order: Int = 0, isBuiltIn: Bool = false,
-         ruleDescription: String = "", createdAt: Date = .now) {
+    init(
+        dimension: RuleDimension,
+        pattern: String,
+        action: RuleAction,
+        isEnabled: Bool = true,
+        order: Int = 0,
+        isBuiltIn: Bool = false,
+        ruleDescription: String = "",
+        createdAt: Date = .now
+    ) {
         self.dimension = dimension
         self.pattern = pattern
         self.action = action
@@ -34,9 +43,18 @@ final class SecurityRule {
     }
 
     var snapshot: SecurityRuleSnapshot {
-        .init(dimension: dimension, pattern: pattern, action: action,
-              isEnabled: isEnabled, order: order, isBuiltIn: isBuiltIn,
-              ruleDescription: ruleDescription, createdAt: createdAt)
+        .init(
+            dimension: dimension,
+            pattern: pattern,
+            action: action,
+            isEnabled: isEnabled,
+            order: order,
+            isBuiltIn: isBuiltIn,
+            ruleDescription: ruleDescription,
+            projectID: project?.id,
+            isMandatory: isMandatory,
+            createdAt: createdAt
+        )
     }
 }
 
@@ -48,5 +66,7 @@ struct SecurityRuleSnapshot: Equatable, Sendable {
     var order: Int = 0
     var isBuiltIn: Bool = false
     var ruleDescription: String = ""
+    var projectID: UUID?
+    var isMandatory: Bool = false
     var createdAt: Date = .distantPast
 }

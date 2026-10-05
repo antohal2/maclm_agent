@@ -136,15 +136,22 @@ final class SessionRunner {
         assistantID: UUID,
         provider: any LLMProvider
     ) {
-        let conversationID = generatingConversationID
+        let conversationID = conversation.id
         let token = UUID()
         generationToken = token
+        let conversation = self.conversation
+        let invocationContext: @MainActor @Sendable () -> ToolInvocationContext = {
+            let project = conversation.project
+            return ToolInvocationContext(conversationID: conversationID, project: project.map {
+                ProjectSecuritySnapshot(id: $0.id, workingDirectoryPath: $0.workingDirectoryPath)
+            })
+        }
         generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
                 try await agentLoop.streamResponse(
                     to: requestMessages,
                     using: provider,
-                    conversationID: conversationID
+                    invocationContext: invocationContext
                 ) { [weak self] event in
                     guard await self?.generationToken == token else { return }
                     await self?.consume(event, assistantID: assistantID)
@@ -164,7 +171,7 @@ final class SessionRunner {
             }
 
             if let self, self.generationToken == token {
-                if let conversationID, !self.autoTitles.hasRequest(for: conversationID) {
+                if !self.autoTitles.hasRequest(for: conversationID) {
                     let descriptor = FetchDescriptor<Conversation>(predicate: #Predicate { $0.id == conversationID })
                     if let conversation = try? self.modelContext.fetch(descriptor).first {
                         self.autoTitles.applyFallbackTitle(conversation)

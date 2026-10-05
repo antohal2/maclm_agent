@@ -20,15 +20,20 @@ enum DefaultSecurityRules {
         ("**/.env", "файлы с секретами"),
         ("**/.git/config", "конфигурация Git может содержать токены"),
     ].enumerated().map { index, definition in
-        SecurityRuleSnapshot(pattern: definition.0, action: .block, order: index,
-                             isBuiltIn: true, ruleDescription: definition.1)
+        SecurityRuleSnapshot(
+            pattern: definition.0,
+            action: .block,
+            order: index,
+            isBuiltIn: true,
+            ruleDescription: definition.1
+        )
     }
 }
 
 enum SecurityRuleSeeder {
     @MainActor
     static func seedIfNeeded(context: ModelContext) throws {
-        var descriptor = FetchDescriptor<SecurityRule>(predicate: #Predicate { $0.isBuiltIn })
+        var descriptor = FetchDescriptor<SecurityRule>(predicate: #Predicate { $0.isBuiltIn && !$0.isMandatory })
         descriptor.fetchLimit = 1
         guard try context.fetch(descriptor).isEmpty else { return }
         for rule in DefaultSecurityRules.rules {

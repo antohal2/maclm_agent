@@ -15,7 +15,7 @@ struct ReadFileTool: Tool {
         )
     }
 
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+    func execute(arguments: [String: Any], invocation _: ToolInvocationContext) async throws -> ToolExecutionResult {
         let path: String
         switch ToolArgument.requiredString(named: "path", in: arguments) {
         case let .value(value):

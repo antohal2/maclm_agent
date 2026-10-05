@@ -5,14 +5,16 @@ struct ProjectEditorView: View {
     @Environment(\.dismiss) private var dismiss
     let project: Project?
     let onSave: (Project) -> Void
+    var onDirectoryChange: ((Project) -> Void)?
     @State private var name: String
     @State private var path: String
     @State private var instructions: String
     @State private var error: String?
     @State private var pendingPath: String?
 
-    init(project: Project?, onSave: @escaping (Project) -> Void) {
+    init(project: Project?, onDirectoryChange: ((Project) -> Void)? = nil, onSave: @escaping (Project) -> Void) {
         self.project = project
+        self.onDirectoryChange = onDirectoryChange
         self.onSave = onSave
         _name = State(initialValue: project?.name ?? "")
         _path = State(initialValue: project?.workingDirectoryPath ?? "")
@@ -83,6 +85,9 @@ struct ProjectEditorView: View {
     private func save(path: String?) {
         let result = project ?? Project(name: name)
         result.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if result.workingDirectoryPath != path {
+            onDirectoryChange?(result)
+        }
         result.workingDirectoryPath = path
         result.instructions = String(instructions.prefix(4000))
         onSave(result)

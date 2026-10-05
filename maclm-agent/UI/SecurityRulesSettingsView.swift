@@ -33,6 +33,8 @@ extension RuleDimension {
 struct SecurityRulesSettingsView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \SecurityRule.order) private var rules: [SecurityRule]
+    @Query private var projects: [Project]
+    @State private var scope: UUID?
     @State private var editing: SecurityRule?
     @State private var draft = SecurityRuleDraft()
     @State private var showsEditor = false
@@ -59,6 +61,10 @@ struct SecurityRulesSettingsView: View {
             )
             .foregroundStyle(.orange)
             .fixedSize(horizontal: false, vertical: true)
+            Picker(String(localized: "Область правил"), selection: $scope) {
+                Text(String(localized: "Глобальные")).tag(nil as UUID?)
+                ForEach(projects) { Text($0.name).tag($0.id as UUID?) }
+            }
             List {
                 ForEach(RuleDimension.allCases, id: \.self) { dimension in
                     Section {
@@ -70,7 +76,7 @@ struct SecurityRulesSettingsView: View {
                                     isOn: Binding(get: { rule.isEnabled }, set: { enabled in
                                         perform { try store.setEnabled(rule, enabled) }
                                     })
-                                ).labelsHidden()
+                                ).labelsHidden().disabled(rule.isMandatory)
                                 VStack(alignment: .leading) {
                                     Text("\(rule.action.rawValue) · \(rule.pattern)").font(.callout.monospaced())
                                     Text(InterfaceLocalization.text(rule.ruleDescription)).font(.caption)
@@ -84,7 +90,7 @@ struct SecurityRulesSettingsView: View {
                                     editing = rule
                                     draft = SecurityRuleDraft(rule)
                                     showsEditor = true
-                                }.buttonStyle(.borderless)
+                                }.buttonStyle(.borderless).disabled(rule.isMandatory)
                                 if !rule.isBuiltIn {
                                     Button(role: .destructive) { perform { try store.delete(rule) } } label: {
                                         Image(systemName: "trash")
@@ -92,7 +98,12 @@ struct SecurityRulesSettingsView: View {
                                 }
                             }
                         }
-                        .onMove { from, to in perform { try store.move(dimension: dimension, from: from, to: to) } }
+                        .onMove { from, to in perform { try store.move(
+                            dimension: dimension,
+                            projectID: scope,
+                            from: from,
+                            to: to
+                        ) } }
                     } header: { Text(dimension.title) }
                 }
             }.frame(minHeight: 280)
@@ -100,6 +111,7 @@ struct SecurityRulesSettingsView: View {
                 Button(String(localized: "Добавить правило…")) {
                     editing = nil
                     draft = SecurityRuleDraft()
+                    draft.project = projects.first { $0.id == scope }
                     showsEditor = true
                 }
                 Button(String(localized: "Сбросить встроенные правила…")) { confirmsReset = true }
@@ -138,7 +150,7 @@ struct SecurityRulesSettingsView: View {
     }
 
     private func group(_ dimension: RuleDimension) -> [SecurityRule] {
-        rules.filter { $0.dimension == dimension }.sorted {
+        rules.filter { $0.dimension == dimension && $0.project?.id == scope }.sorted {
             if $0.order != $1.order {
                 return $0.order < $1.order
             }
@@ -161,6 +173,7 @@ private struct SecurityRuleEditorView: View {
     let rules: [SecurityRuleSnapshot]
     let save: () -> Void
     @State private var example = ""
+    @Query private var projects: [Project]
     private var locked: Bool {
         rule?.isBuiltIn == true
     }
@@ -173,6 +186,13 @@ private struct SecurityRuleEditorView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(rule == nil ? String(localized: "Новое правило") : String(localized: "Редактирование правила"))
                 .font(.headline)
+            Picker(String(localized: "Область правил"), selection: Binding<UUID?>(
+                get: { draft.project?.id },
+                set: { id in draft.project = projects.first { $0.id == id } }
+            )) {
+                Text(String(localized: "Глобальные")).tag(nil as UUID?)
+                ForEach(projects) { Text($0.name).tag($0.id as UUID?) }
+            }.disabled(locked)
             Picker(String(localized: "Измерение"), selection: $draft.dimension) {
                 ForEach(RuleDimension.allCases, id: \.self) { Text($0.title).tag($0) }
             }.disabled(locked)

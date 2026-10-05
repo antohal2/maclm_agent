@@ -8,7 +8,9 @@ struct PolicyDecision: Equatable, Sendable {
     let disposition: PolicyDisposition
     let rule: SecurityRuleSnapshot?
     let explanation: String?
-    var isAllowed: Bool { disposition != .blocked }
+    var isAllowed: Bool {
+        disposition != .blocked
+    }
 
     static let noDecision = Self(disposition: .noDecision, rule: nil, explanation: nil)
 }
@@ -16,12 +18,42 @@ struct PolicyDecision: Equatable, Sendable {
 struct SecurityPolicyEngine: Sendable {
     private let rules: [SecurityRuleSnapshot]
 
-    init(rules: [SecurityRuleSnapshot]) {
-        self.rules = rules.filter(\.isEnabled).sorted {
-            if $0.order != $1.order { return $0.order < $1.order }
-            if $0.createdAt != $1.createdAt { return $0.createdAt < $1.createdAt }
+    let invocation: ToolInvocationContext
+
+    init(rules: [SecurityRuleSnapshot], invocation: ToolInvocationContext) {
+        self.invocation = invocation
+        var effective = rules.filter { rule in
+            if rule.isMandatory {
+                return true
+            }
+            guard rule.isEnabled else { return false }
+            guard invocation.workingDirectory != nil else { return rule.projectID == nil }
+            if rule.action == .block {
+                return rule.projectID == nil || rule.projectID == invocation.project?.id
+            }
+            return rule.projectID == invocation.project?.id && rule.projectID != nil
+        }
+        if let directory = invocation.workingDirectory {
+            effective.append(.init(pattern: PathCanonicalizer.canonicalize(directory) + "/**", action: .allow))
+        }
+        self.rules = effective.sorted {
+            if $0.order != $1.order {
+                return $0.order < $1.order
+            }
+            if $0.createdAt != $1.createdAt {
+                return $0.createdAt < $1.createdAt
+            }
             return $0.pattern < $1.pattern
         }
+    }
+
+    var blockRuleCount: Int {
+        rules.filter { $0.dimension == .path && $0.action == .block }.count
+    }
+
+    func isInProjectAllowedZone(_ path: String) -> Bool {
+        Self(rules: rules.filter { $0.action == .allow }, invocation: invocation)
+            .decision(for: path, dimension: .path).disposition == .allowed
     }
 
     func decision(for value: String, dimension: RuleDimension) -> PolicyDecision {
@@ -36,9 +68,15 @@ struct SecurityPolicyEngine: Sendable {
             let pattern = PathCanonicalizer.canonicalizePattern(rule.pattern)
             var ancestor = canonical
             while true {
-                if PathGlob.matches(caseSensitive ? ancestor : ancestor.lowercased(),
-                                    pattern: caseSensitive ? pattern : pattern.lowercased()) { return true }
-                if ancestor == "/" { return false }
+                if PathGlob.matches(
+                    caseSensitive ? ancestor : ancestor.lowercased(),
+                    pattern: caseSensitive ? pattern : pattern.lowercased()
+                ) {
+                    return true
+                }
+                if ancestor == "/" {
+                    return false
+                }
                 ancestor = URL(fileURLWithPath: ancestor).deletingLastPathComponent().path
             }
         }
@@ -68,8 +106,12 @@ struct SecurityPolicyEngine: Sendable {
             let paths = [path, prepared[key] as? String ?? path]
             for candidate in paths {
                 let decision = decision(for: candidate, dimension: .path)
-                if !decision.isAllowed { return decision }
-                if decision.disposition == .allowed { allowed = decision }
+                if !decision.isAllowed {
+                    return decision
+                }
+                if decision.disposition == .allowed {
+                    allowed = decision
+                }
             }
         }
         return allowed

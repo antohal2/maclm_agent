@@ -122,7 +122,10 @@ private struct LoweringTool: Tool {
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
         .init(level: .safe)
     }
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult { .success(content: "test") }
+    func execute(
+        arguments: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult { .success(content: "test") }
 }
 
 private struct UniversalTool: Tool {
@@ -132,7 +135,10 @@ private struct UniversalTool: Tool {
     let description = "Test only"
     var parametersSchema: JSONSchema { .object(properties: [:], required: []) }
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment { .init(level: .safe) }
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult { .success(content: "test") }
+    func execute(
+        arguments: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult { .success(content: "test") }
 }
 
 private struct UndeclaredTool: Tool {
@@ -140,7 +146,10 @@ private struct UndeclaredTool: Tool {
     let name = "undeclared_test"
     let description = "Test only"
     var parametersSchema: JSONSchema { .object(properties: [:], required: []) }
-    func execute(arguments: [String: Any]) async throws -> ToolExecutionResult { .success(content: "test") }
+    func execute(
+        arguments: [String: Any],
+        invocation _: ToolInvocationContext
+    ) async throws -> ToolExecutionResult { .success(content: "test") }
 }
 
 private actor RiskEventRecorder {

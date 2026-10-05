@@ -2,11 +2,18 @@ import Foundation
 import SwiftData
 
 struct SecurityRuleDraft: Equatable {
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.dimension == rhs.dimension && lhs.pattern == rhs.pattern && lhs.action == rhs.action
+            && lhs.ruleDescription == rhs.ruleDescription && lhs.isEnabled == rhs.isEnabled && lhs.project?.id == rhs
+            .project?.id
+    }
+
     var dimension: RuleDimension = .path
     var pattern = ""
     var action: RuleAction = .block
     var ruleDescription = ""
     var isEnabled = true
+    var project: Project?
 
     init() {}
     init(_ rule: SecurityRule) {
@@ -15,6 +22,7 @@ struct SecurityRuleDraft: Equatable {
         action = rule.action
         ruleDescription = rule.ruleDescription
         isEnabled = rule.isEnabled
+        project = rule.project
     }
 
     var snapshot: SecurityRuleSnapshot {
@@ -23,7 +31,8 @@ struct SecurityRuleDraft: Equatable {
             pattern: pattern,
             action: action,
             isEnabled: isEnabled,
-            ruleDescription: ruleDescription
+            ruleDescription: ruleDescription,
+            projectID: project?.id
         )
     }
 }
@@ -83,10 +92,14 @@ enum SecurityPattern {
         switch draft.dimension {
         case .path:
             var rule = draft.snapshot
+            rule.projectID = nil
             rule.action = .allow
             rule.isEnabled = true
-            return SecurityPolicyEngine(rules: [rule]).decision(for: ReadFileTool(), arguments: ["path": value])
-                .disposition == .allowed
+            return SecurityPolicyEngine(rules: [rule], invocation: .init(conversationID: UUID())).decision(
+                for: ReadFileTool(),
+                arguments: ["path": value]
+            )
+            .disposition == .allowed
         case .command: return matchesRegex(value, draft.pattern)
         case .application: return value == draft.pattern
         case .host:
@@ -116,7 +129,13 @@ enum SecurityPattern {
             edited.order = (rules.filter { $0.dimension == draft.dimension }.map(\.order).max() ?? -1) + 1
             candidates.append(edited)
         }
-        let engine = SecurityPolicyEngine(rules: candidates)
+        let engine = SecurityPolicyEngine(
+            rules: candidates,
+            invocation: .init(
+                conversationID: UUID(),
+                project: draft.project.map { .init(id: $0.id, workingDirectoryPath: $0.workingDirectoryPath) }
+            )
+        )
         return draft.dimension == .path
             ? engine.decision(for: ReadFileTool(), arguments: ["path": value])
             : engine.decision(for: value, dimension: draft.dimension)
@@ -140,9 +159,13 @@ struct SecurityRuleStore {
 
     @discardableResult
     func save(_ draft: SecurityRuleDraft, rule: SecurityRule? = nil) throws -> SecurityRule {
+        if let rule, rule.isMandatory {
+            throw failure(String(localized: "Защитное правило нельзя изменить или отключить."))
+        }
         if let rule, rule.isBuiltIn {
             guard draft.dimension == rule.dimension, draft.pattern == rule.pattern,
-                  draft.action == rule.action, draft.ruleDescription == rule.ruleDescription
+                  draft.action == rule.action, draft.ruleDescription == rule.ruleDescription,
+                  draft.project?.id == rule.project?.id
             else {
                 throw failure("У встроенного правила меняется только включение.")
             }
@@ -171,24 +194,30 @@ struct SecurityRuleStore {
         target.action = draft.action
         target.ruleDescription = draft.ruleDescription
         target.isEnabled = draft.isEnabled
+        target.project = draft.project
         try context.save()
         return target
     }
 
     func delete(_ rule: SecurityRule) throws {
-        guard !rule.isBuiltIn
+        if rule.isMandatory {
+            throw failure(String(localized: "Защитное правило нельзя изменить или отключить."))
+        }
+        guard !rule.isBuiltIn, !rule.isMandatory
         else { throw failure(String(localized: "Встроенные правила нельзя удалить; отключите переключателем.")) }
         context.delete(rule)
         try context.save()
     }
 
     func setEnabled(_ rule: SecurityRule, _ enabled: Bool) throws {
+        guard !rule.isMandatory
+        else { throw failure(String(localized: "Защитное правило нельзя изменить или отключить.")) }
         rule.isEnabled = enabled
         try context.save()
     }
 
-    func move(dimension: RuleDimension, from: IndexSet, to: Int) throws {
-        var group = try rules().filter { $0.dimension == dimension }
+    func move(dimension: RuleDimension, projectID: UUID? = nil, from: IndexSet, to: Int) throws {
+        var group = try rules().filter { $0.dimension == dimension && $0.project?.id == projectID }
         let moved = from.sorted().map { group[$0] }
         for index in from.sorted(by: >) {
             group.remove(at: index)
@@ -201,7 +230,7 @@ struct SecurityRuleStore {
     }
 
     func resetBuiltIns() throws {
-        let existing = try rules().filter(\.isBuiltIn)
+        let existing = try rules().filter { $0.isBuiltIn && !$0.isMandatory }
         for rule in existing {
             context.delete(rule)
         }

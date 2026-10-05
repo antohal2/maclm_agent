@@ -125,8 +125,7 @@ enum AuditSanitizer {
         }
         if toolName == "run_shell", let data = result.content.data(using: .utf8),
            let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let code = output["exitCode"] as? Int, let timedOut = output["timedOut"] as? Bool
-        {
+           let code = output["exitCode"] as? Int, let timedOut = output["timedOut"] as? Bool {
             var summary = "exitCode: \(code)\ntimedOut: \(timedOut)"
                 + "\nstdout:\n\(truncate(output["stdout"] as? String ?? ""))"
                 + "\nstderr:\n\(truncate(output["stderr"] as? String ?? ""))"
@@ -141,6 +140,7 @@ enum AuditSanitizer {
 }
 
 struct AuditFilter: Equatable, Sendable {
+    var conversationID: UUID?
     var start: Date?
     var end: Date?
     var tool = ""
@@ -155,6 +155,8 @@ struct AuditFilter: Equatable, Sendable {
         let risk = risk?.rawValue ?? -1
         let decision = decision?.rawValue ?? ""
         let search = search
+        let conversationID = conversationID
+        let conversation = #Predicate<AuditEntry> { conversationID == nil || $0.conversationID == conversationID }
         let dates = #Predicate<AuditEntry> { $0.timestamp >= start && $0.timestamp <= end }
         let name = #Predicate<AuditEntry> { tool.isEmpty || $0.toolName == tool }
         let level = #Predicate<AuditEntry> { risk == -1 || $0.riskRaw == risk }
@@ -165,7 +167,7 @@ struct AuditFilter: Equatable, Sendable {
         }
         return #Predicate<AuditEntry> {
             dates.evaluate($0) && name.evaluate($0) && level.evaluate($0)
-                && choice.evaluate($0) && found.evaluate($0)
+                && choice.evaluate($0) && found.evaluate($0) && conversation.evaluate($0)
         }
     }
 
@@ -181,8 +183,8 @@ struct AuditFilter: Equatable, Sendable {
 }
 
 @ModelActor actor AuditMaintenance {
-    // Construct the context off the main actor: SwiftData chooses its queue
-    // at initialization, not when a model-actor method is later awaited.
+    /// Construct the context off the main actor: SwiftData chooses its queue
+    /// at initialization, not when a model-actor method is later awaited.
     static func background(container: ModelContainer) async -> AuditMaintenance {
         await Task.detached { AuditMaintenance(modelContainer: container) }.value
     }

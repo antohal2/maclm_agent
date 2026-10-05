@@ -15,6 +15,7 @@ struct AuditCommands: Commands {
 struct AuditLogView: View {
     @Environment(\.modelContext) private var context
     @State private var filter = AuditFilter()
+    @AppStorage("audit.conversationFilter") private var conversationFilter = ""
     @State private var useDates = false
     @State private var start = Calendar.current.startOfDay(for: Date())
     @State private var end = Date()
@@ -26,6 +27,7 @@ struct AuditLogView: View {
 
     private var activeFilter: AuditFilter {
         var value = filter
+        value.conversationID = UUID(uuidString: conversationFilter)
         value.start = useDates ? start : nil
         value.end = useDates ? end : nil
         return value
@@ -33,6 +35,12 @@ struct AuditLogView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if !conversationFilter.isEmpty {
+                HStack {
+                    Text(String(localized: "Фильтр беседы: \(conversationFilter)"))
+                    Button(String(localized: "Все беседы")) { conversationFilter = "" }
+                }
+            }
             HStack {
                 TextField(String(localized: "Поиск: инструмент или аргументы"), text: $filter.search)
                 TextField(String(localized: "Инструмент (точное имя)"), text: $filter.tool)

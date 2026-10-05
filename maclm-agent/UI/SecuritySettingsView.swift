@@ -4,6 +4,7 @@ import SwiftUI
 
 struct SecuritySettingsView: View {
     @Environment(\.modelContext) private var context
+    @Query private var conversations: [Conversation]
     @Environment(\.openWindow) private var openWindow
     @State private var confirmClear = false
     @State private var auditStatus = ""
@@ -16,6 +17,11 @@ struct SecuritySettingsView: View {
         Form {
             Section { SecurityRulesSettingsView() }
             Section(String(localized: "Разрешённые директории · allowed_dirs")) {
+                Text(String(localized: """
+                allowed_dirs действуют только в беседах без проектного периметра. В проекте с рабочей \
+                папкой используются папка проекта и его allow-правила.
+                """))
+                .font(.caption).foregroundStyle(.secondary)
                 Text(
                     String(
                         localized: """
@@ -85,7 +91,8 @@ struct SecuritySettingsView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(sessionPermissions.sortedPermissions) { permission in
-                        Label("\(permission.toolName) · caution", systemImage: "checkmark.shield")
+                        let title = conversations.first { $0.id == permission.conversationID }?.interfaceTitle ?? "—"
+                        Label("\(permission.toolName) · caution · \(title)", systemImage: "checkmark.shield")
                     }
                 }
                 Text(

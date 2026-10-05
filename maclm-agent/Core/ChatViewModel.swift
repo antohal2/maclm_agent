@@ -40,6 +40,8 @@ final class ChatViewModel {
     let autoTitles: AutoTitleService
     private var removedConversationIDs: Set<UUID> = []
     private var removedProjectIDs: Set<UUID> = []
+    var savedProjectDirectories: [UUID: String] = [:]
+    let sessionPermissions: SessionPermissions
     let registry: SessionRunnerRegistry
     var currentRunner: SessionRunner? {
         selectedConversationID.flatMap { registry.runners[$0] }
@@ -57,6 +59,7 @@ final class ChatViewModel {
         titleTimeout: Duration = .seconds(20)
     ) {
         self.modelContext = modelContext
+        sessionPermissions = agentLoop.sessionPermissions
         self.providerCoordinator = providerCoordinator
         autoTitles = AutoTitleService(context: modelContext, timeout: titleTimeout)
         registry = SessionRunnerRegistry(
@@ -65,6 +68,9 @@ final class ChatViewModel {
             autoTitles: autoTitles,
             providerFactory: { try providerFactory?() ?? providerCoordinator.makeProvider() }
         )
+        for project in (try? modelContext.fetch(FetchDescriptor<Project>())) ?? [] {
+            savedProjectDirectories[project.id] = project.workingDirectoryPath ?? ""
+        }
         restoreSelection()
     }
 
@@ -118,6 +124,7 @@ final class ChatViewModel {
             }
         } else {
             for conversation in project.conversations {
+                sessionPermissions.reset(conversationID: conversation.id)
                 conversation.project = nil
             }
             modelContext.delete(project)
@@ -141,6 +148,7 @@ final class ChatViewModel {
             selectedConversation = nil
             registry.selectedConversationID = nil
         }
+        sessionPermissions.reset(conversationID: id)
         modelContext.delete(conversation)
         saveContext()
         ensureConversationSelected()
