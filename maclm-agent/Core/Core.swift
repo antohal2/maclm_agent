@@ -80,6 +80,7 @@ actor AgentLoop {
     func streamResponse(
         to messages: [ChatMessage],
         using provider: any LLMProvider,
+        toolsEnabled: Bool = true,
         invocationContext: @escaping @MainActor @Sendable () -> ToolInvocationContext,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
@@ -100,6 +101,7 @@ actor AgentLoop {
             let turn = try await receiveTurn(
                 history: history,
                 provider: provider,
+                toolsEnabled: toolsEnabled,
                 onEvent: onEvent
             )
             guard !turn.toolCalls.isEmpty else {
@@ -166,14 +168,16 @@ actor AgentLoop {
     private func receiveTurn(
         history: [ChatMessage],
         provider: any LLMProvider,
+        toolsEnabled: Bool,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AssistantTurn {
         var content = ""
         var toolCallAccumulators: [Int: ToolCallAccumulator] = [:]
 
+        await onEvent(.contextRequestStarted)
         for try await event in provider.streamChat(
             messages: history,
-            tools: toolRegistry.definitions
+            tools: toolsEnabled ? toolRegistry.definitions : []
         ) {
             switch event {
             case let .contentDelta(delta):
@@ -182,6 +186,8 @@ actor AgentLoop {
             case let .toolCallDelta(delta):
                 toolCallAccumulators[delta.index, default: ToolCallAccumulator()]
                     .append(delta)
+            case let .usage(prompt, completion):
+                await onEvent(.usage(promptTokens: prompt, completionTokens: completion))
             case .done:
                 break
             }
@@ -189,7 +195,7 @@ actor AgentLoop {
 
         return AssistantTurn(
             content: content,
-            toolCalls: toolCallAccumulators
+            toolCalls: (toolsEnabled ? toolCallAccumulators : [:])
                 .sorted { $0.key < $1.key }
                 .map(\.value.chatToolCall)
         )

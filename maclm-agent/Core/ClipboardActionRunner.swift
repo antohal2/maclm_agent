@@ -201,6 +201,7 @@ final class ClipboardActionRunner {
                 response += delta
             case .toolCallDelta:
                 throw ClipboardActionRunnerError.unexpectedToolCall
+            case .usage: break
             case .done:
                 receivedDone = true
                 break stream

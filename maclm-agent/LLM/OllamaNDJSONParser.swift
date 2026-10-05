@@ -60,6 +60,9 @@ struct OllamaNDJSONParser {
             })
         }
         if chunk.done == true {
+            if let prompt = chunk.promptEvalCount, let completion = chunk.evalCount {
+                events.append(.usage(promptTokens: prompt, completionTokens: completion))
+            }
             events.append(.done)
         }
         return events
@@ -70,6 +73,13 @@ private struct OllamaChatChunk: Decodable {
     let message: OllamaResponseMessage?
     let done: Bool?
     let error: String?
+    let promptEvalCount: Int?
+    let evalCount: Int?
+    enum CodingKeys: String, CodingKey {
+        case message, done, error
+        case promptEvalCount = "prompt_eval_count"
+        case evalCount = "eval_count"
+    }
 }
 
 private struct OllamaResponseMessage: Decodable {

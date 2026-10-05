@@ -14,6 +14,11 @@ struct ProviderSelectionStore {
         static let model = "llm.selectedModel"
     }
 
+    var contextLimit: Int {
+        get { defaults.object(forKey: "llm.defaultContextLimit") as? Int ?? 8192 }
+        nonmutating set { defaults.set(newValue, forKey: "llm.defaultContextLimit") }
+    }
+
     func loadEndpoints() -> [ProviderEndpoint] {
         var endpoints = defaults.data(forKey: "llm.endpoints").flatMap { try? JSONDecoder().decode(
             [ProviderEndpoint].self,
@@ -185,6 +190,7 @@ final class ProviderCoordinator {
         self.discovery = discovery
         selection = store.load()
         customEndpoints = store.loadEndpoints()
+        defaultContextLimit = max(1, store.contextLimit)
     }
 
     func discoverIfNeeded() async {
@@ -302,17 +308,47 @@ final class ProviderCoordinator {
     }
 
     func makeProvider() throws -> any LLMProvider {
-        guard let selection else {
+        try makeProvider(for: nil)
+    }
+
+    func makeProvider(for conversation: Conversation?) throws -> any LLMProvider {
+        guard let selection = sessionSelection(conversation) else {
             throw ProviderRoutingError.noProviderConfigured
         }
 
-        guard !selectionIsEmbedding else { throw ProviderRoutingError.modelRequired }
+        guard !(modelInfo(for: conversation) ?? ModelInfo(id: selection.model)).isEmbedding
+        else { throw ProviderRoutingError.modelRequired }
         switch selection.provider {
         case .lmStudio:
             return LMStudioProvider(baseURL: selection.baseURL, model: selection.model)
         case .ollama:
             return OllamaProvider(baseURL: selection.baseURL, model: selection.model)
         }
+    }
+
+    var defaultContextLimit: Int {
+        didSet { store.contextLimit = max(1, defaultContextLimit) }
+    }
+
+    func sessionSelection(_ conversation: Conversation?) -> ProviderSelection? {
+        guard let conversation else { return selection }
+        if let id = conversation.providerID {
+            guard let endpoint = endpoints.first(where: { $0.id == id }),
+                  let model = conversation.modelID ?? selection?.model else { return nil }
+            return ProviderSelection(provider: endpoint.provider, baseURL: endpoint.baseURL, model: model)
+        }
+        guard let selection else { return nil }
+        return ProviderSelection(
+            provider: selection.provider,
+            baseURL: selection.baseURL,
+            model: conversation.modelID ?? selection.model
+        )
+    }
+
+    func modelInfo(for conversation: Conversation?) -> ModelInfo? {
+        guard let selected = sessionSelection(conversation) else { return nil }
+        return detectedProviders.first { $0.provider == selected.provider && $0.baseURL == selected.baseURL }?
+            .availableModels.first { $0.id == selected.model }
     }
 
     private var selectionIsEmbedding: Bool {

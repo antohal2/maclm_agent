@@ -34,7 +34,7 @@ final class ChatViewModel {
         selectedConversation != nil
             && !isGenerating
             && currentRunner?.isRestoringCheckpoint != true
-            && providerCoordinator.hasActiveProvider
+            && providerCoordinator.sessionSelection(selectedConversation) != nil
             && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -73,6 +73,11 @@ final class ChatViewModel {
         for project in (try? modelContext.fetch(FetchDescriptor<Project>())) ?? [] {
             savedProjectDirectories[project.id] = project.workingDirectoryPath ?? ""
         }
+        registry.sessionProviderFactory = { conversation in
+            try providerFactory?() ?? providerCoordinator.makeProvider(for: conversation)
+        }
+        registry.sessionToolsEnabled = { providerCoordinator.modelInfo(for: $0)?.toolsEnabled ?? true }
+        registry.onMetadataRefresh = { Task { await providerCoordinator.refresh() } }
         restoreSelection()
     }
 
@@ -92,6 +97,7 @@ final class ChatViewModel {
 
     func selectConversation(_ conversation: Conversation) {
         selectedConversation = conversation
+        Task { await providerCoordinator.refresh() }
         registry.selectedConversationID = conversation.id
         conversation.hasUnreadResult = false
         saveContext()

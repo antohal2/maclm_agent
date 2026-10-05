@@ -7596,6 +7596,166 @@
           }
         }
       }
+    },
+    "По умолчанию": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "По умолчанию"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        }
+      }
+    },
+    "Не найден": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не найден"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not found"
+          }
+        }
+      }
+    },
+    "Настройки моделей…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки моделей…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model settings…"
+          }
+        }
+      }
+    },
+    "Контекст:": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекст:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context:"
+          }
+        }
+      }
+    },
+    "Инструменты недоступны для этой модели": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Инструменты недоступны для этой модели"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tools are unavailable for this model"
+          }
+        }
+      }
+    },
+    "Контекст почти заполнен — начните новую сессию или сделайте ветку от нужного ответа": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Контекст почти заполнен — начните новую сессию или сделайте ветку от нужного ответа"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context is almost full — start a new session or branch from the desired response"
+          }
+        }
+      }
+    },
+    "Фактический лимит неизвестен; используется настройка по умолчанию.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фактический лимит неизвестен; используется настройка по умолчанию."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actual context limit is unknown; using the default setting."
+          }
+        }
+      }
+    },
+    "Максимум модели:": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Максимум модели:"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model maximum:"
+          }
+        }
+      }
+    },
+    "Лимит контекста по умолчанию": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лимит контекста по умолчанию"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default context limit"
+          }
+        }
+      }
+    },
+    "Модель по умолчанию используется в беседах без собственного выбора.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Модель по умолчанию используется в беседах без собственного выбора."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The default model is used in conversations without an explicit selection."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

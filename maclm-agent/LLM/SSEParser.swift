@@ -71,7 +71,7 @@ struct SSEParser {
 
         do {
             let chunk = try JSONDecoder().decode(ChatCompletionChunk.self, from: Data(payload.utf8))
-            return chunk.choices.flatMap { choice in
+            var result = chunk.choices.flatMap { choice in
                 var events: [ChatStreamEvent] = []
                 if let content = choice.delta.content, !content.isEmpty {
                     events.append(.contentDelta(content))
@@ -89,6 +89,10 @@ struct SSEParser {
                 } ?? [])
                 return events
             }
+            if let usage = chunk.usage {
+                result.append(.usage(promptTokens: usage.promptTokens, completionTokens: usage.completionTokens))
+            }
+            return result
         } catch {
             throw LLMProviderError.invalidSSEPayload(payload)
         }
@@ -97,6 +101,7 @@ struct SSEParser {
 
 private struct ChatCompletionChunk: Decodable {
     let choices: [ChatCompletionChoice]
+    let usage: CompletionUsage?
 }
 
 private struct ChatCompletionChoice: Decodable {
@@ -128,5 +133,14 @@ private struct ChatCompletionFunction: Decodable {
 private extension String {
     func trimmingPrefix(_ prefix: Character) -> String {
         first == prefix ? String(dropFirst()) : self
+    }
+}
+
+private struct CompletionUsage: Decodable {
+    let promptTokens: Int
+    let completionTokens: Int
+    enum CodingKeys: String, CodingKey {
+        case promptTokens = "prompt_tokens"
+        case completionTokens = "completion_tokens"
     }
 }

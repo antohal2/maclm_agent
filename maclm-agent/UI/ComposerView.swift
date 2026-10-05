@@ -19,8 +19,30 @@ enum ComposerRules {
 struct ComposerView: View {
     @Bindable var viewModel: ChatViewModel
     @FocusState private var isFocused: Bool
+    @State private var modelPresented = false
     @State private var policyPresented = false
     @Environment(\.openSettings) private var openSettings
+
+    private var contextUsage: ContextUsage {
+        ContextUsage(
+            used: viewModel.selectedConversation?.lastContextTokens,
+            model: viewModel.providerCoordinator.modelInfo(for: viewModel.selectedConversation),
+            fallback: viewModel.providerCoordinator.defaultContextLimit
+        )
+    }
+
+    private var contextHelp: String {
+        var text = contextUsage
+            .approximate ? String(localized: "Фактический лимит неизвестен; используется настройка по умолчанию.") : ""
+        if let maximum = viewModel.providerCoordinator.modelInfo(for: viewModel.selectedConversation)?.contextLength {
+            text += " " + String(localized: "Максимум модели:") + " " + ContextUsage.format(maximum)
+        }
+        if contextUsage.level == .critical {
+            text += " " +
+                String(localized: "Контекст почти заполнен — начните новую сессию или сделайте ветку от нужного ответа")
+        }
+        return text
+    }
 
     var body: some View {
         VStack(spacing: 10) {
@@ -59,20 +81,68 @@ struct ComposerView: View {
                         SessionPolicyView(viewModel: viewModel).padding().frame(width: 320)
                     }
                 Spacer(minLength: 0)
-                Button {
-                    UserDefaults.standard.set("models", forKey: "settings.selectedTab")
-                    openSettings()
-                    NSApp.activate(ignoringOtherApps: true)
-                } label: {
-                    Text(ComposerRules
-                        .shortModelName(viewModel.providerCoordinator.selection?
+                Button { modelPresented.toggle() } label: {
+                    Text(ComposerRules.shortModelName(viewModel.providerCoordinator
+                            .sessionSelection(viewModel.selectedConversation)?
                             .model ?? String(localized: "Модель не выбрана")))
-                        .font(.caption).lineLimit(1).truncationMode(.middle)
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(.quaternary, in: Capsule())
+                        .font(.caption).padding(6).background(.quaternary, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .help(viewModel.providerCoordinator.selection?.model ?? String(localized: "Настройки провайдера"))
+                .disabled(viewModel.isGenerating)
+                .popover(isPresented: $modelPresented) {
+                    VStack(alignment: .leading) {
+                        Button(String(localized: "По умолчанию")) {
+                            viewModel.selectedConversation?.modelID = nil
+                            viewModel.selectedConversation?.providerID = nil
+                            viewModel.saveContext()
+                            modelPresented = false
+                        }
+                        ForEach(viewModel.providerCoordinator.endpoints, id: \.self) { endpoint in
+                            Text(endpoint.provider.displayName + " · " + endpoint.baseURL.absoluteString)
+                                .font(.caption).foregroundStyle(.secondary)
+                            if let provider = viewModel.providerCoordinator.detectedProviders
+                                .first(where: { $0.id == endpoint.id }) {
+                                ForEach(provider.availableModels.filter { !$0.isEmbedding }) { model in
+                                    Button {
+                                        viewModel.selectedConversation?.modelID = model.id
+                                        viewModel.selectedConversation?.providerID = endpoint.id
+                                        viewModel.selectedConversation?.lastContextTokens = nil
+                                        viewModel.saveContext()
+                                        modelPresented = false
+                                    } label: {
+                                        HStack {
+                                            Text(model.id)
+                                            if model.isLoaded == true {
+                                                Text(String(localized: "загружена"))
+                                            }
+                                            if let limit = model.loadedContextLength {
+                                                Text(ContextUsage.format(limit))
+                                            }
+                                            if model.supportsTools == true {
+                                                Text(verbatim: "tools")
+                                            }
+                                            if model.supportsTools == false {
+                                                Text(String(localized: "Инструменты недоступны для этой модели"))
+                                            }
+                                        }
+                                    }
+                                    .help(model
+                                        .supportsTools == false ?
+                                        String(localized: "Инструменты недоступны для этой модели") : model.id)
+                                }
+                            } else {
+                                Text(String(localized: "Не найден"))
+                            }
+                        }
+                        Divider()
+                        Button(String(localized: "Настройки моделей…")) {
+                            UserDefaults.standard.set("models", forKey: "settings.selectedTab")
+                            openSettings()
+                            modelPresented = false
+                        }
+                    }.padding().frame(maxWidth: 560)
+                        .task { await viewModel.providerCoordinator.refresh() }
+                }
                 Button {
                     if viewModel.isGenerating {
                         viewModel.stopGeneration()
@@ -90,15 +160,39 @@ struct ComposerView: View {
                 .help(viewModel
                     .isGenerating ? String(localized: "Остановить генерацию") : String(localized: "Отправить"))
             }
-            if let project = viewModel.selectedConversation?.project {
-                HStack {
+            HStack {
+                if let project = viewModel.selectedConversation?.project {
                     Text(project.name)
                     if let path = project.workingDirectoryPath,
                        let branch = GitHeadReader.read(workingDirectory: path) {
                         Text(branch)
                     }
-                    Spacer()
-                }.font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                if !viewModel.messages.isEmpty {
+                    let usage = contextUsage
+                    Text(String(localized: "Контекст:") + " " + (usage.used.map { ContextUsage.format($0) } ?? "—")
+                        + " / " + (usage.approximate ? "≈ " : "") + ContextUsage.format(usage.limit))
+                        .foregroundStyle(usage.level == .critical ? Color.red : usage.level == .warning ? Color
+                            .yellow : Color.secondary)
+                        .help(contextHelp)
+                }
+            }.font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            if viewModel.providerCoordinator.modelInfo(for: viewModel.selectedConversation)?.supportsTools == false {
+                Text(String(localized: "Инструменты недоступны для этой модели")).font(.caption)
+            }
+            if !viewModel.messages.isEmpty, contextUsage.level == .critical {
+                Text(
+                    String(
+                        localized: "Контекст почти заполнен — начните новую сессию или сделайте ветку от нужного ответа"
+                    )
+                )
+                .font(.caption).foregroundStyle(.red)
+            }
+        }
+        .onChange(of: viewModel.isGenerating) { _, generating in
+            if generating {
+                modelPresented = false
             }
         }
         .padding(12)

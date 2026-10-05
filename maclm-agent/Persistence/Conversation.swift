@@ -12,6 +12,9 @@ final class Conversation {
     var hasUnreadResult: Bool = false
     var isPinned: Bool = false
     var isArchived: Bool = false
+    var modelID: String?
+    var providerID: String?
+    var lastContextTokens: Int?
     var titleIsManual: Bool = false
     var updatedAt: Date
 

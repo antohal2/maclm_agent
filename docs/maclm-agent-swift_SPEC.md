@@ -62,7 +62,7 @@ SwiftUI `Window` и AppKit `MenuBarController` (`NSStatusItem` + `NSPopover` с 
 | Модель | Назначение |
 |---|---|
 | `Project` | **Rev 4.** Проект: имя, рабочая папка, инструкции, порядок |
-| `Conversation` | беседа: `id`, заголовок, даты, сообщения (cascade); провайдер и модель сейчас глобальные в UserDefaults; **Rev 4:** проект, закрепление, архив, ручной заголовок, непрочитанный результат, модель сессии |
+| `Conversation` | беседа: `id`, заголовок, даты, сообщения (cascade); проект, закрепление, архив, ручной заголовок, непрочитанный результат; modelID/providerID и lastContextTokens с nil по умолчанию |
 | `Message` | роль, содержимое, timestamp, связь с беседой |
 | `ToolCallRecord` | имя инструмента, аргументы, результат, providerCallID, timestamp, связь с Message; статус pending/approved/rejected/completed/failed, снимок уровня и причины для подтверждения (confirmationRiskRawValue/confirmationRiskReason). Отдельное решение пользователя не хранится |
 | `ClipboardAction` | действие над буфером: имя, промпт, порядок, флаги |
@@ -72,7 +72,7 @@ SwiftUI `Window` и AppKit `MenuBarController` (`NSStatusItem` + `NSPopover` с 
 
 Все новые поля добавляются с значениями по умолчанию, чтобы существующее хранилище открывалось облегчённой миграцией без потери данных. Записи `AuditEntry` не удаляются вместе с беседой: журнал переживает удаление.
 
-Сейчас контейнер регистрирует шесть моделей: Conversation, Message, ToolCallRecord (имя в коде — в приложении A), ClipboardAction, SecurityRule, AuditEntry. Project и Checkpoint ещё отсутствуют. Настройки — `UserDefaults`. Секреты — Keychain.
+Контейнер регистрирует восемь моделей: Conversation, Project, Message, ToolCall, ClipboardAction, SecurityRule, AuditEntry, Checkpoint. Настройки — `UserDefaults`. Секреты — Keychain.
 
 ---
 
@@ -90,7 +90,7 @@ protocol LLMProvider {
 
 `StreamEvent` — токен текста, начало/завершение вызова инструмента, финализация, ошибка; **Rev 4:** событие `usage` с числом токенов запроса и ответа, если провайдер его отдаёт.
 
-Сейчас протокол только стримит сообщения и определения инструментов; список моделей получает отдельный ProviderDiscovery как [String]. События — дельта текста, дельта tool call, done; ошибки завершают throwing stream. Имена и сигнатуры сопоставлены в приложении A.
+Сейчас протокол только стримит сообщения и определения инструментов; список моделей получает отдельный ProviderDiscovery как [ModelInfo]. События — дельта текста, дельта tool call, usage, done; ошибки завершают throwing stream. Имена и сигнатуры сопоставлены в приложении A.
 
 ### 4.2 Реализации
 
@@ -105,7 +105,7 @@ protocol LLMProvider {
 
 ### 4.4 Метаданные моделей (Rev 4)
 
-`ModelInfo` расширяется необязательными полями: тип (`chat` / `embedding` / неизвестно), загружена ли модель, лимит контекста, поддержка tool calling. Поля заполняются только тем, что провайдер реально отдаёт; конкретные эндпоинты проверяются по документации установленных версий LM Studio и Ollama. Модели типа `embedding` не показываются в выборе чат-модели; при отсутствии типа — эвристика по имени (`embed`) с возможностью показать скрытые.
+`ModelInfo` расширяется необязательными полями: тип (`chat` / `embedding` / неизвестно), загружена ли модель, максимум модели (contextLength), контекст загруженного экземпляра (loadedContextLength), поддержка tool calling. Поля заполняются только тем, что провайдер реально отдаёт; конкретные эндпоинты проверяются по документации установленных версий LM Studio и Ollama. Модели типа `embedding` не показываются в выборе чат-модели; при отсутствии типа — эвристика по имени (`embed`) с возможностью показать скрытые.
 
 ---
 
@@ -348,8 +348,8 @@ UI должен явно показывать границу защиты: block
 | v0.1 | MVP | ✅ `v0.1.0` |
 | v0.2 | Clipboard Actions | ✅ `v0.2.4` |
 | **v0.3** | **Security hardening** | ✅ `v0.3.4` |
-| v0.4 | Workspace: интерфейс, проекты, фоновые сессии, инспектор, диффы, чекпоинты | активная |
-| v0.4.x | Десктоп-питомец | |
+| v0.4 | Workspace: интерфейс, проекты, фоновые сессии, инспектор, диффы, чекпоинты | ✅ `v0.4.7` |
+| v0.4.x | Десктоп-питомец | активная |
 | v0.5 | Skills | |
 | v0.6 | Shell / Terminal | |
 | v0.7 | Apple Events / AppleScript | |
@@ -424,7 +424,36 @@ Ad-hoc подпись (`codesign --sign -`), DMG с drag-to-install, публи�
 
 **Модель сессии.** `Conversation.modelID` (nil — модель по умолчанию из настроек); смена применяется со следующего запроса.
 
-**Счётчик контекста.** Использовано = токены запроса + ответа последнего обмена по событию `usage`; лимит — из метаданных модели, иначе из настройки (по умолчанию 8192). Цвет: жёлтый от 70%, красный от 90% с подсказкой начать новую сессию или сделать форк. Автоматического сжатия истории нет.
+**Счётчик контекста.** Использовано = токены запроса + ответа последнего обмена по событию `usage`; лимит — loadedContextLength загруженного экземпляра, иначе из настройки с пометкой «≈»; максимум модели — только в подсказке. Значение по умолчанию — 8192. Цвет: жёлтый от 70%, красный от 90% с подсказкой начать новую сессию или сделать форк. Автоматического сжатия истории нет.
+
+
+#### Реализация 4.7: модель сессии и контекст
+
+`Conversation.modelID` и `providerID` — необязательные поля с nil по умолчанию.
+Провайдер определяется ключом секции `тип|нормализованный URL`, уже используемым
+`DetectedProvider.id`; `ProviderEndpoint.id` использует тот же ключ.
+Nil наследует глобальную настройку. Форк копирует оба поля. Меню чипа в общем
+`ComposerView` обслуживает главное окно и popover; выбор недоступен во время прогона.
+Раннер фиксирует провайдера, модель и поддержку инструментов в начале запроса;
+автозаголовок получает тот же экземпляр провайдера. Явный `supportsTools == false`
+отключает инструменты; nil сохраняет прежний набор.
+
+`ChatStreamEvent.usage(promptTokens:completionTokens:)` разбирается из SSE usage
+LM Studio (включая пустой choices) и финального NDJSON Ollama. Использовано —
+сумма токенов последнего запроса, включая промежуточный запрос внутри AgentLoop;
+перед каждым запросом usage сбрасывается, отсутствие данных отображается как «—».
+Значение хранится в `Conversation.lastContextTokens`.
+
+Лимит — `ModelInfo.loadedContextLength`: LM Studio native v1
+`loaded_instances[].config.context_length`, Ollama `/api/ps.context_length`.
+При нескольких экземплярах LM Studio берётся первый экземпляр из ответа.
+Если данных нет, используется редактируемый `llm.defaultContextLimit` (8192),
+с «≈» и пояснением. `contextLength` — максимум модели, только справочная подсказка,
+никогда не лимит счётчика. Метаданные обновляются асинхронно при выборе беседы,
+открытии меню и окончании прогона; каждый metadata-запрос имеет таймаут 1,5 секунды.
+Пороги: обычный <70%, жёлтый ≥70%, красный ≥90% с предложением новой сессии/ветки.
+Пустая беседа не показывает счётчик. Автоматического сокращения истории нет.
+
 
 ### 13.7 Пустое состояние
 
@@ -510,7 +539,7 @@ Ad-hoc подпись (`codesign --sign -`), DMG с drag-to-install, публи�
 - Вызов через `@` в композере; «Создать навык из этой сессии».
 
 
-## Приложение A. Соответствие имён (сверка 4.pre)
+## Приложение A. Соответствие имён (сверка v0.4.7)
 
 Псевдокод SPEC сохраняет условные имена; фактические сигнатуры определяет код.
 
@@ -518,8 +547,8 @@ Ad-hoc подпись (`codesign --sign -`), DMG с drag-to-install, публи�
 |---|---|
 | AppState | общий ChatViewModel и AppSettings; отдельного AppState нет |
 | ToolCallRecord | ToolCall |
-| StreamEvent | ChatStreamEvent: contentDelta, toolCallDelta, done; ошибки через throwing stream |
-| ModelInfo | пока отсутствует; ProviderDiscovery возвращает DetectedProvider.availableModels: [String] |
+| StreamEvent | ChatStreamEvent: contentDelta, toolCallDelta, usage, done; ошибки через throwing stream |
+| ModelInfo | ModelInfo: id, kind, isLoaded, contextLength, loadedContextLength, supportsTools; DetectedProvider.availableModels: [ModelInfo] |
 | LLMProvider.identifier | LLMProvider.name |
 | LLMProvider.availableModels() | ProviderDiscovery.discover(); отдельного метода протокола нет |
 | LLMProvider.stream(ChatRequest) | streamChat(messages:tools:); ChatRequest отсутствует |
@@ -531,4 +560,4 @@ Ad-hoc подпись (`codesign --sign -`), DMG с drag-to-install, публи�
 | Decision / Outcome | AuditDecision / AuditOutcome |
 | AuditEntry.riskLevel / decision | вычисляемые свойства, хранимые riskRaw / decisionRaw |
 
-RiskLevel, isPolicyEnforceable, SecurityRule, RuleDimension, RuleAction, AuditEntry, LLMProvider и Tool совпадают по именам. SessionRunner, Project, Checkpoint, usage и userInitiated — будущие сущности, а не переименования текущих типов.
+RiskLevel, isPolicyEnforceable, SecurityRule, RuleDimension, RuleAction, AuditEntry, LLMProvider и Tool совпадают по именам. SessionRunner, Project, Checkpoint и usage реализованы; userInitiated — значение AuditDecision. SessionRunnerRegistry.aggregate готов для отображения статусов питомцем.

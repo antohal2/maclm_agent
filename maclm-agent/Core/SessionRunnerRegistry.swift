@@ -68,11 +68,14 @@ struct AggregateStatus: Equatable {
 final class SessionRunnerRegistry {
     private(set) var runners: [UUID: SessionRunner] = [:]
     var selectedConversationID: UUID?
+    var onMetadataRefresh: (() -> Void)?
     var onCompletion: ((Conversation, SessionStatus) -> Void)?
     var onApproval: ((Conversation, ConfirmationRequest) -> Void)?
     private let modelContext: ModelContext
     private let agentLoop: AgentLoop
     private let autoTitles: AutoTitleService
+    var sessionProviderFactory: ((Conversation) throws -> any LLMProvider)?
+    var sessionToolsEnabled: (Conversation) -> Bool = { _ in true }
     private let providerFactory: () throws -> any LLMProvider
     private var stopping: [UUID: Int] = [:]
     private(set) var isShuttingDown = false
@@ -106,15 +109,24 @@ final class SessionRunnerRegistry {
             modelContext: modelContext,
             agentLoop: agentLoop.independentRun(),
             autoTitles: autoTitles,
-            providerFactory: providerFactory
+            providerFactory: { [weak self] in
+                if let factory = self?.sessionProviderFactory {
+                    return try factory(conversation)
+                }
+                guard let self else { throw ProviderRoutingError.noProviderConfigured }
+                return try self.providerFactory()
+            }
         )
+        runner.toolsEnabled = { [weak self] in self?.sessionToolsEnabled(conversation) ?? true }
         let id = conversation.id
         runner.canStart = { [weak self] in
             guard let self else { return false }
             return !self.isShuttingDown && self.stopping[id] == nil && self.runners[id] != nil
         }
         runner.onFinish = { [weak self] runner, cancelled in
-            guard let self, !cancelled else { return }
+            guard let self else { return }
+            self.onMetadataRefresh?()
+            guard !cancelled else { return }
             if self.selectedConversationID != runner.conversationID {
                 runner.conversation.hasUnreadResult = true
                 runner.saveContext()

@@ -169,6 +169,12 @@ extension URL {
 private struct ChatCompletionRequest: Encodable {
     let model: String
     let messages: [RequestMessage]
+    let streamOptions = ["include_usage": true]
+    enum CodingKeys: String, CodingKey {
+        case model, messages, stream, tools
+        case streamOptions = "stream_options"
+    }
+
     let stream: Bool
     let tools: [ToolDefinition]?
 }

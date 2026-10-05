@@ -10,8 +10,13 @@ struct ProviderSettingsView: View {
 
     var body: some View {
         Form {
-            Text(String(localized: "Выбор модели применяется сразу и используется во всех беседах."))
+            Text(String(localized: "Модель по умолчанию используется в беседах без собственного выбора."))
                 .font(.caption).foregroundStyle(.secondary)
+            TextField(
+                String(localized: "Лимит контекста по умолчанию"),
+                value: $coordinator.defaultContextLimit,
+                format: .number
+            )
             Toggle(String(localized: "Показать скрытые модели"), isOn: $showHidden)
             ForEach(coordinator.endpoints, id: \.self) { endpoint in
                 Section(endpoint.provider.displayName) {

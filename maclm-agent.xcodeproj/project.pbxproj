@@ -11,6 +11,7 @@
 		02DFB112BE3B04A6F97D4A7C /* WorkspaceInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE5F86C22039A7CCC3A2E81 /* WorkspaceInspectorView.swift */; };
 		0FB21F1A342772E15E2F83D8 /* ClipboardActionSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */; };
 		0FE3C9C702932FE6310189A9 /* ProjectEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1AD102B0E83F287F15DAA /* ProjectEditorView.swift */; };
+		1075D47F432F8B811080BF21 /* lmstudio-models-live.json in Resources */ = {isa = PBXBuildFile; fileRef = BA8753F536A9778DC1DB2D32 /* lmstudio-models-live.json */; };
 		12840EBC2E8214A33FEEA439 /* SessionPermissionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F663BF35DBA5A2AAC5D913 /* SessionPermissionsTests.swift */; };
 		12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A3099DCC2211F043E4378 /* Conversation.swift */; };
 		138274F242431F46D9EC58BC /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE7398ECA365F5138E806E8 /* Core.swift */; };
@@ -20,6 +21,7 @@
 		210C68B603CB0C1F45A6BE22 /* AuditEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A8F15CCD4A4BE84177CD7D /* AuditEntry.swift */; };
 		2321AA8C8DF215DD4899D491 /* ClipboardActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3478489BC7B59E6914D735 /* ClipboardActionRunnerTests.swift */; };
 		25A2E141AA63B5DE9E694958 /* ComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BD2BA157B0D9D2883D13DCB /* ComposerTests.swift */; };
+		268AAD5CCBBA79FF7A91E1F8 /* ollama-usage-synthetic.ndjson in Resources */ = {isa = PBXBuildFile; fileRef = C3D062E873B44FE2E2A97E6A /* ollama-usage-synthetic.ndjson */; };
 		2841FA7BC35B11E41E9A7BD8 /* SessionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03252BCAAD7CD67428F57B4 /* SessionRunnerTests.swift */; };
 		28A7C99CCD03763CD40B1B75 /* lmstudio-v1-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 2D493AF6764EBC2114DE5BA2 /* lmstudio-v1-synthetic.json */; };
 		28EC3D897E9E7F87052FB06C /* PathCanonicalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7395128DD6A267D5097E2993 /* PathCanonicalizer.swift */; };
@@ -70,12 +72,16 @@
 		7F978E119186397F41476F03 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03385E835E680CDDF7566DED /* Security.framework */; };
 		7FBD47A610127685B4BBA219 /* SecurityRuleEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC5C9ECF4A156064477B664 /* SecurityRuleEditor.swift */; };
 		7FCA27D6759B7024834758E9 /* lmstudio-v0-live-0.4.25.json in Resources */ = {isa = PBXBuildFile; fileRef = 0117B7B10390E8A9CEBF2BF1 /* lmstudio-v0-live-0.4.25.json */; };
+		801463731FD6D922ADFCDEF9 /* lmstudio-usage-live.sse in Resources */ = {isa = PBXBuildFile; fileRef = 074761FA5D0CE9C1637D69E6 /* lmstudio-usage-live.sse */; };
+		8352C8B11478C482FC7B1EA2 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F546E24782D179B1A6BFCD37 /* README.md */; };
+		851D2F950E122E15EB5BCF5B /* ContextUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603CE4C320E25C721D0B46A9 /* ContextUsage.swift */; };
 		85B11984B90E7F00F17A7655 /* CheckpointTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2740CB12D6FBFF14519915BF /* CheckpointTests.swift */; };
 		8817296B29666CA89281C143 /* ClipboardActionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */; };
 		88A8775576343F7E70917501 /* ToolInvocationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9F3B73AD15CBD14E25919E /* ToolInvocationContext.swift */; };
 		8DD02FD87788477A80585BBD /* ClipboardActionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */; };
 		8DF8647AEDF3BC5B69F5184F /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126AD51B613FFC9F3B4474C7 /* Project.swift */; };
 		8FDAC9B442164981522826AA /* ModelSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 900CC41233B21B418D24556A /* ModelSettingsTests.swift */; };
+		96D9DB0BF0EDD5F6656B26F2 /* SessionContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC417D493B2003D8D3C9F01A /* SessionContextTests.swift */; };
 		9849954988154EEA7048C17B /* ClipboardActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */; };
 		98F380F92E23DBA827E19BD2 /* ClipboardActionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270AB5B6193643EDF8B0BE02 /* ClipboardActionStore.swift */; };
 		9913B2B13479E1ADA91E5972 /* ClipboardActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */; };
@@ -95,6 +101,7 @@
 		B0AB9485F39FC42A17ACB277 /* AuditLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7712919F4841548F31F3177A /* AuditLogView.swift */; };
 		B0C03532B335A1A33A51DDE6 /* ApplicationProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E23816F6C486AE5CD62A9C6 /* ApplicationProtection.swift */; };
 		B16BD1CC511C60DD2450E786 /* RunShellTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D14B77D4CFDA3E258F60BBD0 /* RunShellTool.swift */; };
+		B1BA09306F58667CD6DE7453 /* ollama-context-ps-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = F79ED3D03B62F97048C24780 /* ollama-context-ps-synthetic.json */; };
 		B21AEBEBCBAF4068D72D1679 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2A3EE346D287B95D6C981D /* Message.swift */; };
 		B3D07CAB2455A6087547D682 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3DF5BCF95C6307A82F1856E /* MainWindowView.swift */; };
 		B576DDEFCE53E2F2423F4073 /* EndpointClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07973A63835FAA6F1F4B105D /* EndpointClassifier.swift */; };
@@ -127,6 +134,7 @@
 		DEDCC58986C9F510B0566843 /* SecurityPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279AAB48A9720B0E564EF6F /* SecurityPolicyTests.swift */; };
 		DFFE3905F2D5A8FB5FAF2256 /* AutoTitleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86BCA32E3F090D0A65B11DED /* AutoTitleService.swift */; };
 		E2F3044688131758900D1977 /* WorkingDirectoryValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C6567EB104614A78B8B63D5 /* WorkingDirectoryValidator.swift */; };
+		E488DFBC28F1AEACBEEC58F9 /* SessionContextMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D05AD22163F33DFCF7413E /* SessionContextMigrationTests.swift */; };
 		E63A764A0C8B3A38DD60FC37 /* SceneActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F8D00CE9028A5B3792F7EC /* SceneActions.swift */; };
 		E65B2C98E31DEF61232617F9 /* ShellProcessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB9144735F92BBD3A61EDDC /* ShellProcessTests.swift */; };
 		E7F408252E6E98806A862086 /* workspace-v0.4.1.md in Resources */ = {isa = PBXBuildFile; fileRef = 00596880EC830A98274EF687 /* workspace-v0.4.1.md */; };
@@ -161,6 +169,7 @@
 		01A7919CAEB53121634F9073 /* QuickActionPickerModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerModelTests.swift; sourceTree = "<group>"; };
 		03385E835E680CDDF7566DED /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		0578B831267E2CAD2F2170AA /* SessionPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPermissions.swift; sourceTree = "<group>"; };
+		074761FA5D0CE9C1637D69E6 /* lmstudio-usage-live.sse */ = {isa = PBXFileReference; path = "lmstudio-usage-live.sse"; sourceTree = "<group>"; };
 		07973A63835FAA6F1F4B105D /* EndpointClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndpointClassifier.swift; sourceTree = "<group>"; };
 		0D477804E7DF4CDB820C3BA9 /* ClipboardActionEditorModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionEditorModels.swift; sourceTree = "<group>"; };
 		0ED6B7B2202D6F3EAC5C7189 /* FilePreviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewService.swift; sourceTree = "<group>"; };
@@ -206,6 +215,7 @@
 		5A9F3B73AD15CBD14E25919E /* ToolInvocationContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolInvocationContext.swift; sourceTree = "<group>"; };
 		5CC5C9ECF4A156064477B664 /* SecurityRuleEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityRuleEditor.swift; sourceTree = "<group>"; };
 		5DD9F645395A145B8FD101C5 /* PasteServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteServiceTests.swift; sourceTree = "<group>"; };
+		603CE4C320E25C721D0B46A9 /* ContextUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextUsage.swift; sourceTree = "<group>"; };
 		620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMStudioProvider.swift; sourceTree = "<group>"; };
 		6281F2D35171896FCEB0EAB3 /* RegexValidation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RegexValidation.h; sourceTree = "<group>"; };
 		628C0E0AE27881D1D6ED3CD7 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
@@ -260,18 +270,21 @@
 		B87C8C464D73D6BDE12A2532 /* AccessibilityPermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermissionService.swift; sourceTree = "<group>"; };
 		B8990D336DD1FD5302D25B64 /* ClipboardAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAccess.swift; sourceTree = "<group>"; };
 		B97A3099DCC2211F043E4378 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
+		BA8753F536A9778DC1DB2D32 /* lmstudio-models-live.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-models-live.json"; sourceTree = "<group>"; };
 		BAE50E7AB714973948F3E0EC /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionEditorView.swift; sourceTree = "<group>"; };
 		BD2A3EE346D287B95D6C981D /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		BEF8A55530D310F048D14BDF /* WorkspaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceTests.swift; sourceTree = "<group>"; };
 		C046215F215DF0CC1686F1E2 /* OllamaProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaProvider.swift; sourceTree = "<group>"; };
 		C098644BAC87EF238516C246 /* lmstudio-openai-live-0.4.25.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-openai-live-0.4.25.json"; sourceTree = "<group>"; };
+		C3D062E873B44FE2E2A97E6A /* ollama-usage-synthetic.ndjson */ = {isa = PBXFileReference; path = "ollama-usage-synthetic.ndjson"; sourceTree = "<group>"; };
 		C458AC82EC6264FBB2B799ED /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		C61C94419BF0F26D732FE634 /* CheckpointStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckpointStore.swift; sourceTree = "<group>"; };
 		C91D73A066E7938684668328 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CDA8F2610510CF65EA77A7ED /* maclm-agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "maclm-agent.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF774AB249F2AA413AE63452 /* Checkpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Checkpoint.swift; sourceTree = "<group>"; };
 		D03252BCAAD7CD67428F57B4 /* SessionRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRunnerTests.swift; sourceTree = "<group>"; };
+		D0D05AD22163F33DFCF7413E /* SessionContextMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextMigrationTests.swift; sourceTree = "<group>"; };
 		D14B77D4CFDA3E258F60BBD0 /* RunShellTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunShellTool.swift; sourceTree = "<group>"; };
 		D67D598F8228B583F247D35B /* AuditLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditLogTests.swift; sourceTree = "<group>"; };
 		DA4990A139107B6EAC770FE5 /* SessionRunnerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRunnerRegistry.swift; sourceTree = "<group>"; };
@@ -293,6 +306,9 @@
 		F231B04B4566BB6105DC1EF3 /* SSEParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParser.swift; sourceTree = "<group>"; };
 		F2C96102770327439C7769C4 /* ToolCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCall.swift; sourceTree = "<group>"; };
 		F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
+		F546E24782D179B1A6BFCD37 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F79ED3D03B62F97048C24780 /* ollama-context-ps-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ollama-context-ps-synthetic.json"; sourceTree = "<group>"; };
+		FC417D493B2003D8D3C9F01A /* SessionContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextTests.swift; sourceTree = "<group>"; };
 		FF7AA82AAB0F3A4662E29571 /* CheckpointFileState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckpointFileState.swift; sourceTree = "<group>"; };
 		FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskLevelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -340,6 +356,18 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		327F6121BE4C2A95EE8E1E7A /* SessionContext */ = {
+			isa = PBXGroup;
+			children = (
+				BA8753F536A9778DC1DB2D32 /* lmstudio-models-live.json */,
+				074761FA5D0CE9C1637D69E6 /* lmstudio-usage-live.sse */,
+				F79ED3D03B62F97048C24780 /* ollama-context-ps-synthetic.json */,
+				C3D062E873B44FE2E2A97E6A /* ollama-usage-synthetic.ndjson */,
+				F546E24782D179B1A6BFCD37 /* README.md */,
+			);
+			path = SessionContext;
+			sourceTree = "<group>";
+		};
 		55DF9AB23BCB05B9FC5D29D4 /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -365,6 +393,7 @@
 				B244346F19D3F6FD539F84AA /* ollama-tags-synthetic.json */,
 				00596880EC830A98274EF687 /* workspace-v0.4.1.md */,
 				5137C257D3117EC2EE3B7FB7 /* workspace-v0.4.1.store */,
+				327F6121BE4C2A95EE8E1E7A /* SessionContext */,
 			);
 			path = Fixtures;
 			sourceTree = "<group>";
@@ -412,6 +441,8 @@
 				9279AAB48A9720B0E564EF6F /* SecurityPolicyTests.swift */,
 				E726C38719DC47EF6E82A644 /* SecurityRuleEditorTests.swift */,
 				249A3EEF0B4F9A4ECAD9B553 /* SecurityRulePersistenceTests.swift */,
+				D0D05AD22163F33DFCF7413E /* SessionContextMigrationTests.swift */,
+				FC417D493B2003D8D3C9F01A /* SessionContextTests.swift */,
 				0FEB80504F1C6A2CCFDDEC25 /* SessionLoadTests.swift */,
 				468894D9A9CE1F5B5A34B943 /* SessionNotificationTests.swift */,
 				50F663BF35DBA5A2AAC5D913 /* SessionPermissionsTests.swift */,
@@ -488,6 +519,7 @@
 				333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */,
 				6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */,
 				706DC256A6ABF272FE181D01 /* ClipboardHotkeyService.swift */,
+				603CE4C320E25C721D0B46A9 /* ContextUsage.swift */,
 				9BE7398ECA365F5138E806E8 /* Core.swift */,
 				F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */,
 				0FBB4557D6112F51906006A8 /* FrontmostApplicationService.swift */,
@@ -649,14 +681,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8352C8B11478C482FC7B1EA2 /* README.md in Resources */,
+				1075D47F432F8B811080BF21 /* lmstudio-models-live.json in Resources */,
 				7507E829B4D7CEC6695578A1 /* lmstudio-openai-live-0.4.25.json in Resources */,
+				801463731FD6D922ADFCDEF9 /* lmstudio-usage-live.sse in Resources */,
 				7FCA27D6759B7024834758E9 /* lmstudio-v0-live-0.4.25.json in Resources */,
 				A8A649A4C1C7865347BE000F /* lmstudio-v0-synthetic.json in Resources */,
 				6172C12F6B6BE8E6DB055E74 /* lmstudio-v1-live-0.4.25.json in Resources */,
 				28A7C99CCD03763CD40B1B75 /* lmstudio-v1-synthetic.json in Resources */,
+				B1BA09306F58667CD6DE7453 /* ollama-context-ps-synthetic.json in Resources */,
 				64C749656619891CDC7AE685 /* ollama-ps-synthetic.json in Resources */,
 				F55B9A62E818E12009AC98FC /* ollama-show-synthetic.json in Resources */,
 				37DEEF80B872CD8FFAA60522 /* ollama-tags-synthetic.json in Resources */,
+				268AAD5CCBBA79FF7A91E1F8 /* ollama-usage-synthetic.ndjson in Resources */,
 				E7F408252E6E98806A862086 /* workspace-v0.4.1.md in Resources */,
 				6FFC256046EA558720A91B1E /* workspace-v0.4.1.store in Resources */,
 			);
@@ -719,6 +756,7 @@
 				9EA847F23C9CC7BCC3D47D58 /* ClipboardHotkeyService.swift in Sources */,
 				CB61B9970F3FFD8ED6BBEFBD /* ComposerView.swift in Sources */,
 				5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */,
+				851D2F950E122E15EB5BCF5B /* ContextUsage.swift in Sources */,
 				12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */,
 				3C06D6B52570FFC14F0A603F /* ConversationListView.swift in Sources */,
 				138274F242431F46D9EC58BC /* Core.swift in Sources */,
@@ -812,6 +850,8 @@
 				DEDCC58986C9F510B0566843 /* SecurityPolicyTests.swift in Sources */,
 				9CF326B3C577A9805755C3C6 /* SecurityRuleEditorTests.swift in Sources */,
 				D5926BFC827EDA0EA06899CC /* SecurityRulePersistenceTests.swift in Sources */,
+				E488DFBC28F1AEACBEEC58F9 /* SessionContextMigrationTests.swift in Sources */,
+				96D9DB0BF0EDD5F6656B26F2 /* SessionContextTests.swift in Sources */,
 				C91B6A5C29CFB9868EAABC20 /* SessionLoadTests.swift in Sources */,
 				D516FD89933DE7B039CB0FF5 /* SessionNotificationTests.swift in Sources */,
 				12840EBC2E8214A33FEEA439 /* SessionPermissionsTests.swift in Sources */,
@@ -926,7 +966,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.6;
+				MARKETING_VERSION = 0.4.7;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
@@ -951,7 +991,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.6;
+				MARKETING_VERSION = 0.4.7;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";

@@ -28,6 +28,7 @@ final class SessionRunner {
     private let providerFactory: () throws -> any LLMProvider
     private var generationToken: UUID?
     private var generationTask: Task<Void, Never>?
+    var toolsEnabled: () -> Bool = { true }
     var canStart: () -> Bool = { true }
     var onFinish: ((SessionRunner, Bool) -> Void)?
     var onApproval: ((Conversation, ConfirmationRequest) -> Void)?
@@ -175,6 +176,7 @@ final class SessionRunner {
         assistantID: UUID,
         provider: any LLMProvider
     ) {
+        let enabled = toolsEnabled()
         let conversationID = conversation.id
         let token = UUID()
         generationToken = token
@@ -190,6 +192,7 @@ final class SessionRunner {
                 try await agentLoop.streamResponse(
                     to: requestMessages,
                     using: provider,
+                    toolsEnabled: enabled,
                     invocationContext: invocationContext
                 ) { [weak self] event in
                     guard await self?.generationToken == token else { return }
@@ -223,6 +226,12 @@ final class SessionRunner {
 
     private func consume(_ event: AgentLoopEvent, assistantID: UUID) {
         switch event {
+        case .contextRequestStarted:
+            conversation.lastContextTokens = nil
+            saveContext()
+        case let .usage(prompt, completion):
+            conversation.lastContextTokens = prompt + completion
+            saveContext()
         case let .toolExecutionStarted(toolName):
             status = .toolRunning(toolName: toolName)
         case .assistantResponseStarted:

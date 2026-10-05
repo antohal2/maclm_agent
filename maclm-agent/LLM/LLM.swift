@@ -95,6 +95,7 @@ struct ToolFunctionDefinition: Codable, Equatable, Sendable {
 enum ChatStreamEvent: Equatable, Sendable {
     case contentDelta(String)
     case toolCallDelta(ToolCallDelta)
+    case usage(promptTokens: Int, completionTokens: Int)
     case done
 }
 

@@ -41,6 +41,8 @@ enum AgentLoopEvent: Equatable, Sendable {
     case confirmationRequested(ConfirmationRequest)
     case toolExecutionStarted(toolName: String)
     case toolCallsCompleted([AgentToolCallExecution])
+    case usage(promptTokens: Int, completionTokens: Int)
+    case contextRequestStarted
     case done
 }
 

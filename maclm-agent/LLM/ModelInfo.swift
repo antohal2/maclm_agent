@@ -6,18 +6,31 @@ struct ModelInfo: Identifiable, Equatable, Sendable, ExpressibleByStringLiteral 
     var kind: Kind?
     var isLoaded: Bool?
     var contextLength: Int?
+    var loadedContextLength: Int?
     var supportsTools: Bool?
 
-    init(id: String, kind: Kind? = nil, isLoaded: Bool? = nil, contextLength: Int? = nil, supportsTools: Bool? = nil) {
+    init(
+        id: String,
+        kind: Kind? = nil,
+        isLoaded: Bool? = nil,
+        contextLength: Int? = nil,
+        supportsTools: Bool? = nil,
+        loadedContextLength: Int? = nil
+    ) {
         self.id = id
         self.kind = kind
         self.isLoaded = isLoaded
         self.contextLength = contextLength
         self.supportsTools = supportsTools
+        self.loadedContextLength = loadedContextLength
     }
 
     init(stringLiteral value: String) {
         self.init(id: value)
+    }
+
+    var toolsEnabled: Bool {
+        supportsTools != false
     }
 
     var isEmbedding: Bool {
@@ -46,7 +59,9 @@ enum ModelMetadataParser {
                 isLoaded: (row["loaded_instances"] as? [[String: Any]])
                     .map { !$0.isEmpty } ?? (state == "loaded" ? true : state == "not-loaded" ? false : nil),
                 contextLength: row["max_context_length"] as? Int,
-                supportsTools: (row["capabilities"] as? [String: Any])?["trained_for_tool_use"] as? Bool
+                supportsTools: (row["capabilities"] as? [String: Any])?["trained_for_tool_use"] as? Bool,
+                loadedContextLength: (row["loaded_instances"] as? [[String: Any]])?.first
+                    .flatMap { ($0["config"] as? [String: Any])?["context_length"] as? Int }
             )
         }
     }
@@ -74,6 +89,8 @@ enum ModelMetadataParser {
         }
         if let running, let root = (try? JSONSerialization.jsonObject(with: running)) as? [String: Any],
            let models = root["models"] as? [[String: Any]] {
+            result.loadedContextLength = models
+                .first { ($0["name"] as? String ?? $0["model"] as? String) == model.id }?["context_length"] as? Int
             result.isLoaded = models.contains { ($0["name"] as? String ?? $0["model"] as? String) == model.id }
         }
         return result

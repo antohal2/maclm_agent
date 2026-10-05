@@ -13,6 +13,9 @@ struct DetectedProvider: Identifiable, Equatable, Sendable {
 struct ProviderEndpoint: Codable, Hashable, Sendable {
     let provider: LLMProviderKind
     let baseURL: URL
+    var id: String {
+        "\(provider.rawValue)|\(baseURL.normalizedServerURL.absoluteString)"
+    }
 }
 
 struct ProviderDiscovery: Sendable {

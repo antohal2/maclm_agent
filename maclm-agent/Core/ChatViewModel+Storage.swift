@@ -112,6 +112,8 @@ extension ChatViewModel {
               .contains(where: { $0.final?.id == response.id })
         else { return nil }
         let branch = Conversation(title: source.title + String(localized: " — ветка"))
+        branch.modelID = source.modelID
+        branch.providerID = source.providerID
         branch.project = source.project
         branch.titleIsManual = true
         modelContext.insert(branch)
