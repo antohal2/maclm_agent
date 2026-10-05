@@ -18,11 +18,19 @@ struct MacLMAgentApp: App {
                 for: Conversation.self,
                 Message.self,
                 ToolCall.self,
-                ClipboardAction.self
+                ClipboardAction.self,
+                SecurityRule.self
             )
             try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
+            try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
             modelContainer = container
-            let viewModel = ChatViewModel(modelContext: container.mainContext)
+            let policyContext = container.mainContext
+            let viewModel = ChatViewModel(
+                modelContext: policyContext,
+                agentLoop: AgentLoop(securityRules: {
+                    try SecurityRuleSeeder.snapshots(context: policyContext)
+                })
+            )
             let appSettings = AppSettings()
             let accessibilityPermissionService = SystemAccessibilityPermissionService()
             self.accessibilityPermissionService = accessibilityPermissionService

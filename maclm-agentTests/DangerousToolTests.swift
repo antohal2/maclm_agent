@@ -260,7 +260,8 @@ final class DangerousToolTests: XCTestCase {
         let recorder = ConfirmationEventRecorder()
         let loop = AgentLoop(
             toolRegistry: ToolRegistry(tools: [WriteFileTool()]),
-            maximumIterations: 3
+            maximumIterations: 3,
+            securityRules: { [] }
         )
         let provider = DangerousToolCallingTestProvider(
             path: file.path,

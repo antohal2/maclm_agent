@@ -164,7 +164,7 @@ final class ToolTests: XCTestCase {
         let file = directory.appending(path: "context.txt")
         try Data("tool result".utf8).write(to: file)
         let recorder = AgentEventRecorder()
-        let loop = AgentLoop(toolRegistry: .readOnly, maximumIterations: 3)
+        let loop = AgentLoop(toolRegistry: .readOnly, maximumIterations: 3, securityRules: { [] })
 
         try await loop.streamResponse(
             to: [ChatMessage(role: .user, content: "Read the file")],

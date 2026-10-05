@@ -12,9 +12,14 @@ protocol Tool: Sendable {
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment
 
     func execute(arguments: [String: Any]) async throws -> ToolExecutionResult
+    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult
 }
 
 extension Tool {
+    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult {
+        try await execute(arguments: arguments)
+    }
+
     static var isPolicyEnforceable: Bool { false }
 
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {

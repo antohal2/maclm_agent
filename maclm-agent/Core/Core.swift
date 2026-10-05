@@ -3,14 +3,19 @@ import Foundation
 actor AgentLoop {
     private let toolRegistry: ToolRegistry
     private let confirmationCoordinator: ConfirmationCoordinator
+    private let securityRules: @MainActor @Sendable () throws -> [SecurityRuleSnapshot]
     private let maximumIterations: Int
     private var isGenerating = false
 
     init(
         toolRegistry: ToolRegistry = .all,
         confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
-        maximumIterations: Int = 8
+        maximumIterations: Int = 8,
+        securityRules: @escaping @MainActor @Sendable () throws -> [SecurityRuleSnapshot] = {
+            DefaultSecurityRules.rules
+        }
     ) {
+        self.securityRules = securityRules
         self.toolRegistry = toolRegistry
         self.confirmationCoordinator = confirmationCoordinator
         self.maximumIterations = max(1, maximumIterations)
@@ -143,10 +148,28 @@ actor AgentLoop {
             )
         }
 
+        let policy: SecurityPolicyEngine
+        do {
+            policy = try await SecurityPolicyEngine(rules: securityRules())
+        } catch {
+            // A failed store read must never silently disable policy enforcement.
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: .failure("Unable to load security rules: \(error.localizedDescription)")
+            )
+        }
+        let policyDecision = policy.decision(for: tool, arguments: arguments)
+        guard policyDecision.isAllowed else {
+            return AgentToolCallExecution(
+                toolCall: toolCall,
+                result: .failure(policyDecision.explanation ?? "Вызов запрещён правилом безопасности.")
+            )
+        }
+        let executionArguments = policy.executionArguments(for: tool, arguments: arguments)
         let context = await MainActor.run {
             ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
         }
-        let assessment = ToolRiskEvaluator.evaluate(tool, arguments: arguments, context: context)
+        let assessment = ToolRiskEvaluator.evaluate(tool, arguments: executionArguments, context: context)
         let confirmation = try await confirmIfNeeded(
             toolCall: toolCall,
             assessment: assessment,
@@ -157,7 +180,7 @@ actor AgentLoop {
         }
 
         do {
-            let result = try await tool.execute(arguments: arguments)
+            let result = try await tool.execute(arguments: executionArguments, policy: policy)
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: result,

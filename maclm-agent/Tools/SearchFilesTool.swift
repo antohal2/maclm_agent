@@ -20,6 +20,10 @@ struct SearchFilesTool: Tool {
     }
 
     func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+        try await execute(arguments: arguments, policy: SecurityPolicyEngine(rules: []))
+    }
+
+    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult {
         let root: String
         switch ToolArgument.requiredString(named: "root", in: arguments) {
         case let .value(value):
@@ -49,7 +53,7 @@ struct SearchFilesTool: Tool {
         }
 
         do {
-            let matches = try findMatches(in: rootURL, pattern: pattern)
+            let matches = try findMatches(in: rootURL, pattern: pattern, policy: policy)
             let data = try JSONEncoder.toolOutput.encode(matches)
             guard let content = String(data: data, encoding: .utf8) else {
                 return .failure("Unable to encode search results as UTF-8.")
@@ -65,12 +69,13 @@ struct SearchFilesTool: Tool {
 
     private func findMatches(
         in rootURL: URL,
-        pattern: String
+        pattern: String,
+        policy: SecurityPolicyEngine
     ) throws -> [String] {
         let keys: Set<URLResourceKey> = [.isRegularFileKey]
         guard let enumerator = FileManager.default.enumerator(
             at: rootURL,
-            includingPropertiesForKeys: Array(keys),
+            includingPropertiesForKeys: nil,
             options: []
         ) else {
             throw SearchFilesError.unableToEnumerate(rootURL.path)
@@ -78,6 +83,10 @@ struct SearchFilesTool: Tool {
 
         var matches: [String] = []
         for case let fileURL as URL in enumerator {
+            guard policy.decision(for: fileURL.path, dimension: .path).isAllowed else {
+                enumerator.skipDescendants()
+                continue
+            }
             let values = try fileURL.resourceValues(forKeys: keys)
             guard
                 values.isRegularFile == true,

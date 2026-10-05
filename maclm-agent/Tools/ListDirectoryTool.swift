@@ -16,6 +16,10 @@ struct ListDirectoryTool: Tool {
     }
 
     func execute(arguments: [String: Any]) async throws -> ToolExecutionResult {
+        try await execute(arguments: arguments, policy: SecurityPolicyEngine(rules: []))
+    }
+
+    func execute(arguments: [String: Any], policy: SecurityPolicyEngine) async throws -> ToolExecutionResult {
         let path: String
         switch ToolArgument.requiredString(named: "path", in: arguments) {
         case let .value(value):
@@ -40,9 +44,11 @@ struct ListDirectoryTool: Tool {
             let keys: Set<URLResourceKey> = [.isDirectoryKey]
             let urls = try FileManager.default.contentsOfDirectory(
                 at: url,
-                includingPropertiesForKeys: Array(keys)
+                includingPropertiesForKeys: nil
             )
-            let entries = try urls.map { entryURL in
+            let entries = try urls.filter {
+                policy.decision(for: $0.path, dimension: .path).isAllowed
+            }.map { entryURL in
                 let values = try entryURL.resourceValues(forKeys: keys)
                 return values.isDirectory == true
                     ? "\(entryURL.lastPathComponent)/"

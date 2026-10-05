@@ -24,6 +24,9 @@ struct ToolCallCard: View {
             DisclosureGroup("Результат", isExpanded: $isResultExpanded) {
                 payloadText(toolCall.resultJSON ?? "Ожидание результата…")
             }
+            .onChange(of: toolCall.status, initial: true) { _, status in
+                if status == .failed { isResultExpanded = true }
+            }
         }
         .padding(10)
         .background(.background.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
