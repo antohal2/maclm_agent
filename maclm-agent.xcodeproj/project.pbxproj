@@ -49,6 +49,7 @@
 		9EA847F23C9CC7BCC3D47D58 /* ClipboardHotkeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706DC256A6ABF272FE181D01 /* ClipboardHotkeyService.swift */; };
 		A5EE8B4368EB065F03A68BA2 /* ProviderDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */; };
 		A95A7A3DFD60902F9FD81BBA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C91D73A066E7938684668328 /* SettingsView.swift */; };
+		AA55B76FDCFB6D8B747C3078 /* RiskLevelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */; };
 		AAE87B1298940E3657B6AFFC /* MoveFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114BE49C5E20E1D4EA612B30 /* MoveFileTool.swift */; };
 		B16BD1CC511C60DD2450E786 /* RunShellTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D14B77D4CFDA3E258F60BBD0 /* RunShellTool.swift */; };
 		B21AEBEBCBAF4068D72D1679 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2A3EE346D287B95D6C981D /* Message.swift */; };
@@ -65,6 +66,7 @@
 		C7B56948610A455ED2DE9F3C /* QuickActionPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE35BD3F9F14AAC825E1ACE /* QuickActionPickerController.swift */; };
 		C8AD5200649ECB6CF9F5F368 /* ClipboardActionEditorModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D477804E7DF4CDB820C3BA9 /* ClipboardActionEditorModels.swift */; };
 		D4DE0EBADF9FE06EAF41E4AA /* GlobalHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */; };
+		D633AFFA3C955C4E50115461 /* RiskLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A61B8098B517DCF8A97F95 /* RiskLevel.swift */; };
 		DE75A0B1D7D6AE027D826951 /* SearchFilesTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9936E6A8DD8E2727B4AF0C3 /* SearchFilesTool.swift */; };
 		E63A764A0C8B3A38DD60FC37 /* SceneActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F8D00CE9028A5B3792F7EC /* SceneActions.swift */; };
 		F043622DF908AD59DAC0AFD3 /* ListDirectoryTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9505329737F6B909EFA1C7 /* ListDirectoryTool.swift */; };
@@ -109,6 +111,7 @@
 		620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LMStudioProvider.swift; sourceTree = "<group>"; };
 		628C0E0AE27881D1D6ED3CD7 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionTemplate.swift; sourceTree = "<group>"; };
+		63A61B8098B517DCF8A97F95 /* RiskLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskLevel.swift; sourceTree = "<group>"; };
 		68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderDiscovery.swift; sourceTree = "<group>"; };
 		6BBC58753B7CA69E1D2F38FA /* OllamaNDJSONParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaNDJSONParser.swift; sourceTree = "<group>"; };
 		6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLMAgentTests.swift; sourceTree = "<group>"; };
@@ -154,6 +157,7 @@
 		F231B04B4566BB6105DC1EF3 /* SSEParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParser.swift; sourceTree = "<group>"; };
 		F2C96102770327439C7769C4 /* ToolCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCall.swift; sourceTree = "<group>"; };
 		F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKey.swift; sourceTree = "<group>"; };
+		FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiskLevelTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -222,6 +226,7 @@
 				6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */,
 				5DD9F645395A145B8FD101C5 /* PasteServiceTests.swift */,
 				01A7919CAEB53121634F9073 /* QuickActionPickerModelTests.swift */,
+				FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */,
 				DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */,
 				7C508F8649E5A34F5599F4D9 /* ToolTests.swift */,
 			);
@@ -326,6 +331,7 @@
 			isa = PBXGroup;
 			children = (
 				B87C8C464D73D6BDE12A2532 /* AccessibilityPermissionService.swift */,
+				63A61B8098B517DCF8A97F95 /* RiskLevel.swift */,
 				171819761DB744C3E56AA499 /* Security.swift */,
 			);
 			path = Security;
@@ -452,6 +458,7 @@
 				380A8E20DE22CD6332F37B83 /* QuickActionPickerModel.swift in Sources */,
 				51CEEF8BD4959870F557CE62 /* QuickActionPickerView.swift in Sources */,
 				6950722B70EFD7EA0714D8C9 /* ReadFileTool.swift in Sources */,
+				D633AFFA3C955C4E50115461 /* RiskLevel.swift in Sources */,
 				B16BD1CC511C60DD2450E786 /* RunShellTool.swift in Sources */,
 				2D67060156F6DFB6F4D3D213 /* SSEParser.swift in Sources */,
 				E63A764A0C8B3A38DD60FC37 /* SceneActions.swift in Sources */,
@@ -478,6 +485,7 @@
 				41F8A003E2E8B428D0D9168B /* MacLMAgentTests.swift in Sources */,
 				56F8C3B8491D024120758649 /* PasteServiceTests.swift in Sources */,
 				783A07715767FD44CD394FE0 /* QuickActionPickerModelTests.swift in Sources */,
+				AA55B76FDCFB6D8B747C3078 /* RiskLevelTests.swift in Sources */,
 				FABA11777CBDC7880A0A9346 /* SettingsAndKeychainTests.swift in Sources */,
 				4CDE003C80F81E2CA4706DC4 /* ToolTests.swift in Sources */,
 			);
@@ -584,7 +592,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
 				SDKROOT = macosx;
@@ -607,7 +615,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
 				SDKROOT = macosx;

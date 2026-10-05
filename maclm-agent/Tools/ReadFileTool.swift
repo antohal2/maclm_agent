@@ -3,7 +3,8 @@ import Foundation
 struct ReadFileTool: Tool {
     let name = "read_file"
     let description = "Read the complete UTF-8 contents of a file at the given path."
-    let riskLevel = RiskLevel.safe
+    static let baseRiskLevel = RiskLevel.safe
+    static let isPolicyEnforceable = true
 
     var parametersSchema: JSONSchema {
         .object(

@@ -38,11 +38,16 @@ enum AppTheme: String, CaseIterable, Identifiable, Sendable {
 @Observable
 final class AppSettings {
     private enum Key {
+        static let allowedDirectories = "allowed_dirs"
         static let theme = "appearance.theme"
         static let shortcut = "shortcuts.toggleMenuBar"
         static let clipboardActionShortcut = "shortcuts.clipboardActions"
         static let automaticallyPasteClipboardActionResults =
             "clipboardActions.automaticallyPasteResults"
+    }
+
+    var allowedDirectories: [String] {
+        didSet { defaults.set(allowedDirectories, forKey: Key.allowedDirectories) }
     }
 
     var theme: AppTheme {
@@ -83,6 +88,7 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        allowedDirectories = defaults.stringArray(forKey: Key.allowedDirectories) ?? []
         theme = defaults
             .string(forKey: Key.theme)
             .flatMap(AppTheme.init(rawValue:))

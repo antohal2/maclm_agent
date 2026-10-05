@@ -4,7 +4,16 @@ struct WriteFileTool: Tool {
     let name = "write_file"
     let description =
         "Write UTF-8 content to a file by overwriting, appending, or exclusively creating it."
-    let riskLevel = RiskLevel.confirm
+    static let baseRiskLevel = RiskLevel.caution
+    static let isPolicyEnforceable = true
+
+    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+        let paths = ["path"]
+        if paths.contains(where: { !context.contains(arguments[$0] as? String) }) {
+            return RiskAssessment(level: .dangerous, reason: "путь вне разрешённых директорий")
+        }
+        return RiskAssessment(level: Self.baseRiskLevel)
+    }
 
     var parametersSchema: JSONSchema {
         .object(

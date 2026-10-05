@@ -19,7 +19,9 @@ final class DangerousToolTests: XCTestCase {
             dangerousToolNames
         )
         XCTAssertTrue(dangerousToolNames.allSatisfy { name in
-            registry.tool(named: name)?.riskLevel == .confirm
+            registry.tool(named: name).map {
+                ToolRiskEvaluator.evaluate($0, arguments: [:], context: .init()).level.requiresConfirmation
+            } == true
         })
     }
 

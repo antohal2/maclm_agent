@@ -8,16 +8,19 @@ enum ConfirmationDecision: String, Equatable, Sendable {
 struct ConfirmationRequest: Identifiable, Equatable, Sendable {
     let id: UUID
     let toolCall: ChatToolCall
+    let riskReason: String?
     let riskLevel: RiskLevel
 
     init(
         id: UUID = UUID(),
         toolCall: ChatToolCall,
-        riskLevel: RiskLevel
+        riskLevel: RiskLevel,
+        riskReason: String? = nil
     ) {
         self.id = id
         self.toolCall = toolCall
         self.riskLevel = riskLevel
+        self.riskReason = riskReason
     }
 }
 

@@ -5,7 +5,8 @@ struct RunShellTool: Tool {
     let name = "run_shell"
     let description =
         "Run an exact shell command through /bin/zsh -c and return stdout, stderr, and exit code."
-    let riskLevel = RiskLevel.confirm
+    static let baseRiskLevel = RiskLevel.dangerous
+    static let isPolicyEnforceable = false
 
     var parametersSchema: JSONSchema {
         .object(

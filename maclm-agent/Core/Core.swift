@@ -143,9 +143,13 @@ actor AgentLoop {
             )
         }
 
+        let context = await MainActor.run {
+            ToolRiskContext(allowedDirectories: AppSettings().allowedDirectories)
+        }
+        let assessment = ToolRiskEvaluator.evaluate(tool, arguments: arguments, context: context)
         let confirmation = try await confirmIfNeeded(
             toolCall: toolCall,
-            riskLevel: tool.riskLevel,
+            assessment: assessment,
             onEvent: onEvent
         )
         if let rejection = confirmation.rejection {
@@ -174,16 +178,17 @@ actor AgentLoop {
 
     private func confirmIfNeeded(
         toolCall: ChatToolCall,
-        riskLevel: RiskLevel,
+        assessment: RiskAssessment,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> ToolConfirmation {
-        guard riskLevel != .safe else {
+        guard assessment.level.requiresConfirmation else {
             return ToolConfirmation()
         }
 
         let request = ConfirmationRequest(
             toolCall: toolCall,
-            riskLevel: riskLevel
+            riskLevel: assessment.level,
+            riskReason: assessment.reason
         )
         await onEvent(.confirmationRequested(request))
         let decision = try await confirmationCoordinator.waitForDecision(

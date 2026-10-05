@@ -3,7 +3,8 @@ import Foundation
 struct ListDirectoryTool: Tool {
     let name = "list_dir"
     let description = "List the immediate entries in a directory. Directory names end with '/'."
-    let riskLevel = RiskLevel.safe
+    static let baseRiskLevel = RiskLevel.safe
+    static let isPolicyEnforceable = true
 
     var parametersSchema: JSONSchema {
         .object(

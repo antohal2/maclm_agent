@@ -4,15 +4,22 @@ protocol Tool: Sendable {
     var name: String { get }
     var description: String { get }
     var parametersSchema: JSONSchema { get }
-    var riskLevel: RiskLevel { get }
+    static var baseRiskLevel: RiskLevel { get }
+    /// true: structured paths, hosts or bundle IDs can be extracted deterministically.
+    /// false: arbitrary shell or AppleScript code; policies cannot apply and the
+    /// effective risk is always dangerous. Defaults to false (fail-closed).
+    static var isPolicyEnforceable: Bool { get }
+    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment
 
     func execute(arguments: [String: Any]) async throws -> ToolExecutionResult
 }
 
-enum RiskLevel: String, Codable, Equatable, Sendable {
-    case safe
-    case confirm
-    case deny
+extension Tool {
+    static var isPolicyEnforceable: Bool { false }
+
+    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+        RiskAssessment(level: Self.baseRiskLevel)
+    }
 }
 
 struct ToolExecutionResult: Equatable, Sendable {
@@ -128,11 +135,17 @@ struct ToolRegistry: Sendable {
 
     init(tools: [any Tool] = []) {
         for tool in tools {
-            toolsByName[tool.name] = tool
+            register(tool)
         }
     }
 
     mutating func register(_ tool: any Tool) {
+        #if DEBUG
+        if !type(of: tool).isPolicyEnforceable,
+           type(of: tool).baseRiskLevel < .dangerous {
+            assertionFailure("Universal tool '\(tool.name)' must declare baseRiskLevel .dangerous.")
+        }
+        #endif
         toolsByName[tool.name] = tool
     }
 

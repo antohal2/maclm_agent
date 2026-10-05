@@ -21,7 +21,9 @@ final class ToolTests: XCTestCase {
             ["list_dir", "read_file", "search_files"]
         )
         XCTAssertTrue(registry.definitions.allSatisfy { definition in
-            registry.tool(named: definition.function.name)?.riskLevel == .safe
+            registry.tool(named: definition.function.name).map {
+                ToolRiskEvaluator.evaluate($0, arguments: [:], context: .init()).level == .safe
+            } == true
         })
     }
 

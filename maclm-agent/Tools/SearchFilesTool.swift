@@ -4,7 +4,8 @@ struct SearchFilesTool: Tool {
     let name = "search_files"
     let description =
         "Recursively find files whose filename contains the pattern (case-insensitive substring match)."
-    let riskLevel = RiskLevel.safe
+    static let baseRiskLevel = RiskLevel.safe
+    static let isPolicyEnforceable = true
 
     var parametersSchema: JSONSchema {
         .object(

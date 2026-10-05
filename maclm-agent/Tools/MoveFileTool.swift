@@ -3,7 +3,16 @@ import Foundation
 struct MoveFileTool: Tool {
     let name = "move_file"
     let description = "Move a file or directory from one path to another."
-    let riskLevel = RiskLevel.confirm
+    static let baseRiskLevel = RiskLevel.caution
+    static let isPolicyEnforceable = true
+
+    func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+        let paths = ["from", "to"]
+        if paths.contains(where: { !context.contains(arguments[$0] as? String) }) {
+            return RiskAssessment(level: .dangerous, reason: "путь вне разрешённых директорий")
+        }
+        return RiskAssessment(level: Self.baseRiskLevel)
+    }
 
     var parametersSchema: JSONSchema {
         .object(
