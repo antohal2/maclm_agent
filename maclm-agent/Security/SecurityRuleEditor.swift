@@ -31,20 +31,22 @@ struct SecurityRuleDraft: Equatable {
 enum SecurityPattern {
     static func error(_ pattern: String, dimension: RuleDimension) -> String? {
         guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return "Паттерн не должен быть пустым."
+            return String(localized: "Паттерн не должен быть пустым.")
         }
-        guard !pattern.contains("\0") else { return "Недопустимый нулевой символ." }
+        guard !pattern.contains("\0") else { return String(localized: "Недопустимый нулевой символ.") }
         switch dimension {
         case .path:
             return pathError(pattern)
         case .command:
             do { _ = try NSRegularExpression(pattern: pattern) } catch {
                 // Foundation omits the offset. ICU's public parser supplies it.
-                return "Ошибка regex: \(error.localizedDescription). \(RegexErrorPosition.describe(pattern))"
+                return String(
+                    localized: "Ошибка regex: \(error.localizedDescription). \(RegexErrorPosition.describe(pattern))"
+                )
             }
         case .application:
             if !matchesRegex(pattern, "^[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$") {
-                return "Нужен bundle ID в обратной доменной записи: com.example.app."
+                return String(localized: "Нужен bundle ID в обратной доменной записи: com.example.app.")
             }
         case .host:
             let host = pattern.hasPrefix("*.") ? String(pattern.dropFirst(2)) : pattern
@@ -52,7 +54,7 @@ enum SecurityPattern {
             if host.utf8.count > 253 || labels.contains(where: {
                 $0.utf8.count > 63 || !matchesRegex(String($0), "^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$")
             }) {
-                return "Нужен hostname или домен с wildcard: example.com, *.example.com."
+                return String(localized: "Нужен hostname или домен с wildcard: example.com, *.example.com.")
             }
         }
         return nil
@@ -61,10 +63,12 @@ enum SecurityPattern {
     private static func pathError(_ pattern: String) -> String? {
         // The engine supports only *, ** and ?; reject shell glob extensions.
         if pattern.contains(where: { "[]{}\\".contains($0) }) {
-            return "Поддерживаются только *, ** и ?. Классы [], группы {} и экранирование не поддерживаются."
+            return String(
+                localized: "Поддерживаются только *, ** и ?. Классы [], группы {} и экранирование не поддерживаются."
+            )
         }
         if pattern.contains("***") {
-            return "Используйте * или **, не ***."
+            return String(localized: "Используйте * или **, не ***.")
         }
         return nil
     }
@@ -172,7 +176,8 @@ struct SecurityRuleStore {
     }
 
     func delete(_ rule: SecurityRule) throws {
-        guard !rule.isBuiltIn else { throw failure("Встроенные правила нельзя удалить; отключите переключателем.") }
+        guard !rule.isBuiltIn
+        else { throw failure(String(localized: "Встроенные правила нельзя удалить; отключите переключателем.")) }
         context.delete(rule)
         try context.save()
     }
@@ -224,6 +229,6 @@ private enum RegexErrorPosition {
         let offset = units.withUnsafeBufferPointer {
             securityRegexErrorOffset($0.baseAddress, Int32($0.count))
         }
-        return "Позиция UTF-16: \(max(0, offset) + 1)."
+        return String(localized: "Позиция UTF-16: \(max(0, offset) + 1).")
     }
 }

@@ -57,14 +57,14 @@ enum ClipboardActionRunnerError: Error, Equatable, LocalizedError {
         case let .invalidTemplate(error):
             switch error {
             case .emptyTemplate:
-                "У действия пустой шаблон промпта."
+                String(localized: "У действия пустой шаблон промпта.")
             case .missingInputPlaceholder:
-                "В шаблоне действия отсутствует {{input}}."
+                String(localized: "В шаблоне действия отсутствует {{input}}.")
             }
         case .emptyResponse:
-            "LLM-сервер вернул пустой ответ."
+            String(localized: "LLM-сервер вернул пустой ответ.")
         case .unexpectedToolCall:
-            "LLM попыталась вызвать инструмент вместо обработки текста."
+            String(localized: "LLM попыталась вызвать инструмент вместо обработки текста.")
         }
     }
 }

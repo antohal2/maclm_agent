@@ -43,20 +43,20 @@ struct MenuBarContentView: View {
             Button(action: createConversation) {
                 Image(systemName: "square.and.pencil")
             }
-            .help("Новая беседа")
-            .accessibilityLabel("Новая беседа")
+            .help(String(localized: "Новая беседа"))
+            .accessibilityLabel(String(localized: "Новая беседа"))
 
             Button(action: sceneActions.openSettings) {
                 Image(systemName: "gearshape")
             }
-            .help("Настройки")
-            .accessibilityLabel("Настройки")
+            .help(String(localized: "Настройки"))
+            .accessibilityLabel(String(localized: "Настройки"))
 
             Button(action: openMainWindow) {
                 Image(systemName: "macwindow")
             }
-            .help("Открыть главное окно")
-            .accessibilityLabel("Открыть главное окно")
+            .help(String(localized: "Открыть главное окно"))
+            .accessibilityLabel(String(localized: "Открыть главное окно"))
         }
         .buttonStyle(.borderless)
         .padding(12)
@@ -64,9 +64,9 @@ struct MenuBarContentView: View {
 
     private var clipboardActionMenu: some View {
         Menu {
-            Section("Действия с буфером") {
+            Section(String(localized: "Действия с буфером")) {
                 if enabledClipboardActions.isEmpty {
-                    Text("Нет включённых действий")
+                    Text(String(localized: "Нет включённых действий"))
                 } else {
                     ForEach(enabledClipboardActions) { action in
                         Button {
@@ -85,8 +85,8 @@ struct MenuBarContentView: View {
                 Image(systemName: "clipboard")
             }
         }
-        .help("Применить действие к тексту в буфере")
-        .accessibilityLabel("Действия с буфером")
+        .help(String(localized: "Применить действие к тексту в буфере"))
+        .accessibilityLabel(String(localized: "Действия с буфером"))
         .disabled(clipboardActionRunner.state.isRunning)
     }
 
@@ -99,7 +99,7 @@ struct MenuBarContentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             if shouldOfferAccessibilitySettings {
-                Button("Настройки") {
+                Button(String(localized: "Настройки")) {
                     accessibilityPermissionService.openSystemSettings()
                 }
                 .controlSize(.small)
@@ -110,8 +110,8 @@ struct MenuBarContentView: View {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.borderless)
-                .help("Скрыть статус")
-                .accessibilityLabel("Скрыть статус")
+                .help(String(localized: "Скрыть статус"))
+                .accessibilityLabel(String(localized: "Скрыть статус"))
             }
         }
         .padding(.horizontal, 12)
@@ -140,7 +140,7 @@ struct MenuBarContentView: View {
         case .idle:
             ""
         case let .running(_, actionName):
-            "«\(actionName)»: обработка…"
+            String(localized: "«\(actionName)»: обработка…")
         case let .succeeded(actionName, outcome):
             successMessage(actionName: actionName, outcome: outcome)
         case let .failed(actionName, message):
@@ -161,18 +161,18 @@ struct MenuBarContentView: View {
     ) -> String {
         switch outcome.pasteResult {
         case .pasted:
-            "«\(actionName)»: результат вставлен."
+            String(localized: "«\(actionName)»: результат вставлен.")
         case .disabled:
-            "«\(actionName)»: результат в буфере. Вставьте его вручную через ⌘V."
+            String(localized: "«\(actionName)»: результат в буфере. Вставьте его вручную через ⌘V.")
         case .accessibilityDenied:
-            "«\(actionName)»: результат в буфере. Для авто-вставки нужен доступ "
-                + "к Универсальному доступу."
+            String(localized: "«\(actionName)»: результат в буфере. Для авто-вставки нужен доступ ")
+                + String(localized: "к Универсальному доступу.")
         case .targetApplicationUnavailable:
-            "«\(actionName)»: результат в буфере. Не удалось вернуть фокус — вставьте "
-                + "его вручную через ⌘V."
+            String(localized: "«\(actionName)»: результат в буфере. Не удалось вернуть фокус — вставьте ")
+                + String(localized: "его вручную через ⌘V.")
         case let .failed(message):
-            "«\(actionName)»: результат в буфере. Авто-вставка не выполнена: \(message) "
-                + "Вставьте его вручную через ⌘V."
+            String(localized: "«\(actionName)»: результат в буфере. Авто-вставка не выполнена: \(message) ")
+                + String(localized: "Вставьте его вручную через ⌘V.")
         }
     }
 
@@ -189,15 +189,15 @@ struct MenuBarContentView: View {
 
     private var conversationMenu: some View {
         Menu {
-            Section("Все беседы") {
+            Section(String(localized: "Все беседы")) {
                 ForEach(conversations) { conversation in
                     Button {
                         viewModel.selectConversation(conversation)
                     } label: {
                         if conversation.id == viewModel.selectedConversationID {
-                            Label(conversation.title, systemImage: "checkmark")
+                            Label(conversation.interfaceTitle, systemImage: "checkmark")
                         } else {
-                            Text(conversation.title)
+                            Text(conversation.interfaceTitle)
                         }
                     }
                 }
@@ -206,11 +206,11 @@ struct MenuBarContentView: View {
             Divider()
 
             Button(action: createConversation) {
-                Label("Новая беседа", systemImage: "square.and.pencil")
+                Label(String(localized: "Новая беседа"), systemImage: "square.and.pencil")
             }
         } label: {
             HStack(spacing: 6) {
-                Text(viewModel.selectedConversation?.title ?? Conversation.defaultTitle)
+                Text(viewModel.selectedConversation?.interfaceTitle ?? Conversation.defaultTitle)
                     .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.caption)

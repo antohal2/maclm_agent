@@ -8,49 +8,38 @@ struct SettingsView: View {
     let sessionPermissions: SessionPermissions
     let accessibilityPermissionService: any AccessibilityPermissionService
 
+    @AppStorage("settings.selectedTab") private var selectedTab = "general"
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
+            shortcutSettings.tabItem { Label(String(localized: "Основные"), systemImage: "gearshape") }.tag("general")
             ProviderSettingsView(coordinator: providerCoordinator)
-                .tabItem {
-                    Label("Provider", systemImage: "server.rack")
-                }
-
+                .tabItem { Label(String(localized: "Модели"), systemImage: "server.rack") }.tag("models")
             SecuritySettingsView(settings: settings, sessionPermissions: sessionPermissions)
-                .tabItem { Label("Безопасность", systemImage: "shield") }
-
-            appearanceSettings
-                .tabItem {
-                    Label("Appearance", systemImage: "circle.lefthalf.filled")
-                }
-
-            shortcutSettings
-                .tabItem {
-                    Label("Shortcuts", systemImage: "keyboard")
-                }
-
+                .tabItem { Label(String(localized: "Безопасность"), systemImage: "shield") }.tag("security")
             ClipboardActionsSettingsView(
                 settings: settings,
                 clipboardHotkeyService: clipboardHotkeyService,
                 accessibilityPermissionService: accessibilityPermissionService
-            )
-            .tabItem {
-                Label("Действия с буфером", systemImage: "clipboard")
-            }
+            ).tabItem { Label(String(localized: "Буфер обмена"), systemImage: "clipboard") }.tag("clipboard")
+            appearanceSettings
+                .tabItem { Label(String(localized: "Внешний вид"), systemImage: "circle.lefthalf.filled") }
+                .tag("appearance")
         }
         .frame(width: 900, height: 680)
     }
 
     private var appearanceSettings: some View {
         Form {
-            Section("Тема") {
-                Picker("Оформление", selection: $settings.theme) {
+            Section(String(localized: "Тема")) {
+                Picker(String(localized: "Оформление"), selection: $settings.theme) {
                     ForEach(AppTheme.allCases) { theme in
                         Text(theme.displayName).tag(theme)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Text("Auto следует системной теме macOS.")
+                Text(String(localized: "Auto следует системной теме macOS."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -61,8 +50,16 @@ struct SettingsView: View {
 
     private var shortcutSettings: some View {
         Form {
-            Section("Глобальный хоткей") {
-                LabeledContent("Показать или скрыть панель") {
+            Section(String(localized: "Язык интерфейса")) {
+                Picker(String(localized: "Язык"), selection: $settings.interfaceLanguage) {
+                    Text(String(localized: "Системный")).tag("system")
+                    Text(verbatim: String(localized: "Русский")).tag("ru")
+                    Text(verbatim: "English").tag("en")
+                }
+                Text(String(localized: "Применится после перезапуска")).font(.caption).foregroundStyle(.secondary)
+            }
+            Section(String(localized: "Глобальный хоткей")) {
+                LabeledContent(String(localized: "Показать или скрыть панель")) {
                     ShortcutRecorder(
                         shortcut: settings.shortcut,
                         onShortcut: updateShortcut
@@ -70,7 +67,7 @@ struct SettingsView: View {
                     .frame(width: 150)
                 }
 
-                Text("Нажмите поле, затем новое сочетание. Требуется Command, Control или Option.")
+                Text(String(localized: "Нажмите поле, затем новое сочетание. Требуется Command, Control или Option."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

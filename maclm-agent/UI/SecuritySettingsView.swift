@@ -15,12 +15,26 @@ struct SecuritySettingsView: View {
     var body: some View {
         Form {
             Section { SecurityRulesSettingsView() }
-            Section("Разрешённые директории · allowed_dirs") {
-                Text("Запись и перемещение внутри этих папок получают уровень caution: разрешение можно запомнить на сессию. Вне них — dangerous с подтверждением каждого вызова.")
-                    .font(.callout)
+            Section(String(localized: "Разрешённые директории · allowed_dirs")) {
+                Text(
+                    String(
+                        localized: """
+                        Запись и перемещение внутри этих папок получают уровень caution: разрешение можно \
+                        запомнить на сессию. Вне них — dangerous с подтверждением каждого вызова.
+                        """
+                    )
+                )
+                .font(.callout)
                 if settings.allowedDirectories.isEmpty {
-                    Text("Пока не задано: любая запись и перемещение файлов требуют подтверждения каждый раз (уровень dangerous)")
-                        .foregroundStyle(.secondary)
+                    Text(
+                        String(
+                            localized: """
+                            Пока не задано: любая запись и перемещение файлов требуют подтверждения каждый раз \
+                            (уровень dangerous)
+                            """
+                        )
+                    )
+                    .foregroundStyle(.secondary)
                 } else {
                     ForEach(Array(settings.allowedDirectories.enumerated()), id: \.offset) { index, directory in
                         HStack {
@@ -32,81 +46,97 @@ struct SecuritySettingsView: View {
                                 Image(systemName: "minus.circle")
                             }
                             .buttonStyle(.borderless)
-                            .help("Убрать из разрешённых директорий")
+                            .help(String(localized: "Убрать из разрешённых директорий"))
                             .accessibilityLabel("Убрать \(directory) из разрешённых директорий")
                         }
                     }
                 }
-                Button("Добавить папку…", action: chooseDirectory)
-                Text("Этот список меняет только уровень риска. Запреты SecurityRule продолжают действовать независимо от него.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Button(String(localized: "Добавить папку…"), action: chooseDirectory)
+                Text(
+                    String(
+                        localized: """
+                        Этот список меняет только уровень риска. Запреты SecurityRule продолжают действовать \
+                        независимо от него.
+                        """
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
-            Section("Журнал аудита") {
-                Button("Открыть журнал…") { openWindow(id: "audit") }
-                Picker("Срок хранения", selection: $settings.auditRetentionDays) {
-                    Text("30 дней").tag(30)
-                    Text("90 дней").tag(90)
-                    Text("Год").tag(365)
-                    Text("Бессрочно").tag(0)
+            Section(String(localized: "Журнал аудита")) {
+                Button(String(localized: "Открыть журнал аудита…")) { openWindow(id: "audit") }
+                Picker(String(localized: "Срок хранения"), selection: $settings.auditRetentionDays) {
+                    Text(String(localized: "30 дней")).tag(30)
+                    Text(String(localized: "90 дней")).tag(90)
+                    Text(String(localized: "Год")).tag(365)
+                    Text(String(localized: "Бессрочно")).tag(0)
                 }
-                Text("Устаревшие записи удаляются при следующем запуске приложения.").font(.caption)
-                Button("Очистить журнал", role: .destructive) { confirmClear = true }
+                Text(String(localized: "Устаревшие записи удаляются при следующем запуске приложения.")).font(.caption)
+                Button(String(localized: "Очистить журнал"), role: .destructive) { confirmClear = true }
                 if !auditStatus.isEmpty {
                     Text(auditStatus)
                 }
             }
 
-            Section("Разрешения текущей сессии") {
+            Section(String(localized: "Разрешения текущей сессии")) {
                 if sessionPermissions.permissions.isEmpty {
-                    Text("Нет запомненных разрешений.")
+                    Text(String(localized: "Нет запомненных разрешений."))
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(sessionPermissions.sortedPermissions) { permission in
                         Label("\(permission.toolName) · caution", systemImage: "checkmark.shield")
                     }
                 }
-                Text("Запоминаются только разрешения caution. Dangerous подтверждается каждый раз. При перезапуске приложения память очищается.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("Сбросить") { sessionPermissions.reset() }
+                Text(
+                    String(
+                        localized: """
+                        Запоминаются только разрешения caution. Dangerous подтверждается каждый раз. При \
+                        перезапуске приложения память очищается.
+                        """
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                Button(String(localized: "Сбросить")) { sessionPermissions.reset() }
                     .disabled(sessionPermissions.permissions.isEmpty)
             }
         }
         .formStyle(.grouped)
         .padding()
-        .alert("Очистить весь журнал аудита?", isPresented: $confirmClear) {
-            Button("Отмена", role: .cancel) {}
-            Button("Очистить", role: .destructive) {
+        .alert(String(localized: "Очистить весь журнал аудита?"), isPresented: $confirmClear) {
+            Button(String(localized: "Отмена"), role: .cancel) {}
+            Button(String(localized: "Очистить"), role: .destructive) {
                 let container = context.container
                 Task {
                     let maintenance = await AuditMaintenance.background(container: container)
                     do {
                         try await maintenance.clear()
-                        auditStatus = "Журнал очищен."
+                        auditStatus = String(localized: "Журнал очищен.")
                     } catch {
                         auditStatus = error.localizedDescription
                     }
                 }
             }
-        } message: { Text("Все записи будут удалены без возможности восстановления.") }
-        .alert("Широкая область разрешения", isPresented: $showBroadWarning) {
-            Button("Отмена", role: .cancel) { broadDirectory = nil }
-            Button("Добавить всё равно") {
+        } message: { Text(String(localized: "Все записи будут удалены без возможности восстановления.")) }
+        .alert(String(localized: "Широкая область разрешения"), isPresented: $showBroadWarning) {
+            Button(String(localized: "Отмена"), role: .cancel) { broadDirectory = nil }
+            Button(String(localized: "Добавить всё равно")) {
                 if let directory = broadDirectory {
                     settings.addAllowedDirectory(directory)
                 }
                 broadDirectory = nil
             }
         } message: {
-            Text("Папка \(broadDirectory ?? "") включает конфигурации оболочки и автозапуска. Запись в них без подтверждения каждый раз опасна. Разрешение caution на инструмент можно будет запомнить для всей этой области.")
+            Text(
+                "Папка \(broadDirectory ?? "") включает конфигурации оболочки и автозапуска. Запись в них без подтверждения каждый раз опасна. Разрешение caution на инструмент можно будет запомнить для всей этой области."
+            )
         }
     }
 
     private func chooseDirectory() {
         let panel = NSOpenPanel()
-        panel.title = "Добавить разрешённую директорию"
+        panel.title = String(localized: "Добавить разрешённую директорию")
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false

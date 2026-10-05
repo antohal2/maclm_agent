@@ -26,7 +26,7 @@ struct ClipboardActionsSettingsView: View {
         Form {
             clipboardBehaviorSection
 
-            Section("Редактор действий") {
+            Section(String(localized: "Редактор действий")) {
                 HSplitView {
                     actionList
                     editor
@@ -35,7 +35,7 @@ struct ClipboardActionsSettingsView: View {
             }
 
             Section {
-                Button("Сбросить встроенные действия", role: .destructive) {
+                Button(String(localized: "Сбросить встроенные действия"), role: .destructive) {
                     showsResetConfirmation = true
                 }
             }
@@ -54,49 +54,51 @@ struct ClipboardActionsSettingsView: View {
         ) { _ in
             refreshAccessibilityStatus()
         }
-        .alert("Несохранённые изменения", isPresented: $showsDiscardConfirmation) {
-            Button("Отменить", role: .cancel) {
+        .alert(String(localized: "Несохранённые изменения"), isPresented: $showsDiscardConfirmation) {
+            Button(String(localized: "Отменить"), role: .cancel) {
                 pendingDestination = nil
             }
-            Button("Не сохранять", role: .destructive) {
+            Button(String(localized: "Не сохранять"), role: .destructive) {
                 applyPendingDestination()
             }
         } message: {
-            Text("Изменения текущего действия будут потеряны.")
+            Text(String(localized: "Изменения текущего действия будут потеряны."))
         }
-        .alert("Удалить действие?", isPresented: $showsDeleteConfirmation) {
-            Button("Отменить", role: .cancel) {}
-            Button("Удалить", role: .destructive, action: deletePendingAction)
+        .alert(String(localized: "Удалить действие?"), isPresented: $showsDeleteConfirmation) {
+            Button(String(localized: "Отменить"), role: .cancel) {}
+            Button(String(localized: "Удалить"), role: .destructive, action: deletePendingAction)
         } message: {
             Text(deleteConfirmationMessage)
         }
-        .alert("Сбросить встроенные действия?", isPresented: $showsResetConfirmation) {
-            Button("Отменить", role: .cancel) {}
-            Button("Сбросить", role: .destructive, action: resetBuiltIns)
+        .alert(String(localized: "Сбросить встроенные действия?"), isPresented: $showsResetConfirmation) {
+            Button(String(localized: "Отменить"), role: .cancel) {}
+            Button(String(localized: "Сбросить"), role: .destructive, action: resetBuiltIns)
         } message: {
             Text(
-                "Все 6 встроенных действий будут восстановлены: изменённые поля, порядок и включённость "
-                    + "вернутся к исходным, а удалённые действия будут созданы заново. "
-                    + "Пользовательские действия и их порядок не изменятся."
+                String(
+                    localized: "Все 6 встроенных действий будут восстановлены: изменённые поля, порядок и включённость "
+                )
+                    + String(localized: "вернутся к исходным, а удалённые действия будут созданы заново. ")
+                    + String(localized: "Пользовательские действия и их порядок не изменятся.")
             )
         }
-        .alert("Не удалось сохранить изменения", isPresented: showsOperationError) {
+        .alert(String(localized: "Не удалось сохранить изменения"), isPresented: showsOperationError) {
             Button("OK", role: .cancel) {
                 operationError = nil
             }
         } message: {
-            Text(operationError ?? "Неизвестная ошибка.")
+            Text(operationError ?? String(localized: "Неизвестная ошибка."))
         }
     }
 
     private var clipboardBehaviorSection: some View {
-        Section("Действия с буфером") {
+        Section(String(localized: "Действия с буфером")) {
             Toggle(
-                "Вставлять результат автоматически",
+                String(localized: "Вставлять результат автоматически"),
                 isOn: $settings.automaticallyPasteClipboardActionResults
             )
 
-            LabeledContent("Быстрый пикер") {
+            LabeledContent(String(localized: "Быстрый пикер")) {
                 HStack(spacing: 8) {
                     ShortcutRecorder(
                         shortcut: settings.clipboardActionShortcut,
@@ -104,7 +106,7 @@ struct ClipboardActionsSettingsView: View {
                     )
                     .frame(width: 150)
 
-                    Button("Сбросить") {
+                    Button(String(localized: "Сбросить")) {
                         updateShortcut(.defaultClipboardActionShortcut)
                     }
                     .disabled(
@@ -113,7 +115,7 @@ struct ClipboardActionsSettingsView: View {
                 }
             }
 
-            Text("Нажмите поле и введите сочетание. По умолчанию — ⌘⇧Space.")
+            Text(String(localized: "Нажмите поле и введите сочетание. По умолчанию — ⌘⇧Space."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -150,9 +152,9 @@ struct ClipboardActionsSettingsView: View {
             .overlay {
                 if actions.isEmpty, !isCreating {
                     ContentUnavailableView(
-                        "Нет действий",
+                        String(localized: "Нет действий"),
                         systemImage: "clipboard",
-                        description: Text("Создайте действие кнопкой +")
+                        description: Text(String(localized: "Создайте действие кнопкой +"))
                     )
                 }
             }
@@ -164,14 +166,14 @@ struct ClipboardActionsSettingsView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .help("Создать действие")
+                .help(String(localized: "Создать действие"))
 
                 Button {
                     prepareDeletion()
                 } label: {
                     Image(systemName: "minus")
                 }
-                .help("Удалить выбранное действие")
+                .help(String(localized: "Удалить выбранное действие"))
                 .disabled(selectedAction == nil || isCreating)
 
                 Spacer()
@@ -195,9 +197,9 @@ struct ClipboardActionsSettingsView: View {
             .padding(.leading, 12)
         } else {
             ContentUnavailableView(
-                "Выберите действие",
+                String(localized: "Выберите действие"),
                 systemImage: "slider.horizontal.3",
-                description: Text("Выберите действие слева или создайте новое")
+                description: Text(String(localized: "Выберите действие слева или создайте новое"))
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -206,18 +208,18 @@ struct ClipboardActionsSettingsView: View {
     private var accessibilityWarning: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label(
-                "Для авто-вставки нужен доступ к Универсальному доступу.",
+                String(localized: "Для авто-вставки нужен доступ к Универсальному доступу."),
                 systemImage: "exclamationmark.triangle.fill"
             )
             .font(.caption)
             .foregroundStyle(.orange)
 
             HStack {
-                Button("Запросить доступ") {
+                Button(String(localized: "Запросить доступ")) {
                     accessibilityPermissionService.requestAccess()
                     refreshAccessibilityStatus()
                 }
-                Button("Открыть настройки системы") {
+                Button(String(localized: "Открыть настройки системы")) {
                     accessibilityPermissionService.openSystemSettings()
                 }
             }
@@ -280,13 +282,13 @@ private extension ClipboardActionsSettingsView {
 
     private var deleteConfirmationMessage: String {
         guard let actionPendingDeletion else {
-            return "Действие будет удалено."
+            return String(localized: "Действие будет удалено.")
         }
         if actionPendingDeletion.isBuiltIn {
-            return "Встроенное действие «\(actionPendingDeletion.name)» будет удалено. "
-                + "Его можно вернуть кнопкой «Сбросить встроенные действия»."
+            return String(localized: "Встроенное действие «\(actionPendingDeletion.name)» будет удалено. ")
+                + String(localized: "Его можно вернуть кнопкой «Сбросить встроенные действия».")
         }
-        return "Действие «\(actionPendingDeletion.name)» будет удалено без возможности отмены."
+        return String(localized: "Действие «\(actionPendingDeletion.name)» будет удалено без возможности отмены.")
     }
 
     private func requestDestination(_ destination: EditorDestination) {

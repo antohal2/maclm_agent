@@ -14,6 +14,24 @@ struct ProviderSelectionStore {
         static let model = "llm.selectedModel"
     }
 
+    func loadEndpoints() -> [ProviderEndpoint] {
+        var endpoints = defaults.data(forKey: "llm.endpoints").flatMap { try? JSONDecoder().decode(
+            [ProviderEndpoint].self,
+            from: $0
+        ) } ?? []
+        if let saved = load() {
+            let endpoint = ProviderEndpoint(provider: saved.provider, baseURL: saved.baseURL)
+            if !endpoints.contains(endpoint) {
+                endpoints.append(endpoint)
+            }
+        }
+        return endpoints
+    }
+
+    func saveEndpoints(_ endpoints: [ProviderEndpoint]) {
+        defaults.set(try? JSONEncoder().encode(endpoints), forKey: "llm.endpoints")
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -61,9 +79,9 @@ enum ProviderSelectionResolver {
                 return saved
             }
 
-            let model = matchingProvider.availableModels.contains(saved.model)
+            let model = matchingProvider.availableModels.contains { $0.id == saved.model && !$0.isEmbedding }
                 ? saved.model
-                : matchingProvider.availableModels.first
+                : matchingProvider.availableModels.first(where: { !$0.isEmbedding })?.id
             guard let model else {
                 return saved
             }
@@ -75,8 +93,8 @@ enum ProviderSelectionResolver {
         }
 
         guard
-            let provider = detected.first(where: { !$0.availableModels.isEmpty }),
-            let model = provider.availableModels.first
+            let provider = detected.first(where: { $0.availableModels.contains { !$0.isEmbedding } }),
+            let model = provider.availableModels.first(where: { !$0.isEmbedding })?.id
         else {
             return nil
         }
@@ -92,15 +110,18 @@ enum ProviderRoutingError: Error, LocalizedError {
     case noProviderConfigured
     case invalidBaseURL
     case modelRequired
+    case confirmationRequired
 
     var errorDescription: String? {
         switch self {
         case .noProviderConfigured:
-            "LLM-провайдер не настроен. Выберите обнаруженную модель или задайте URL вручную."
+            String(localized: "LLM-провайдер не настроен. Выберите обнаруженную модель или задайте URL вручную.")
         case .invalidBaseURL:
-            "Укажите полный HTTP(S)-адрес LLM-сервера."
+            String(localized: "Укажите полный HTTP(S)-адрес LLM-сервера.")
+        case .confirmationRequired:
+            String(localized: "Подтвердите отправку данных на этот хост.")
         case .modelRequired:
-            "Укажите модель."
+            String(localized: "Укажите модель.")
         }
     }
 }
@@ -113,11 +134,11 @@ enum ProviderConnectionState {
     var title: String {
         switch self {
         case .checking:
-            "Проверка…"
+            String(localized: "Проверка…")
         case .available:
-            "Доступен"
+            String(localized: "Доступен")
         case .unavailable:
-            "Недоступен"
+            String(localized: "Недоступен")
         }
     }
 }
@@ -125,18 +146,19 @@ enum ProviderConnectionState {
 @MainActor
 @Observable
 final class ProviderCoordinator {
+    private(set) var customEndpoints: [ProviderEndpoint]
     private(set) var detectedProviders: [DetectedProvider] = []
     private(set) var selection: ProviderSelection?
     private(set) var isDiscovering = false
     private(set) var statusMessage: String?
 
     var hasActiveProvider: Bool {
-        selection != nil
+        selection != nil && !selectionIsEmbedding
     }
 
     var activeProviderTitle: String {
         guard let selection else {
-            return "Провайдер не выбран"
+            return String(localized: "Провайдер не выбран")
         }
         return "\(selection.provider.displayName) · \(selection.model)"
     }
@@ -162,6 +184,7 @@ final class ProviderCoordinator {
         self.store = store
         self.discovery = discovery
         selection = store.load()
+        customEndpoints = store.loadEndpoints()
     }
 
     func discoverIfNeeded() async {
@@ -179,10 +202,7 @@ final class ProviderCoordinator {
         isDiscovering = true
         statusMessage = nil
 
-        let additionalEndpoints = selection.map {
-            [ProviderEndpoint(provider: $0.provider, baseURL: $0.baseURL)]
-        } ?? []
-        let results = await discovery.discover(additionalEndpoints: additionalEndpoints)
+        let results = await discovery.discover(additionalEndpoints: customEndpoints)
         detectedProviders = results
 
         let resolved = ProviderSelectionResolver.resolve(saved: selection, detected: results)
@@ -193,18 +213,31 @@ final class ProviderCoordinator {
 
         if results.isEmpty {
             statusMessage = selection == nil
-                ? "Локальные LLM-серверы не найдены. Запустите LM Studio или Ollama либо задайте URL вручную."
-                : "Сохранённый сервер сейчас не отвечает. Выбор сохранён; проверьте сервер или задайте другой URL."
+                ?
+                String(
+                    localized: """
+                    Локальные LLM-серверы не найдены. Запустите LM Studio или Ollama либо задайте URL \
+                    вручную.
+                    """
+                )
+                :
+                String(
+                    localized: """
+                    Сохранённый сервер сейчас не отвечает. Выбор сохранён; проверьте сервер или задайте \
+                    другой URL.
+                    """
+                )
         } else if let selection, !isDetected(selection) {
-            statusMessage = "Сохранённый сервер сейчас не отвечает. Можно выбрать один из обнаруженных."
+            statusMessage =
+                String(localized: "Сохранённый сервер сейчас не отвечает. Можно выбрать один из обнаруженных.")
         } else if results.allSatisfy(\.availableModels.isEmpty) {
-            statusMessage = "LLM-сервер найден, но на нём нет доступных моделей."
+            statusMessage = String(localized: "LLM-сервер найден, но на нём нет доступных моделей.")
         }
         isDiscovering = false
     }
 
     func select(_ provider: DetectedProvider, model: String) {
-        guard provider.availableModels.contains(model) else {
+        guard provider.availableModels.contains(where: { $0.id == model && !$0.isEmbedding }) else {
             return
         }
         apply(
@@ -216,10 +249,30 @@ final class ProviderCoordinator {
         )
     }
 
+    var endpoints: [ProviderEndpoint] {
+        var result = LLMProviderKind.allCases.map { ProviderEndpoint(provider: $0, baseURL: $0.defaultBaseURL) }
+        for endpoint in customEndpoints where !result.contains(endpoint) {
+            result.append(endpoint)
+        }
+        return result
+    }
+
+    func addEndpoint(provider: LLMProviderKind, address: String, confirmed: Bool = false) throws {
+        let address = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let exposure = EndpointClassifier.classify(address)
+        guard exposure != .invalid, let url = URL(string: address) else { throw ProviderRoutingError.invalidBaseURL }
+        guard exposure == .loopback || confirmed else { throw ProviderRoutingError.confirmationRequired }
+        let endpoint = ProviderEndpoint(provider: provider, baseURL: url.normalizedServerURL)
+        if !endpoints.contains(endpoint) {
+            customEndpoints.append(endpoint); store.saveEndpoints(customEndpoints)
+        }
+    }
+
     func configureManually(
         provider: LLMProviderKind,
         baseURLText: String,
-        model: String
+        model: String,
+        confirmed: Bool = false
     ) throws {
         let trimmedURL = baseURLText.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedModel = model.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -232,6 +285,11 @@ final class ProviderCoordinator {
         }
         guard !trimmedModel.isEmpty else {
             throw ProviderRoutingError.modelRequired
+        }
+
+        let endpoint = ProviderEndpoint(provider: provider, baseURL: baseURL.normalizedServerURL)
+        if !endpoints.contains(endpoint) {
+            try addEndpoint(provider: provider, address: trimmedURL, confirmed: confirmed)
         }
 
         apply(
@@ -248,6 +306,7 @@ final class ProviderCoordinator {
             throw ProviderRoutingError.noProviderConfigured
         }
 
+        guard !selectionIsEmbedding else { throw ProviderRoutingError.modelRequired }
         switch selection.provider {
         case .lmStudio:
             return LMStudioProvider(baseURL: selection.baseURL, model: selection.model)
@@ -256,12 +315,19 @@ final class ProviderCoordinator {
         }
     }
 
+    private var selectionIsEmbedding: Bool {
+        guard let selection else { return false }
+        let info = detectedProviders.first { $0.provider == selection.provider && $0.baseURL == selection.baseURL }?
+            .availableModels.first { $0.id == selection.model }
+        return (info ?? ModelInfo(id: selection.model)).isEmbedding
+    }
+
     private func apply(_ newSelection: ProviderSelection) {
         selection = newSelection
         store.save(newSelection)
         statusMessage = isDetected(newSelection)
             ? nil
-            : "Используется заданный вручную сервер. Проверка соединения выполнится при отправке."
+            : String(localized: "Используется заданный вручную сервер. Проверка соединения выполнится при отправке.")
     }
 
     private func isDetected(_ selection: ProviderSelection) -> Bool {

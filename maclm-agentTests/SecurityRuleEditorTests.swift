@@ -101,7 +101,8 @@ final class SecurityRuleEditorTests: XCTestCase {
             draft.pattern = pattern
             XCTAssertThrowsError(try store.save(draft))
         }
-        XCTAssertTrue(SecurityPattern.error("[", dimension: .command)?.contains("Позиция") == true)
+        XCTAssertTrue(SecurityPattern.error("[", dimension: .command)?
+            .contains("UTF-16") == true)
         for dimension in RuleDimension.allCases {
             XCTAssertNotNil(SecurityPattern.error("  ", dimension: dimension))
         }

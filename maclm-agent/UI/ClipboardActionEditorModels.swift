@@ -42,13 +42,13 @@ struct ClipboardActionListRow: View {
                 HStack(spacing: 8) {
                     Image(systemName: action.iconSystemName)
                         .frame(width: 18)
-                    Text(action.name)
+                    Text(action.interfaceName)
                         .lineLimit(1)
                     Spacer(minLength: 4)
                     if action.isBuiltIn {
                         Image(systemName: "shippingbox.fill")
                             .foregroundStyle(.secondary)
-                            .help("Встроенное действие")
+                            .help(String(localized: "Встроенное действие"))
                     }
                 }
                 .contentShape(Rectangle())

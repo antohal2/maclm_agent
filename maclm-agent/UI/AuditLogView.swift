@@ -7,7 +7,7 @@ struct AuditCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     var body: some Commands {
         CommandGroup(after: .appSettings) {
-            Button("Журнал аудита…") { openWindow(id: "audit") }
+            Button(String(localized: "Журнал аудита…")) { openWindow(id: "audit") }
         }
     }
 }
@@ -34,58 +34,59 @@ struct AuditLogView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                TextField("Поиск: инструмент или аргументы", text: $filter.search)
-                TextField("Инструмент (точное имя)", text: $filter.tool)
-                Picker("Риск", selection: $filter.risk) {
-                    Text("Все").tag(nil as RiskLevel?)
+                TextField(String(localized: "Поиск: инструмент или аргументы"), text: $filter.search)
+                TextField(String(localized: "Инструмент (точное имя)"), text: $filter.tool)
+                Picker(String(localized: "Риск"), selection: $filter.risk) {
+                    Text(String(localized: "Все")).tag(nil as RiskLevel?)
                     ForEach(RiskLevel.allCases, id: \.self) { risk in
                         Text(String(describing: risk)).tag(Optional(risk))
                     }
                 }
-                Picker("Решение", selection: $filter.decision) {
-                    Text("Все").tag(nil as AuditDecision?)
+                Picker(String(localized: "Решение"), selection: $filter.decision) {
+                    Text(String(localized: "Все")).tag(nil as AuditDecision?)
                     ForEach(AuditDecision.allCases, id: \.self) { decision in
                         Text(decision.rawValue).tag(Optional(decision))
                     }
                 }
             }
             HStack {
-                Toggle("Диапазон дат", isOn: $useDates)
+                Toggle(String(localized: "Диапазон дат"), isOn: $useDates)
                 if useDates {
-                    DatePicker("С", selection: $start)
-                    DatePicker("По", selection: $end)
+                    DatePicker(String(localized: "С"), selection: $start)
+                    DatePicker(String(localized: "По"), selection: $end)
                 }
                 Spacer()
-                Button("Обновить") { reload() }
-                Button("Экспорт по текущим фильтрам…", action: export).disabled(exporting)
+                Button(String(localized: "Обновить")) { reload() }
+                Button(String(localized: "Экспорт по текущим фильтрам…"), action: export).disabled(exporting)
             }
             Table(rows, selection: $selection) {
-                TableColumn("Время") { Text($0.timestamp.formatted(date: .numeric, time: .standard)) }
-                TableColumn("Инструмент", value: \.toolName)
-                TableColumn("Уровень") { Text(String(describing: $0.riskLevel)) }
-                TableColumn("Решение") { Text($0.decision.rawValue) }
-                TableColumn("Исход") { Text($0.outcome.rawValue) }
+                TableColumn(String(localized: "Время")) { Text($0.timestamp.formatted(date: .numeric, time: .standard))
+                }
+                TableColumn(String(localized: "Инструмент"), value: \.toolName)
+                TableColumn(String(localized: "Уровень")) { Text(String(describing: $0.riskLevel)) }
+                TableColumn(String(localized: "Решение")) { Text($0.decision.rawValue) }
+                TableColumn(String(localized: "Исход")) { Text($0.outcome.rawValue) }
             }
             HStack {
-                Text("Загружено: \(rows.count)").foregroundStyle(.secondary)
+                Text(String(localized: "Загружено: \(rows.count)")).foregroundStyle(.secondary)
                 if hasMore {
-                    Button("Загрузить ещё 200") { loadPage() }
+                    Button(String(localized: "Загрузить ещё 200")) { loadPage() }
                 }
                 Text(status).foregroundStyle(.secondary)
             }
             if let entry = rows.first(where: { $0.id == selection }) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Аргументы (сохранённый вид)").font(.headline)
+                        Text(String(localized: "Аргументы (сохранённый вид)")).font(.headline)
                         Text(entry.argumentsJSON).font(.system(.body, design: .monospaced))
-                        Text("Причина уровня: \(entry.elevationReason ?? "—")")
-                        Text("Правило: \(entry.matchedRuleDescription ?? "—")")
-                        Text("Результат: \(entry.resultSummary)")
+                        Text(String(localized: "Причина уровня: \(entry.elevationReason ?? "—")"))
+                        Text(String(localized: "Правило: \(entry.matchedRuleDescription ?? "—")"))
+                        Text(String(localized: "Результат: \(entry.resultSummary)"))
                         if let error = entry.errorDescription {
-                            Text("Ошибка: \(error)")
+                            Text(String(localized: "Ошибка: \(error)"))
                         }
-                        Text("Длительность выполнения: \(entry.durationMilliseconds.map { "\($0) мс" } ?? "—")")
-                        Text("Диалог: \(entry.conversationID?.uuidString ?? "—")")
+                        Text("Длительность выполнения: \(durationLabel(entry.durationMilliseconds))")
+                        Text(String(localized: "Диалог: \(entry.conversationID?.uuidString ?? "—")"))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
@@ -116,9 +117,13 @@ struct AuditLogView: View {
         } catch { status = error.localizedDescription }
     }
 
+    private func durationLabel(_ milliseconds: Int?) -> String {
+        milliseconds.map { String(localized: "\($0) мс") } ?? "—"
+    }
+
     private func export() {
         let panel = NSSavePanel()
-        panel.title = "Экспорт журнала по текущим фильтрам"
+        panel.title = String(localized: "Экспорт журнала по текущим фильтрам")
         panel.nameFieldStringValue = "audit.jsonl"
         panel.allowedContentTypes = [UTType(filenameExtension: "jsonl") ?? .plainText]
         let selectedFilter = activeFilter
@@ -131,7 +136,7 @@ struct AuditLogView: View {
                 defer { exporting = false }
                 do {
                     let count = try await maintenance.export(filter: selectedFilter, to: url)
-                    status = "Экспортировано записей: \(count)"
+                    status = String(localized: "Экспортировано записей: \(count)")
                 } catch { status = error.localizedDescription }
             }
         }

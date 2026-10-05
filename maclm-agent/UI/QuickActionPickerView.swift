@@ -48,19 +48,19 @@ struct QuickActionPickerView: View {
     }
 
     private var searchField: some View {
-        TextField("Найти действие", text: $model.query)
+        TextField(String(localized: "Найти действие"), text: $model.query)
             .textFieldStyle(.roundedBorder)
             .focused($isSearchFocused)
-            .accessibilityLabel("Поиск действий")
+            .accessibilityLabel(String(localized: "Поиск действий"))
     }
 
     @ViewBuilder
     private var actionList: some View {
         if model.filteredActions.isEmpty {
             ContentUnavailableView(
-                "Действия не найдены",
+                String(localized: "Действия не найдены"),
                 systemImage: "magnifyingglass",
-                description: Text("Измените поисковый запрос")
+                description: Text(String(localized: "Измените поисковый запрос"))
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -91,12 +91,12 @@ struct QuickActionPickerView: View {
             Image(systemName: "clipboard")
                 .font(.title2)
                 .foregroundStyle(.secondary)
-            Text("Буфер обмена пуст")
+            Text(String(localized: "Буфер обмена пуст"))
                 .font(.headline)
-            Text("Скопируйте текст и снова вызовите быстрый пикер")
+            Text(String(localized: "Скопируйте текст и снова вызовите быстрый пикер"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Button("Закрыть", action: onCancel)
+            Button(String(localized: "Закрыть"), action: onCancel)
                 .keyboardShortcut(.cancelAction)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -110,7 +110,7 @@ struct QuickActionPickerView: View {
                 Image(systemName: action.iconSystemName)
                     .frame(width: 22)
                     .foregroundStyle(.secondary)
-                Text(action.name)
+                Text(action.interfaceName)
                     .lineLimit(1)
                 Spacer()
                 if number <= 9 {

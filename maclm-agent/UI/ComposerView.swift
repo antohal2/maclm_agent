@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-// Shared by the full window and status-item popover.
+/// Shared by the full window and status-item popover.
 enum ComposerRules {
     static func canSubmit(_ text: String) -> Bool {
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -19,13 +19,13 @@ enum ComposerRules {
 struct ComposerView: View {
     @Bindable var viewModel: ChatViewModel
     @FocusState private var isFocused: Bool
-    @State private var showsProvider = false
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         VStack(spacing: 10) {
-            TextField("Сообщение для локальной модели", text: $viewModel.input, axis: .vertical)
+            TextField(String(localized: "Сообщение для локальной модели"), text: $viewModel.input, axis: .vertical)
                 .textFieldStyle(.plain)
-                .lineLimit(1...8)
+                .lineLimit(1 ... 8)
                 .focused($isFocused)
                 .focusEffectDisabled()
                 .onKeyPress(keys: [.return], phases: .down) { press in
@@ -35,33 +35,43 @@ struct ComposerView: View {
                         return .ignored
                     }
                     guard !press.modifiers.contains(.shift) else { return .ignored }
-                    if viewModel.canSend { viewModel.send() }
+                    if viewModel.canSend {
+                        viewModel.send()
+                    }
                     return .handled
                 }
             HStack {
                 Spacer(minLength: 0)
-                Button { showsProvider = true } label: {
-                    Text(ComposerRules.shortModelName(viewModel.providerCoordinator.selection?.model ?? "Модель не выбрана"))
+                Button {
+                    UserDefaults.standard.set("models", forKey: "settings.selectedTab")
+                    openSettings()
+                    NSApp.activate(ignoringOtherApps: true)
+                } label: {
+                    Text(ComposerRules
+                        .shortModelName(viewModel.providerCoordinator.selection?
+                            .model ?? String(localized: "Модель не выбрана")))
                         .font(.caption).lineLimit(1).truncationMode(.middle)
                         .padding(.horizontal, 8).padding(.vertical, 4)
                         .background(.quaternary, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .help(viewModel.providerCoordinator.selection?.model ?? "Настройки провайдера")
-                .popover(isPresented: $showsProvider) {
-                    ProviderSettingsView(coordinator: viewModel.providerCoordinator)
-                }
+                .help(viewModel.providerCoordinator.selection?.model ?? String(localized: "Настройки провайдера"))
                 Button {
-                    if viewModel.isGenerating { viewModel.stopGeneration() }
-                    else { viewModel.send() }
+                    if viewModel.isGenerating {
+                        viewModel.stopGeneration()
+                    } else {
+                        viewModel.send()
+                    }
                 } label: {
                     Image(systemName: viewModel.isGenerating ? "stop.circle.fill" : "arrow.up.circle.fill")
                         .font(.title2)
                 }
                 .buttonStyle(.plain)
                 .disabled(!viewModel.isGenerating && !viewModel.canSend)
-                .accessibilityLabel(viewModel.isGenerating ? "Остановить" : "Отправить")
-                .help(viewModel.isGenerating ? "Остановить генерацию" : "Отправить")
+                .accessibilityLabel(viewModel
+                    .isGenerating ? String(localized: "Остановить") : String(localized: "Отправить"))
+                .help(viewModel
+                    .isGenerating ? String(localized: "Остановить генерацию") : String(localized: "Отправить"))
             }
         }
         .padding(12)

@@ -4,20 +4,28 @@ import SwiftUI
 extension RuleDimension {
     var title: String {
         switch self {
-        case .path: "Пути"
-        case .command: "Команды"
-        case .application: "Приложения"
-        case .host: "Сетевые хосты"
+        case .path: String(localized: "Пути")
+        case .command: String(localized: "Команды")
+        case .application: String(localized: "Приложения")
+        case .host: String(localized: "Сетевые хосты")
         }
     }
 
     var notice: String {
         switch self {
-        case .path: "Применяются к шести файловым инструментам. Block всегда приоритетнее allow."
-        case .command: "Сохраняются, но пока не применяются. Принуждение — v0.6 (Shell)."
-        case .application: "Сохраняются, но пока не применяются. Принуждение — v0.7 (AppleScript)."
-        case .host: "Сохраняются, но пока не применяются. Проверка ограничивается явными URL в аргументах: "
-            + "невозможно статически определить адреса npm install, git pull или произвольного скрипта."
+        case .path: String(localized: "Применяются к шести файловым инструментам. Block всегда приоритетнее allow.")
+        case .command: String(localized: "Сохраняются, но пока не применяются. Принуждение — v0.6 (Shell).")
+        case .application: String(localized: "Сохраняются, но пока не применяются. Принуждение — v0.7 (AppleScript).")
+        case .host: String(
+                localized: "Сохраняются, но пока не применяются. Проверка ограничивается явными URL в аргументах: "
+            )
+                +
+                String(
+                    localized: """
+                    невозможно статически определить адреса npm install, git pull или произвольного \
+                    скрипта.
+                    """
+                )
         }
     }
 }
@@ -37,13 +45,16 @@ struct SecurityRulesSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Правила безопасности").font(.headline)
+            Text(String(localized: "Правила безопасности")).font(.headline)
             Label(
-                "Правила по путям действуют только на файловые инструменты. "
-                    + "run_shell выполняет произвольные команды; правила на него не распространяются. "
-                    + "Единственная защита — подтверждение каждой команды на карточке. "
-                    + "Блокировка ~/.ssh/** не остановит cat ~/.ssh/id_rsa. "
-                    + "Внимательно читайте команду на карточке.",
+                String(localized: "Правила по путям действуют только на файловые инструменты. ")
+                    +
+                    String(
+                        localized: "run_shell выполняет произвольные команды; правила на него не распространяются. "
+                    )
+                    + String(localized: "Единственная защита — подтверждение каждой команды на карточке. ")
+                    + String(localized: "Блокировка ~/.ssh/** не остановит cat ~/.ssh/id_rsa. ")
+                    + String(localized: "Внимательно читайте команду на карточке."),
                 systemImage: "exclamationmark.triangle.fill"
             )
             .foregroundStyle(.orange)
@@ -54,18 +65,22 @@ struct SecurityRulesSettingsView: View {
                         Text(dimension.notice).font(.caption).foregroundStyle(.secondary)
                         ForEach(group(dimension)) { rule in
                             HStack {
-                                Toggle("Включено", isOn: Binding(get: { rule.isEnabled }, set: { enabled in
-                                    perform { try store.setEnabled(rule, enabled) }
-                                })).labelsHidden()
+                                Toggle(
+                                    String(localized: "Включено"),
+                                    isOn: Binding(get: { rule.isEnabled }, set: { enabled in
+                                        perform { try store.setEnabled(rule, enabled) }
+                                    })
+                                ).labelsHidden()
                                 VStack(alignment: .leading) {
                                     Text("\(rule.action.rawValue) · \(rule.pattern)").font(.callout.monospaced())
-                                    Text(rule.ruleDescription).font(.caption).foregroundStyle(.secondary)
+                                    Text(InterfaceLocalization.text(rule.ruleDescription)).font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
                                 Spacer()
                                 if rule.isBuiltIn {
-                                    Image(systemName: "lock.fill").help("Встроенное правило")
+                                    Image(systemName: "lock.fill").help(String(localized: "Встроенное правило"))
                                 }
-                                Button("Изменить") {
+                                Button(String(localized: "Изменить")) {
                                     editing = rule
                                     draft = SecurityRuleDraft(rule)
                                     showsEditor = true
@@ -73,7 +88,7 @@ struct SecurityRulesSettingsView: View {
                                 if !rule.isBuiltIn {
                                     Button(role: .destructive) { perform { try store.delete(rule) } } label: {
                                         Image(systemName: "trash")
-                                    }.buttonStyle(.borderless).help("Удалить правило")
+                                    }.buttonStyle(.borderless).help(String(localized: "Удалить правило"))
                                 }
                             }
                         }
@@ -82,12 +97,12 @@ struct SecurityRulesSettingsView: View {
                 }
             }.frame(minHeight: 280)
             HStack {
-                Button("Добавить правило…") {
+                Button(String(localized: "Добавить правило…")) {
                     editing = nil
                     draft = SecurityRuleDraft()
                     showsEditor = true
                 }
-                Button("Сбросить встроенные правила…") { confirmsReset = true }
+                Button(String(localized: "Сбросить встроенные правила…")) { confirmsReset = true }
             }
         }
         .sheet(isPresented: $showsEditor) {
@@ -98,17 +113,22 @@ struct SecurityRulesSettingsView: View {
                 }
             }
         }
-        .alert("Восстановить встроенные правила?", isPresented: $confirmsReset) {
-            Button("Отмена", role: .cancel) {}
-            Button("Восстановить") { perform { try store.resetBuiltIns() } }
+        .alert(String(localized: "Восстановить встроенные правила?"), isPresented: $confirmsReset) {
+            Button(String(localized: "Отмена"), role: .cancel) {}
+            Button(String(localized: "Восстановить")) { perform { try store.resetBuiltIns() } }
         } message: {
             Text(
-                "Будут восстановлены исходные паттерны, действия, описания и порядок всех 16 встроенных правил; "
-                    + "все они будут включены. Отсутствующие правила появятся снова. "
-                    + "Пользовательские правила, их состояния и порядок не изменятся."
+                String(
+                    localized: """
+                    Будут восстановлены исходные паттерны, действия, описания и порядок всех 16 \
+                    встроенных правил;\u{20}
+                    """
+                )
+                    + String(localized: "все они будут включены. Отсутствующие правила появятся снова. ")
+                    + String(localized: "Пользовательские правила, их состояния и порядок не изменятся.")
             )
         }
-        .alert("Ошибка сохранения", isPresented: Binding(get: { operationError != nil }, set: {
+        .alert(String(localized: "Ошибка сохранения"), isPresented: Binding(get: { operationError != nil }, set: {
             if !$0 {
                 operationError = nil
             }
@@ -151,19 +171,20 @@ private struct SecurityRuleEditorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(rule == nil ? "Новое правило" : "Редактирование правила").font(.headline)
-            Picker("Измерение", selection: $draft.dimension) {
+            Text(rule == nil ? String(localized: "Новое правило") : String(localized: "Редактирование правила"))
+                .font(.headline)
+            Picker(String(localized: "Измерение"), selection: $draft.dimension) {
                 ForEach(RuleDimension.allCases, id: \.self) { Text($0.title).tag($0) }
             }.disabled(locked)
-            Picker("Действие", selection: $draft.action) {
-                Text("Разрешить · allow").tag(RuleAction.allow)
-                Text("Запретить · block").tag(RuleAction.block)
+            Picker(String(localized: "Действие"), selection: $draft.action) {
+                Text(String(localized: "Разрешить · allow")).tag(RuleAction.allow)
+                Text(String(localized: "Запретить · block")).tag(RuleAction.block)
             }.disabled(locked)
-            TextField("Паттерн", text: $draft.pattern).disabled(locked)
-            TextField("Описание", text: $draft.ruleDescription).disabled(locked)
-            Toggle("Включено", isOn: $draft.isEnabled)
+            TextField(String(localized: "Паттерн"), text: $draft.pattern).disabled(locked)
+            TextField(String(localized: "Описание"), text: $draft.ruleDescription).disabled(locked)
+            Toggle(String(localized: "Включено"), isOn: $draft.isEnabled)
             if locked {
-                Text("У встроенного правила меняется только включение.").font(.caption)
+                Text(String(localized: "У встроенного правила меняется только включение.")).font(.caption)
             }
             Text(draft.dimension.notice).font(.caption).foregroundStyle(.secondary)
             if let error {
@@ -173,41 +194,51 @@ private struct SecurityRuleEditorView: View {
                 Text("Канонический паттерн: \(PathCanonicalizer.canonicalizePattern(draft.pattern))")
                     .font(.caption.monospaced()).textSelection(.enabled)
                 Text(
-                    "Глоб: * и ? внутри компонента; ** пересекает /. "
-                        + "Совпадение с каталогом распространяется на потомков."
+                    String(localized: "Глоб: * и ? внутри компонента; ** пересекает /. ")
+                        + String(localized: "Совпадение с каталогом распространяется на потомков.")
                 )
                 .font(.caption)
                 if ["**", "/**", "*"].contains(draft.pattern.trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    Text("Внимание: предельно широкий паттерн, включая всю файловую систему для ** и /**.")
-                        .foregroundStyle(.orange)
+                    Text(
+                        String(
+                            localized: "Внимание: предельно широкий паттерн, включая всю файловую систему для ** и /**."
+                        )
+                    )
+                    .foregroundStyle(.orange)
                 }
             }
-            TextField("Проверить на примере", text: $example)
+            TextField(String(localized: "Проверить на примере"), text: $example)
             if !example.isEmpty, error == nil {
-                Text(SecurityPattern.matches(example, draft: draft) ? "Паттерн совпадает" : "Паттерн не совпадает")
+                Text(SecurityPattern
+                    .matches(example, draft: draft) ? String(localized: "Паттерн совпадает") :
+                    String(localized: "Паттерн не совпадает"))
                 let decision = SecurityPattern.preview(example, draft: draft, replacing: rule?.snapshot, rules: rules)
                 Text(verdict(decision)).textSelection(.enabled)
                 Text(
-                    "Проверка учитывает несохранённый вариант и весь набор правил; "
-                        + "путь проверяется как read_file. Это не разрешение на выполнение."
+                    String(localized: "Проверка учитывает несохранённый вариант и весь набор правил; ")
+                        + String(localized: "путь проверяется как read_file. Это не разрешение на выполнение.")
                 )
                 .font(.caption).foregroundStyle(.secondary)
             }
             HStack {
                 Spacer()
-                Button("Отмена") { dismiss() }
-                Button("Сохранить", action: save).disabled(error != nil).keyboardShortcut(.defaultAction)
+                Button(String(localized: "Отмена")) { dismiss() }
+                Button(String(localized: "Сохранить"), action: save).disabled(error != nil)
+                    .keyboardShortcut(.defaultAction)
             }
         }.textFieldStyle(.roundedBorder).padding(24).frame(width: 640)
     }
 
     private func verdict(_ decision: PolicyDecision) -> String {
-        switch decision.disposition {
-        case .allowed: "Разрешено: \(decision.rule?.pattern ?? "")"
-        case .blocked: "Запрещено: \(decision.rule?.pattern ?? "")"
-        case .noDecision:
-            draft.dimension == .path ? "Нет решения: совпавших включённых правил нет."
-                : "Нет решения: принуждение по этому измерению не включено."
+        if decision.disposition == .allowed {
+            return String(localized: "Разрешено: \(decision.rule?.pattern ?? "")")
         }
+        if decision.disposition == .blocked {
+            return String(localized: "Запрещено: \(decision.rule?.pattern ?? "")")
+        }
+        if draft.dimension == .path {
+            return String(localized: "Нет решения: совпавших включённых правил нет.")
+        }
+        return String(localized: "Нет решения: принуждение по этому измерению не включено.")
     }
 }

@@ -37,7 +37,7 @@ struct ChatView: View {
             Divider()
             composer
         }
-        .navigationTitle(viewModel.selectedConversation?.title ?? "maclm-agent")
+        .navigationTitle(viewModel.selectedConversation?.interfaceTitle ?? "maclm-agent")
         .task {
             await viewModel.discoverProvidersIfNeeded()
         }
@@ -50,14 +50,14 @@ struct ChatView: View {
                     if visibleMessages.isEmpty {
                         VStack(spacing: 14) {
                             Image(systemName: "brain").font(.largeTitle)
-                            Text("Локальный ассистент").font(.title2)
+                            Text(String(localized: "Локальный ассистент")).font(.title2)
                             Text(emptyStateDescription)
                                 .font(.caption).foregroundStyle(.secondary)
                                 .lineLimit(1).truncationMode(.middle)
                             ForEach([
-                                "Найди самые большие файлы в папке Загрузки",
-                                "Прочитай файл и кратко перескажи его содержание",
-                                "Что ты умеешь делать с файлами?"
+                                String(localized: "Найди самые большие файлы в папке Загрузки"),
+                                String(localized: "Прочитай файл и кратко перескажи его содержание"),
+                                String(localized: "Что ты умеешь делать с файлами?"),
                             ], id: \.self) { suggestion in
                                 Button(suggestion) { viewModel.input = suggestion }
                                     .buttonStyle(.plain)
@@ -106,7 +106,7 @@ struct ChatView: View {
         if let selection = viewModel.providerCoordinator.selection {
             "\(selection.provider.displayName) · \(ComposerRules.shortModelName(selection.model))"
         } else {
-            "Провайдер недоступен — запустите LM Studio или Ollama."
+            String(localized: "Провайдер недоступен — запустите LM Studio или Ollama.")
         }
     }
 
@@ -145,7 +145,7 @@ private struct MessageBubble: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Печатает…")
+                        Text(String(localized: "Печатает…"))
                             .foregroundStyle(.secondary)
                     }
                 } else if !message.content.isEmpty {
@@ -175,13 +175,13 @@ private struct MessageBubble: View {
     private var roleTitle: String {
         switch message.role {
         case .system:
-            "Система"
+            String(localized: "Система")
         case .user:
-            "Вы"
+            String(localized: "Вы")
         case .assistant:
-            "Ассистент"
+            String(localized: "Ассистент")
         case .tool:
-            "Инструмент"
+            String(localized: "Инструмент")
         }
     }
 

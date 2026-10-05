@@ -120,7 +120,7 @@ final class ClipboardActionRunnerTests: XCTestCase {
         XCTAssertEqual(paste.callCount, 1)
         XCTAssertEqual(
             successOutcome(from: runner).pasteResult,
-            .failed(message: "Не удалось создать событие вставки.")
+            .failed(message: String(localized: "Не удалось создать событие вставки."))
         )
     }
 
@@ -210,7 +210,7 @@ final class ClipboardActionRunnerTests: XCTestCase {
             runner.state,
             .failed(
                 actionName: action.name,
-                message: "В шаблоне действия отсутствует {{input}}."
+                message: String(localized: "В шаблоне действия отсутствует {{input}}.")
             )
         )
         XCTAssertEqual(clipboard.readCallCount, 0)
@@ -239,7 +239,7 @@ final class ClipboardActionRunnerTests: XCTestCase {
             runner.state,
             .failed(
                 actionName: action.name,
-                message: "LLM попыталась вызвать инструмент вместо обработки текста."
+                message: String(localized: "LLM попыталась вызвать инструмент вместо обработки текста.")
             )
         )
         XCTAssertEqual(clipboard.value, "исходный текст")

@@ -33,7 +33,7 @@ targets:
         ENABLE_HARDENED_RUNTIME: true
         GENERATE_INFOPLIST_FILE: true
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
-        MARKETING_VERSION: 0.3.4
+        MARKETING_VERSION: 0.4.1
         PRODUCT_BUNDLE_IDENTIFIER: local.maclm-agent
         PRODUCT_NAME: maclm-agent
         SWIFT_EMIT_LOC_STRINGS: true
@@ -43,6 +43,15 @@ targets:
     platform: macOS
     sources:
       - path: maclm-agentTests
+    preBuildScripts:
+      - name: Copy source catalog for localization completeness test
+        script: |
+          mkdir -p "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
+          cp "${SRCROOT}/maclm-agent/Localizable.xcstrings" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/LocalizableCatalog.json"
+        inputFiles:
+          - $(SRCROOT)/maclm-agent/Localizable.xcstrings
+        outputFiles:
+          - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/LocalizableCatalog.json
     dependencies:
       - target: maclm-agent
     settings:

@@ -52,7 +52,7 @@ final class ShortcutRecorderButton: NSButton {
 
     override func mouseDown(with _: NSEvent) {
         isRecording = true
-        title = "Нажмите сочетание…"
+        title = String(localized: "Нажмите сочетание…")
         window?.makeFirstResponder(self)
     }
 

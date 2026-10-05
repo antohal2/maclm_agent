@@ -10,6 +10,7 @@ final class SceneActions {
     }
 
     func openSettings() {
+        UserDefaults.standard.set("models", forKey: "settings.selectedTab")
         openSettingsAction?()
     }
 }

@@ -13,9 +13,9 @@ enum PasteError: Error, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .accessibilityDenied:
-            "Нет доступа к Универсальному доступу."
+            String(localized: "Нет доступа к Универсальному доступу.")
         case .eventCreationFailed:
-            "Не удалось создать событие вставки."
+            String(localized: "Не удалось создать событие вставки.")
         }
     }
 }

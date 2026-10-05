@@ -17,15 +17,17 @@ struct ToolCallCard: View {
                 statusLabel
             }
 
-            DisclosureGroup("Аргументы", isExpanded: $isArgumentsExpanded) {
+            DisclosureGroup(String(localized: "Аргументы"), isExpanded: $isArgumentsExpanded) {
                 payloadText(prettyJSON(toolCall.argumentsJSON))
             }
 
-            DisclosureGroup("Результат", isExpanded: $isResultExpanded) {
-                payloadText(toolCall.resultJSON ?? "Ожидание результата…")
+            DisclosureGroup(String(localized: "Результат"), isExpanded: $isResultExpanded) {
+                payloadText(toolCall.resultJSON ?? String(localized: "Ожидание результата…"))
             }
             .onChange(of: toolCall.status, initial: true) { _, status in
-                if status == .failed { isResultExpanded = true }
+                if status == .failed {
+                    isResultExpanded = true
+                }
             }
         }
         .padding(10)
@@ -70,15 +72,15 @@ struct ToolCallCard: View {
     private var statusTitle: String {
         switch toolCall.status {
         case .pending:
-            "Ожидание"
+            String(localized: "Ожидание")
         case .approved:
-            "Разрешён"
+            String(localized: "Разрешён")
         case .rejected:
-            "Отклонён"
+            String(localized: "Отклонён")
         case .completed:
-            "Готово"
+            String(localized: "Готово")
         case .failed:
-            "Ошибка"
+            String(localized: "Ошибка")
         }
     }
 

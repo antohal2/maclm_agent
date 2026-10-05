@@ -3,4 +3,4 @@
 --linebreaks lf
 --wraparguments before-first
 --wrapcollections before-first
---disable redundantSelf
+--disable redundantSelf,wrapMultilineStatementBraces

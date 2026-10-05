@@ -116,9 +116,9 @@ enum GlobalHotKeyError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case let .registrationFailed(status):
-            "Комбинация занята, выберите другую (код \(status))."
+            String(localized: "Комбинация занята, выберите другую (код \(status)).")
         case .conflictsWithOtherShortcut:
-            "Комбинация уже назначена другому хоткею приложения."
+            String(localized: "Комбинация уже назначена другому хоткею приложения.")
         }
     }
 }

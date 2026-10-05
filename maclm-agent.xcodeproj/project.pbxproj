@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F09B07F9A79B49148408A052 /* ComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9832266786F480C947CAFCB /* ComposerTests.swift */; };
-		36193C60947649D1A7DF4351 /* ComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AF57CF649884E5FA308CF63 /* ComposerView.swift */; };
 		0FB21F1A342772E15E2F83D8 /* ClipboardActionSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */; };
 		12840EBC2E8214A33FEEA439 /* SessionPermissionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F663BF35DBA5A2AAC5D913 /* SessionPermissionsTests.swift */; };
 		12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A3099DCC2211F043E4378 /* Conversation.swift */; };
@@ -18,10 +16,13 @@
 		1CA5D7E86C7974E16745AE70 /* ClipboardActionTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */; };
 		210C68B603CB0C1F45A6BE22 /* AuditEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A8F15CCD4A4BE84177CD7D /* AuditEntry.swift */; };
 		2321AA8C8DF215DD4899D491 /* ClipboardActionRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3478489BC7B59E6914D735 /* ClipboardActionRunnerTests.swift */; };
+		25A2E141AA63B5DE9E694958 /* ComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BD2BA157B0D9D2883D13DCB /* ComposerTests.swift */; };
+		28A7C99CCD03763CD40B1B75 /* lmstudio-v1-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 2D493AF6764EBC2114DE5BA2 /* lmstudio-v1-synthetic.json */; };
 		28EC3D897E9E7F87052FB06C /* PathCanonicalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7395128DD6A267D5097E2993 /* PathCanonicalizer.swift */; };
 		2D67060156F6DFB6F4D3D213 /* SSEParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F231B04B4566BB6105DC1EF3 /* SSEParser.swift */; };
 		3183C907BBD4A99B13E5860E /* LMStudioProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */; };
 		33E966F962F7BB41A309B2CE /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C458AC82EC6264FBB2B799ED /* SecuritySettingsView.swift */; };
+		37DEEF80B872CD8FFAA60522 /* ollama-tags-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = B244346F19D3F6FD539F84AA /* ollama-tags-synthetic.json */; };
 		380A8E20DE22CD6332F37B83 /* QuickActionPickerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD468E05FD03A5043CFDAE0B /* QuickActionPickerModel.swift */; };
 		384F5E913BAC76779908249D /* ShortcutRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5211EC914BE4690C2B0B08 /* ShortcutRecorder.swift */; };
 		3A2315D8420B21073E77E050 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C0373720418992928F49D9 /* MenuBarController.swift */; };
@@ -38,32 +39,42 @@
 		57ABB2AD2CABC5B5E0D9E2D6 /* ClipboardAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */; };
 		58E9F2D5AEC5478BF5F64E16 /* Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171819761DB744C3E56AA499 /* Security.swift */; };
 		5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */; };
+		6172C12F6B6BE8E6DB055E74 /* lmstudio-v1-live-0.4.25.json in Resources */ = {isa = PBXBuildFile; fileRef = 25DFA4B18EA7846FC61CB35D /* lmstudio-v1-live-0.4.25.json */; };
+		64C749656619891CDC7AE685 /* ollama-ps-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 2755DCD83580F8336144E6E2 /* ollama-ps-synthetic.json */; };
 		679FFE74EB7C0310E64B88CE /* DeleteFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C908B3755176AE72C5E947 /* DeleteFileTool.swift */; };
 		6817FAC2C12373063F0B5847 /* MacLMAgentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93644C8336FE627BD3F3F299 /* MacLMAgentApp.swift */; };
+		68F15CFB5D62C47694DA7844 /* InterfaceLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F37E292CEC3EF2103BE3AD /* InterfaceLocalization.swift */; };
 		6950722B70EFD7EA0714D8C9 /* ReadFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0E1EF7838811397B8E119DB /* ReadFileTool.swift */; };
 		6A982E8440A3122D91552129 /* ProviderCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A7AB91B2BE3F44707A2F97 /* ProviderCoordinator.swift */; };
 		6F60B04E7ADF497A05B2A9E6 /* LLM.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E227070DA0FE5685CC90F62 /* LLM.swift */; };
 		71BC198CAF60C144414AC111 /* ToolCallCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF89DD40946291B82206243 /* ToolCallCard.swift */; };
 		7325881864476BE8705AFF84 /* FrontmostApplicationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FBB4557D6112F51906006A8 /* FrontmostApplicationService.swift */; };
+		7507E829B4D7CEC6695578A1 /* lmstudio-openai-live-0.4.25.json in Resources */ = {isa = PBXBuildFile; fileRef = C098644BAC87EF238516C246 /* lmstudio-openai-live-0.4.25.json */; };
 		783A07715767FD44CD394FE0 /* QuickActionPickerModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01A7919CAEB53121634F9073 /* QuickActionPickerModelTests.swift */; };
 		7D58DF163D482818E25D28E9 /* Tools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F5F94DD0C6655E0949B69B /* Tools.swift */; };
 		7F978E119186397F41476F03 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 03385E835E680CDDF7566DED /* Security.framework */; };
 		7FBD47A610127685B4BBA219 /* SecurityRuleEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CC5C9ECF4A156064477B664 /* SecurityRuleEditor.swift */; };
+		7FCA27D6759B7024834758E9 /* lmstudio-v0-live-0.4.25.json in Resources */ = {isa = PBXBuildFile; fileRef = 0117B7B10390E8A9CEBF2BF1 /* lmstudio-v0-live-0.4.25.json */; };
 		8817296B29666CA89281C143 /* ClipboardActionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */; };
 		8DD02FD87788477A80585BBD /* ClipboardActionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */; };
+		8FDAC9B442164981522826AA /* ModelSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 900CC41233B21B418D24556A /* ModelSettingsTests.swift */; };
 		9849954988154EEA7048C17B /* ClipboardActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */; };
 		98F380F92E23DBA827E19BD2 /* ClipboardActionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270AB5B6193643EDF8B0BE02 /* ClipboardActionStore.swift */; };
 		9913B2B13479E1ADA91E5972 /* ClipboardActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */; };
 		9CF326B3C577A9805755C3C6 /* SecurityRuleEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E726C38719DC47EF6E82A644 /* SecurityRuleEditorTests.swift */; };
 		9EA847F23C9CC7BCC3D47D58 /* ClipboardHotkeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 706DC256A6ABF272FE181D01 /* ClipboardHotkeyService.swift */; };
+		A55DB558B76C82AA3C6ABEFC /* ModelInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB36C62F087DF9B563EDD289 /* ModelInfo.swift */; };
 		A5EE8B4368EB065F03A68BA2 /* ProviderDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */; };
+		A8A649A4C1C7865347BE000F /* lmstudio-v0-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 1C839DEE30EE04BE88444626 /* lmstudio-v0-synthetic.json */; };
 		A95A7A3DFD60902F9FD81BBA /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C91D73A066E7938684668328 /* SettingsView.swift */; };
 		AA55B76FDCFB6D8B747C3078 /* RiskLevelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */; };
 		AAE87B1298940E3657B6AFFC /* MoveFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114BE49C5E20E1D4EA612B30 /* MoveFileTool.swift */; };
+		ACFFEA515289924EC8D2E439 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A5023E2DA958DA7F4646AAF5 /* Localizable.xcstrings */; };
 		B0AB9485F39FC42A17ACB277 /* AuditLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7712919F4841548F31F3177A /* AuditLogView.swift */; };
 		B16BD1CC511C60DD2450E786 /* RunShellTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D14B77D4CFDA3E258F60BBD0 /* RunShellTool.swift */; };
 		B21AEBEBCBAF4068D72D1679 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2A3EE346D287B95D6C981D /* Message.swift */; };
 		B3D07CAB2455A6087547D682 /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3DF5BCF95C6307A82F1856E /* MainWindowView.swift */; };
+		B576DDEFCE53E2F2423F4073 /* EndpointClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07973A63835FAA6F1F4B105D /* EndpointClassifier.swift */; };
 		B7BD18EDE8251146330C5D7B /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85401CE6557E769B5005815D /* ChatView.swift */; };
 		B7EB5536DFDB9440A44713E0 /* ClipboardActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFB3F48EBCF00ED30BB396D /* ClipboardActionRunner.swift */; };
 		BC934848CEBFF5701700B3D9 /* PasteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25A23370D90320D7E524F8F /* PasteService.swift */; };
@@ -76,6 +87,7 @@
 		C788174A08732C4A7BB570E4 /* ToolCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C96102770327439C7769C4 /* ToolCall.swift */; };
 		C7B56948610A455ED2DE9F3C /* QuickActionPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AE35BD3F9F14AAC825E1ACE /* QuickActionPickerController.swift */; };
 		C8AD5200649ECB6CF9F5F368 /* ClipboardActionEditorModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D477804E7DF4CDB820C3BA9 /* ClipboardActionEditorModels.swift */; };
+		CB61B9970F3FFD8ED6BBEFBD /* ComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1215A5DE9FA66DB0EC766FC /* ComposerView.swift */; };
 		D4DE0EBADF9FE06EAF41E4AA /* GlobalHotKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */; };
 		D5926BFC827EDA0EA06899CC /* SecurityRulePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 249A3EEF0B4F9A4ECAD9B553 /* SecurityRulePersistenceTests.swift */; };
 		D633AFFA3C955C4E50115461 /* RiskLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A61B8098B517DCF8A97F95 /* RiskLevel.swift */; };
@@ -87,6 +99,7 @@
 		F1AB0B922D35532014AA515B /* SessionPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0578B831267E2CAD2F2170AA /* SessionPermissions.swift */; };
 		F3FEB9EDA77A4A0F318F1307 /* ProviderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34F727917869B9B5C8186223 /* ProviderSettingsView.swift */; };
 		F499C7CE035D9C25D609421F /* DangerousToolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53EE6DAD4705F1077DCD7840 /* DangerousToolTests.swift */; };
+		F55B9A62E818E12009AC98FC /* ollama-show-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = E3B4E2903A5C74F659D94A33 /* ollama-show-synthetic.json */; };
 		F64D934202DFB8B560DCFAC9 /* SecurityRuleSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9695EE0B91CC1967811265 /* SecurityRuleSeeder.swift */; };
 		F715A14AEA723FB125DEC683 /* ClipboardAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8990D336DD1FD5302D25B64 /* ClipboardAccess.swift */; };
 		FABA11777CBDC7880A0A9346 /* SettingsAndKeychainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */; };
@@ -106,20 +119,24 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		A9832266786F480C947CAFCB /* ComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerTests.swift; sourceTree = "<group>"; };
-		2AF57CF649884E5FA308CF63 /* ComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerView.swift; sourceTree = "<group>"; };
+		0117B7B10390E8A9CEBF2BF1 /* lmstudio-v0-live-0.4.25.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-v0-live-0.4.25.json"; sourceTree = "<group>"; };
 		01A7919CAEB53121634F9073 /* QuickActionPickerModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerModelTests.swift; sourceTree = "<group>"; };
 		03385E835E680CDDF7566DED /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		0578B831267E2CAD2F2170AA /* SessionPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPermissions.swift; sourceTree = "<group>"; };
+		07973A63835FAA6F1F4B105D /* EndpointClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndpointClassifier.swift; sourceTree = "<group>"; };
 		0D477804E7DF4CDB820C3BA9 /* ClipboardActionEditorModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionEditorModels.swift; sourceTree = "<group>"; };
 		0FBB4557D6112F51906006A8 /* FrontmostApplicationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrontmostApplicationService.swift; sourceTree = "<group>"; };
 		114BE49C5E20E1D4EA612B30 /* MoveFileTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveFileTool.swift; sourceTree = "<group>"; };
 		171819761DB744C3E56AA499 /* Security.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Security.swift; sourceTree = "<group>"; };
 		19C0373720418992928F49D9 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		1AF89DD40946291B82206243 /* ToolCallCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallCard.swift; sourceTree = "<group>"; };
+		1C839DEE30EE04BE88444626 /* lmstudio-v0-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-v0-synthetic.json"; sourceTree = "<group>"; };
 		1E9505329737F6B909EFA1C7 /* ListDirectoryTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListDirectoryTool.swift; sourceTree = "<group>"; };
 		249A3EEF0B4F9A4ECAD9B553 /* SecurityRulePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityRulePersistenceTests.swift; sourceTree = "<group>"; };
+		25DFA4B18EA7846FC61CB35D /* lmstudio-v1-live-0.4.25.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-v1-live-0.4.25.json"; sourceTree = "<group>"; };
 		270AB5B6193643EDF8B0BE02 /* ClipboardActionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionStore.swift; sourceTree = "<group>"; };
+		2755DCD83580F8336144E6E2 /* ollama-ps-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ollama-ps-synthetic.json"; sourceTree = "<group>"; };
+		2D493AF6764EBC2114DE5BA2 /* lmstudio-v1-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-v1-synthetic.json"; sourceTree = "<group>"; };
 		330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionsSettingsView.swift; sourceTree = "<group>"; };
 		333E084E43AB611FFC114851 /* ClipboardActionSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionSeeder.swift; sourceTree = "<group>"; };
 		34F727917869B9B5C8186223 /* ProviderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderSettingsView.swift; sourceTree = "<group>"; };
@@ -152,7 +169,9 @@
 		830CD7A06CA4FFC1BC57455A /* SecurityPolicyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityPolicyEngine.swift; sourceTree = "<group>"; };
 		85401CE6557E769B5005815D /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		85C908B3755176AE72C5E947 /* DeleteFileTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteFileTool.swift; sourceTree = "<group>"; };
+		8BD2BA157B0D9D2883D13DCB /* ComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerTests.swift; sourceTree = "<group>"; };
 		8E227070DA0FE5685CC90F62 /* LLM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLM.swift; sourceTree = "<group>"; };
+		900CC41233B21B418D24556A /* ModelSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelSettingsTests.swift; sourceTree = "<group>"; };
 		919F859F7CCBDD13F7190289 /* maclm-agentTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "maclm-agentTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9279AAB48A9720B0E564EF6F /* SecurityPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityPolicyTests.swift; sourceTree = "<group>"; };
 		92A7AB91B2BE3F44707A2F97 /* ProviderCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderCoordinator.swift; sourceTree = "<group>"; };
@@ -165,9 +184,12 @@
 		A0E1EF7838811397B8E119DB /* ReadFileTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadFileTool.swift; sourceTree = "<group>"; };
 		A25A23370D90320D7E524F8F /* PasteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteService.swift; sourceTree = "<group>"; };
 		A3DF5BCF95C6307A82F1856E /* MainWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowView.swift; sourceTree = "<group>"; };
+		A5023E2DA958DA7F4646AAF5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		A6F37E292CEC3EF2103BE3AD /* InterfaceLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceLocalization.swift; sourceTree = "<group>"; };
 		ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmationCard.swift; sourceTree = "<group>"; };
 		ACFB3F48EBCF00ED30BB396D /* ClipboardActionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionRunner.swift; sourceTree = "<group>"; };
 		B218B4009854150B155CF8E9 /* WriteFileTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WriteFileTool.swift; sourceTree = "<group>"; };
+		B244346F19D3F6FD539F84AA /* ollama-tags-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ollama-tags-synthetic.json"; sourceTree = "<group>"; };
 		B7D70134980544BF9B4F6E55 /* MessageMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageMapping.swift; sourceTree = "<group>"; };
 		B87C8C464D73D6BDE12A2532 /* AccessibilityPermissionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityPermissionService.swift; sourceTree = "<group>"; };
 		B8990D336DD1FD5302D25B64 /* ClipboardAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAccess.swift; sourceTree = "<group>"; };
@@ -176,6 +198,7 @@
 		BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionEditorView.swift; sourceTree = "<group>"; };
 		BD2A3EE346D287B95D6C981D /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		C046215F215DF0CC1686F1E2 /* OllamaProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OllamaProvider.swift; sourceTree = "<group>"; };
+		C098644BAC87EF238516C246 /* lmstudio-openai-live-0.4.25.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-openai-live-0.4.25.json"; sourceTree = "<group>"; };
 		C458AC82EC6264FBB2B799ED /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		C91D73A066E7938684668328 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		CDA8F2610510CF65EA77A7ED /* maclm-agent.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "maclm-agent.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,10 +207,13 @@
 		DD468E05FD03A5043CFDAE0B /* QuickActionPickerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerModel.swift; sourceTree = "<group>"; };
 		DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndKeychainTests.swift; sourceTree = "<group>"; };
 		E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionStoreTests.swift; sourceTree = "<group>"; };
+		E1215A5DE9FA66DB0EC766FC /* ComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerView.swift; sourceTree = "<group>"; };
 		E1B0B979529E33A19B67E1ED /* QuickActionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerView.swift; sourceTree = "<group>"; };
 		E30C2ABA14D6698C7823FE00 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
+		E3B4E2903A5C74F659D94A33 /* ollama-show-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ollama-show-synthetic.json"; sourceTree = "<group>"; };
 		E726C38719DC47EF6E82A644 /* SecurityRuleEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityRuleEditorTests.swift; sourceTree = "<group>"; };
 		E9936E6A8DD8E2727B4AF0C3 /* SearchFilesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFilesTool.swift; sourceTree = "<group>"; };
+		EB36C62F087DF9B563EDD289 /* ModelInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelInfo.swift; sourceTree = "<group>"; };
 		EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAction.swift; sourceTree = "<group>"; };
 		ED4F0123BC5C7F0347D8D885 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultClipboardActions.swift; sourceTree = "<group>"; };
@@ -215,12 +241,13 @@
 			children = (
 				7712919F4841548F31F3177A /* AuditLogView.swift */,
 				85401CE6557E769B5005815D /* ChatView.swift */,
-				2AF57CF649884E5FA308CF63 /* ComposerView.swift */,
 				0D477804E7DF4CDB820C3BA9 /* ClipboardActionEditorModels.swift */,
 				BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */,
 				330108579FE774A9EF054FBE /* ClipboardActionsSettingsView.swift */,
+				E1215A5DE9FA66DB0EC766FC /* ComposerView.swift */,
 				ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */,
 				E30C2ABA14D6698C7823FE00 /* ConversationListView.swift */,
+				A6F37E292CEC3EF2103BE3AD /* InterfaceLocalization.swift */,
 				A3DF5BCF95C6307A82F1856E /* MainWindowView.swift */,
 				ED4F0123BC5C7F0347D8D885 /* MenuBarContentView.swift */,
 				34F727917869B9B5C8186223 /* ProviderSettingsView.swift */,
@@ -244,6 +271,21 @@
 				92F8D00CE9028A5B3792F7EC /* SceneActions.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		89943DEEF6681DC89E50E153 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				C098644BAC87EF238516C246 /* lmstudio-openai-live-0.4.25.json */,
+				0117B7B10390E8A9CEBF2BF1 /* lmstudio-v0-live-0.4.25.json */,
+				1C839DEE30EE04BE88444626 /* lmstudio-v0-synthetic.json */,
+				25DFA4B18EA7846FC61CB35D /* lmstudio-v1-live-0.4.25.json */,
+				2D493AF6764EBC2114DE5BA2 /* lmstudio-v1-synthetic.json */,
+				2755DCD83580F8336144E6E2 /* ollama-ps-synthetic.json */,
+				E3B4E2903A5C74F659D94A33 /* ollama-show-synthetic.json */,
+				B244346F19D3F6FD539F84AA /* ollama-tags-synthetic.json */,
+			);
+			path = Fixtures;
 			sourceTree = "<group>";
 		};
 		A3357615091EBEF8FA816605 /* Support */ = {
@@ -272,9 +314,10 @@
 				4E3478489BC7B59E6914D735 /* ClipboardActionRunnerTests.swift */,
 				E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */,
 				48A25DE7221DB9887518A128 /* ClipboardActionTests.swift */,
+				8BD2BA157B0D9D2883D13DCB /* ComposerTests.swift */,
 				53EE6DAD4705F1077DCD7840 /* DangerousToolTests.swift */,
 				6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */,
-				A9832266786F480C947CAFCB /* ComposerTests.swift */,
+				900CC41233B21B418D24556A /* ModelSettingsTests.swift */,
 				5DD9F645395A145B8FD101C5 /* PasteServiceTests.swift */,
 				01A7919CAEB53121634F9073 /* QuickActionPickerModelTests.swift */,
 				FFCCB665FEC407510EAAA278 /* RiskLevelTests.swift */,
@@ -285,6 +328,7 @@
 				DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */,
 				9FB9144735F92BBD3A61EDDC /* ShellProcessTests.swift */,
 				7C508F8649E5A34F5599F4D9 /* ToolTests.swift */,
+				89943DEEF6681DC89E50E153 /* Fixtures */,
 			);
 			path = "maclm-agentTests";
 			sourceTree = "<group>";
@@ -301,6 +345,7 @@
 		C25C30EEEACAE6E37C9DEE66 /* maclm-agent */ = {
 			isa = PBXGroup;
 			children = (
+				A5023E2DA958DA7F4646AAF5 /* Localizable.xcstrings */,
 				55DF9AB23BCB05B9FC5D29D4 /* App */,
 				D749ECD0DFD0707430116840 /* Core */,
 				CBACBF7CCBDF2426B77355B1 /* LLM */,
@@ -327,6 +372,7 @@
 			children = (
 				8E227070DA0FE5685CC90F62 /* LLM.swift */,
 				620D068C128C9FFFC32B6336 /* LMStudioProvider.swift */,
+				EB36C62F087DF9B563EDD289 /* ModelInfo.swift */,
 				6BBC58753B7CA69E1D2F38FA /* OllamaNDJSONParser.swift */,
 				C046215F215DF0CC1686F1E2 /* OllamaProvider.swift */,
 				68B011F71E42B85FCE11DCAC /* ProviderDiscovery.swift */,
@@ -390,6 +436,7 @@
 			isa = PBXGroup;
 			children = (
 				B87C8C464D73D6BDE12A2532 /* AccessibilityPermissionService.swift */,
+				07973A63835FAA6F1F4B105D /* EndpointClassifier.swift */,
 				7395128DD6A267D5097E2993 /* PathCanonicalizer.swift */,
 				63A61B8098B517DCF8A97F95 /* RiskLevel.swift */,
 				171819761DB744C3E56AA499 /* Security.swift */,
@@ -408,7 +455,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3ECE6AB41519CF34FA77B0ED /* Build configuration list for PBXNativeTarget "maclm-agentTests" */;
 			buildPhases = (
+				664F0C1867B4E25A878F98AA /* Copy source catalog for localization completeness test */,
 				EC4052FA960B1B611322B5D9 /* Sources */,
+				199C1BD11328549C508B0C22 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -427,6 +476,7 @@
 			buildConfigurationList = 2B054F9D1268238D33041F23 /* Build configuration list for PBXNativeTarget "maclm-agent" */;
 			buildPhases = (
 				611872DDE5E0F74F5755CE0B /* Sources */,
+				0DBEBB510BCD4A042C0EAFD7 /* Resources */,
 				BB626F2528DDA66F33B35382 /* Frameworks */,
 			);
 			buildRules = (
@@ -460,6 +510,7 @@
 			knownRegions = (
 				Base,
 				en,
+				ru,
 			);
 			mainGroup = A4B84E5B1258538F3BB69421;
 			minimizedProjectReferenceProxies = 1;
@@ -474,6 +525,55 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		0DBEBB510BCD4A042C0EAFD7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ACFFEA515289924EC8D2E439 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		199C1BD11328549C508B0C22 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7507E829B4D7CEC6695578A1 /* lmstudio-openai-live-0.4.25.json in Resources */,
+				7FCA27D6759B7024834758E9 /* lmstudio-v0-live-0.4.25.json in Resources */,
+				A8A649A4C1C7865347BE000F /* lmstudio-v0-synthetic.json in Resources */,
+				6172C12F6B6BE8E6DB055E74 /* lmstudio-v1-live-0.4.25.json in Resources */,
+				28A7C99CCD03763CD40B1B75 /* lmstudio-v1-synthetic.json in Resources */,
+				64C749656619891CDC7AE685 /* ollama-ps-synthetic.json in Resources */,
+				F55B9A62E818E12009AC98FC /* ollama-show-synthetic.json in Resources */,
+				37DEEF80B872CD8FFAA60522 /* ollama-tags-synthetic.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		664F0C1867B4E25A878F98AA /* Copy source catalog for localization completeness test */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/maclm-agent/Localizable.xcstrings",
+			);
+			name = "Copy source catalog for localization completeness test";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/LocalizableCatalog.json",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "mkdir -p \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncp \"${SRCROOT}/maclm-agent/Localizable.xcstrings\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/LocalizableCatalog.json\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		611872DDE5E0F74F5755CE0B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -484,7 +584,6 @@
 				210C68B603CB0C1F45A6BE22 /* AuditEntry.swift in Sources */,
 				B0AB9485F39FC42A17ACB277 /* AuditLogView.swift in Sources */,
 				B7BD18EDE8251146330C5D7B /* ChatView.swift in Sources */,
-				36193C60947649D1A7DF4351 /* ComposerView.swift in Sources */,
 				46FD7E639CF55D3CAAA97694 /* ChatViewModel.swift in Sources */,
 				F715A14AEA723FB125DEC683 /* ClipboardAccess.swift in Sources */,
 				57ABB2AD2CABC5B5E0D9E2D6 /* ClipboardAction.swift in Sources */,
@@ -496,14 +595,17 @@
 				1CA5D7E86C7974E16745AE70 /* ClipboardActionTemplate.swift in Sources */,
 				9849954988154EEA7048C17B /* ClipboardActionsSettingsView.swift in Sources */,
 				9EA847F23C9CC7BCC3D47D58 /* ClipboardHotkeyService.swift in Sources */,
+				CB61B9970F3FFD8ED6BBEFBD /* ComposerView.swift in Sources */,
 				5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */,
 				12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */,
 				3C06D6B52570FFC14F0A603F /* ConversationListView.swift in Sources */,
 				138274F242431F46D9EC58BC /* Core.swift in Sources */,
 				140A8A215CD1EEB0AD2E54B3 /* DefaultClipboardActions.swift in Sources */,
 				679FFE74EB7C0310E64B88CE /* DeleteFileTool.swift in Sources */,
+				B576DDEFCE53E2F2423F4073 /* EndpointClassifier.swift in Sources */,
 				7325881864476BE8705AFF84 /* FrontmostApplicationService.swift in Sources */,
 				D4DE0EBADF9FE06EAF41E4AA /* GlobalHotKey.swift in Sources */,
+				68F15CFB5D62C47694DA7844 /* InterfaceLocalization.swift in Sources */,
 				44F880C8272BAE2B0725D44F /* KeychainService.swift in Sources */,
 				6F60B04E7ADF497A05B2A9E6 /* LLM.swift in Sources */,
 				3183C907BBD4A99B13E5860E /* LMStudioProvider.swift in Sources */,
@@ -514,6 +616,7 @@
 				3A2315D8420B21073E77E050 /* MenuBarController.swift in Sources */,
 				B21AEBEBCBAF4068D72D1679 /* Message.swift in Sources */,
 				3C5D3117BD832A5CD671A136 /* MessageMapping.swift in Sources */,
+				A55DB558B76C82AA3C6ABEFC /* ModelInfo.swift in Sources */,
 				AAE87B1298940E3657B6AFFC /* MoveFileTool.swift in Sources */,
 				C609D261A9FF69EBF5B398DA /* OllamaNDJSONParser.swift in Sources */,
 				176817B1CC643E75A47277CF /* OllamaProvider.swift in Sources */,
@@ -557,9 +660,10 @@
 				2321AA8C8DF215DD4899D491 /* ClipboardActionRunnerTests.swift in Sources */,
 				8817296B29666CA89281C143 /* ClipboardActionStoreTests.swift in Sources */,
 				9913B2B13479E1ADA91E5972 /* ClipboardActionTests.swift in Sources */,
+				25A2E141AA63B5DE9E694958 /* ComposerTests.swift in Sources */,
 				F499C7CE035D9C25D609421F /* DangerousToolTests.swift in Sources */,
 				41F8A003E2E8B428D0D9168B /* MacLMAgentTests.swift in Sources */,
-				F09B07F9A79B49148408A052 /* ComposerTests.swift in Sources */,
+				8FDAC9B442164981522826AA /* ModelSettingsTests.swift in Sources */,
 				56F8C3B8491D024120758649 /* PasteServiceTests.swift in Sources */,
 				783A07715767FD44CD394FE0 /* QuickActionPickerModelTests.swift in Sources */,
 				AA55B76FDCFB6D8B747C3078 /* RiskLevelTests.swift in Sources */,
@@ -674,7 +778,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.4;
+				MARKETING_VERSION = 0.4.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
@@ -699,7 +803,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.3.4;
+				MARKETING_VERSION = 0.4.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";

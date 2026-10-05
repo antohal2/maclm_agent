@@ -2,214 +2,116 @@ import SwiftUI
 
 struct ProviderSettingsView: View {
     @Bindable var coordinator: ProviderCoordinator
-
-    @State private var manualProvider: LLMProviderKind
-    @State private var manualURL: String
-    @State private var manualModel: String
+    @State private var manualProvider: LLMProviderKind = .lmStudio
+    @State private var manualURL = "http://localhost:1234"
+    @State private var showHidden = false
+    @State private var confirmEndpoint = false
     @State private var validationMessage: String?
 
-    init(coordinator: ProviderCoordinator) {
-        self.coordinator = coordinator
-        let selection = coordinator.selection
-        _manualProvider = State(initialValue: selection?.provider ?? .lmStudio)
-        _manualURL = State(
-            initialValue: selection?.baseURL.absoluteString
-                ?? LLMProviderKind.lmStudio.defaultBaseURL.absoluteString
-        )
-        _manualModel = State(initialValue: selection?.model ?? "")
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
-
-            if coordinator.detectedProviders.isEmpty {
-                Text(coordinator.isDiscovering ? "Поиск локальных серверов…" : "Серверы не найдены")
-                    .foregroundStyle(.secondary)
-            } else {
-                detectedProviderList
-            }
-
-            Divider()
-            manualConfiguration
-
-            if let message = validationMessage ?? coordinator.statusMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundStyle(validationMessage == nil ? Color.secondary : Color.red)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding()
-        .task {
-            await coordinator.discoverIfNeeded()
-            syncManualFields()
-        }
-    }
-
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("LLM-провайдер")
-                    .font(.headline)
-                Text(coordinator.activeProviderTitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Label(
-                    coordinator.connectionState.title,
-                    systemImage: connectionStatusSymbol
-                )
-                .font(.caption)
-                .foregroundStyle(connectionStatusColor)
-            }
-
-            Spacer()
-
-            Button {
-                Task {
-                    await coordinator.refresh()
-                    syncManualFields()
-                }
-            } label: {
-                if coordinator.isDiscovering {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Label("Обновить", systemImage: "arrow.clockwise")
-                }
-            }
-            .disabled(coordinator.isDiscovering)
-        }
-    }
-
-    private var detectedProviderList: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Обнаружены")
-                .font(.subheadline.weight(.semibold))
-
-            ForEach(coordinator.detectedProviders) { provider in
-                VStack(alignment: .leading, spacing: 6) {
+        Form {
+            Text(String(localized: "Выбор модели применяется сразу и используется во всех беседах."))
+                .font(.caption).foregroundStyle(.secondary)
+            Toggle(String(localized: "Показать скрытые модели"), isOn: $showHidden)
+            ForEach(coordinator.endpoints, id: \.self) { endpoint in
+                Section(endpoint.provider.displayName) {
+                    Text(endpoint.baseURL.absoluteString).textSelection(.enabled)
+                    exposureLabel(endpoint.baseURL.absoluteString)
                     HStack {
-                        Text(provider.provider.displayName)
-                            .font(.subheadline.weight(.medium))
+                        if coordinator.detectedProviders
+                            .contains(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL }) {
+                            Label(String(localized: "Доступен"), systemImage: "checkmark.circle")
+                                .foregroundStyle(.green)
+                        } else {
+                            Label("Не найден (\(endpoint.baseURL.absoluteString))", systemImage: "xmark.circle")
+                                .foregroundStyle(.secondary)
+                        }
                         Spacer()
-                        Text(provider.baseURL.absoluteString)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                        Button(String(localized: "Проверить")) { Task { await coordinator.refresh() } }
+                            .disabled(coordinator.isDiscovering)
                     }
-
-                    if provider.availableModels.isEmpty {
-                        Text("Нет моделей")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(provider.availableModels, id: \.self) { model in
+                    if let detected = coordinator.detectedProviders
+                        .first(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL }) {
+                        ForEach(detected.availableModels.filter { showHidden || !$0.isEmbedding }) { model in
                             Button {
-                                coordinator.select(provider, model: model)
-                                syncManualFields()
+                                coordinator.select(detected, model: model.id)
                             } label: {
                                 HStack {
-                                    Image(
-                                        systemName: isSelected(provider, model: model)
-                                            ? "checkmark.circle.fill"
-                                            : "circle"
-                                    )
-                                    Text(model)
-                                        .lineLimit(1)
+                                    Image(systemName: coordinator.selection == ProviderSelection(
+                                        provider: endpoint.provider,
+                                        baseURL: endpoint.baseURL,
+                                        model: model.id
+                                    ) ? "checkmark.circle.fill" : "circle")
+                                    Text(model.id)
                                     Spacer()
+                                    if model.isLoaded == true {
+                                        Text(String(localized: "загружена")).font(.caption)
+                                    }
+                                    if let context = model.contextLength {
+                                        Text(context >= 1024 ? "\(context / 1024)K" : "\(context)").font(.caption)
+                                    }
+                                    if model.supportsTools == true {
+                                        Text(verbatim: "tools").font(.caption)
+                                    }
                                 }
-                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
+                            .disabled(model.isEmbedding)
+                            .foregroundStyle(model.isEmbedding ? .secondary : .primary)
+                        }
+                        if detected.availableModels.isEmpty {
+                            Text(String(localized: "Нет моделей"))
                         }
                     }
                 }
-                .padding(10)
-                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
             }
-        }
-    }
-
-    private var manualConfiguration: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Ручная настройка")
-                .font(.subheadline.weight(.semibold))
-
-            Picker("Тип", selection: $manualProvider) {
-                ForEach(LLMProviderKind.allCases) { provider in
-                    Text(provider.displayName).tag(provider)
-                }
-            }
-
-            TextField("http://localhost:1234", text: $manualURL)
-                .textFieldStyle(.roundedBorder)
-
-            TextField("Название модели", text: $manualModel)
-                .textFieldStyle(.roundedBorder)
-
-            Button("Применить") {
-                do {
-                    try coordinator.configureManually(
-                        provider: manualProvider,
-                        baseURLText: manualURL,
-                        model: manualModel
-                    )
-                    validationMessage = nil
-                    Task {
-                        await coordinator.refresh()
-                        syncManualFields()
+            Section {
+                DisclosureGroup(String(localized: "Свой эндпоинт…")) {
+                    Picker(String(localized: "Тип"), selection: $manualProvider) {
+                        ForEach(LLMProviderKind.allCases) { Text($0.displayName).tag($0) }
                     }
-                } catch {
-                    validationMessage = error.localizedDescription
+                    TextField(String(localized: "Адрес"), text: $manualURL)
+                    exposureLabel(manualURL)
+                    Button(String(localized: "Добавить")) {
+                        let exposure = EndpointClassifier
+                            .classify(manualURL.trimmingCharacters(in: .whitespacesAndNewlines))
+                        if exposure == .lan || exposure == .external {
+                            confirmEndpoint = true
+                        } else {
+                            addEndpoint(confirmed: false)
+                        }
+                    }
+                    if let validationMessage {
+                        Text(validationMessage).foregroundStyle(.red)
+                    }
                 }
             }
-            .buttonStyle(.borderedProminent)
         }
-        .onChange(of: manualProvider) {
-            manualURL = manualProvider.defaultBaseURL.absoluteString
-        }
-    }
-
-    private func isSelected(_ provider: DetectedProvider, model: String) -> Bool {
-        guard let selection = coordinator.selection else {
-            return false
-        }
-        return selection.provider == provider.provider
-            && selection.baseURL.normalizedServerURL == provider.baseURL.normalizedServerURL
-            && selection.model == model
-    }
-
-    private func syncManualFields() {
-        guard let selection = coordinator.selection else {
-            return
-        }
-        manualProvider = selection.provider
-        manualURL = selection.baseURL.absoluteString
-        manualModel = selection.model
-        validationMessage = nil
-    }
-
-    private var connectionStatusSymbol: String {
-        switch coordinator.connectionState {
-        case .checking:
-            "clock"
-        case .available:
-            "checkmark.circle.fill"
-        case .unavailable:
-            "xmark.circle.fill"
+        .formStyle(.grouped)
+        .task { await coordinator.discoverIfNeeded() }
+        .alert(String(localized: "Добавить эндпоинт?"), isPresented: $confirmEndpoint) {
+            Button(String(localized: "Отмена"), role: .cancel) {}
+            Button(String(localized: "Подтвердить")) { addEndpoint(confirmed: true) }
+        } message: {
+            Text(String(localized: "Переписка и содержимое файлов будут отправляться на этот хост"))
+            Text(manualURL)
         }
     }
 
-    private var connectionStatusColor: Color {
-        switch coordinator.connectionState {
-        case .checking:
-            .secondary
-        case .available:
-            .green
-        case .unavailable:
-            .red
+    @ViewBuilder private func exposureLabel(_ address: String) -> some View {
+        switch EndpointClassifier.classify(address) {
+        case .lan: Text(verbatim: "LAN").foregroundStyle(.orange)
+        case .external: Text(String(localized: "Переписка и содержимое файлов будут отправляться на этот хост"))
+            .foregroundStyle(.red)
+        default: EmptyView()
         }
+    }
+
+    private func addEndpoint(confirmed: Bool) {
+        do {
+            try coordinator.addEndpoint(provider: manualProvider, address: manualURL, confirmed: confirmed)
+            validationMessage = nil
+            Task { await coordinator.refresh() }
+        } catch { validationMessage = error.localizedDescription }
     }
 }

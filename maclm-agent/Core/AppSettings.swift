@@ -14,11 +14,11 @@ enum AppTheme: String, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .automatic:
-            "Auto"
+            String(localized: "Auto")
         case .light:
-            "Light"
+            String(localized: "Light")
         case .dark:
-            "Dark"
+            String(localized: "Dark")
         }
     }
 
@@ -44,6 +44,17 @@ final class AppSettings {
         static let clipboardActionShortcut = "shortcuts.clipboardActions"
         static let automaticallyPasteClipboardActionResults =
             "clipboardActions.automaticallyPasteResults"
+    }
+
+    var interfaceLanguage: String {
+        didSet {
+            defaults.set(interfaceLanguage, forKey: "interface.language")
+            if interfaceLanguage == "system" {
+                defaults.removeObject(forKey: "AppleLanguages")
+            } else {
+                defaults.set([interfaceLanguage], forKey: "AppleLanguages")
+            }
+        }
     }
 
     var auditRetentionDays: Int {
@@ -117,6 +128,7 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        interfaceLanguage = defaults.string(forKey: "interface.language") ?? "system"
         auditRetentionDays = defaults.object(forKey: "security.auditRetentionDays") as? Int ?? 90
         allowedDirectories = defaults.stringArray(forKey: Key.allowedDirectories) ?? []
         theme = defaults

@@ -27,10 +27,10 @@ struct ConversationListView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationTitle("Беседы")
+        .navigationTitle(String(localized: "Беседы"))
         .toolbar {
             Button(action: createConversation) {
-                Label("Новая беседа", systemImage: "square.and.pencil")
+                Label(String(localized: "Новая беседа"), systemImage: "square.and.pencil")
             }
         }
         .onAppear {
@@ -39,10 +39,10 @@ struct ConversationListView: View {
         .onChange(of: conversations.map(\.id)) {
             ensureSelection()
         }
-        .alert("Переименовать беседу", isPresented: renamePresented) {
-            TextField("Название", text: $renameTitle)
-            Button("Отмена", role: .cancel) {}
-            Button("Сохранить") {
+        .alert(String(localized: "Переименовать беседу"), isPresented: renamePresented) {
+            TextField(String(localized: "Название"), text: $renameTitle)
+            Button(String(localized: "Отмена"), role: .cancel) {}
+            Button(String(localized: "Сохранить")) {
                 guard let conversationToRename else {
                     return
                 }
@@ -50,9 +50,9 @@ struct ConversationListView: View {
             }
             .disabled(renameTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
-        .alert("Удалить беседу?", isPresented: deletePresented) {
-            Button("Отмена", role: .cancel) {}
-            Button("Удалить", role: .destructive) {
+        .alert(String(localized: "Удалить беседу?"), isPresented: deletePresented) {
+            Button(String(localized: "Отмена"), role: .cancel) {}
+            Button(String(localized: "Удалить"), role: .destructive) {
                 guard let conversationToDelete else {
                     return
                 }
@@ -60,7 +60,7 @@ struct ConversationListView: View {
                 ensureSelection(excluding: conversationToDelete.id)
             }
         } message: {
-            Text("Беседа и все её сообщения будут удалены без возможности восстановления.")
+            Text(String(localized: "Беседа и все её сообщения будут удалены без возможности восстановления."))
         }
     }
 
@@ -133,17 +133,17 @@ private struct ConversationRow: View {
     let onDelete: () -> Void
 
     var body: some View {
-        Text(conversation.title)
+        Text(conversation.interfaceTitle)
             .lineLimit(2)
             .contextMenu {
                 Button(action: onRename) {
-                    Label("Переименовать…", systemImage: "pencil")
+                    Label(String(localized: "Переименовать…"), systemImage: "pencil")
                 }
 
                 Divider()
 
                 Button(role: .destructive, action: onDelete) {
-                    Label("Удалить…", systemImage: "trash")
+                    Label(String(localized: "Удалить…"), systemImage: "trash")
                 }
             }
     }

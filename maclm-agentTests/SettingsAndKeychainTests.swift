@@ -49,7 +49,7 @@ final class SettingsAndKeychainTests: XCTestCase {
         ) { error in
             XCTAssertEqual(
                 error.localizedDescription,
-                "Комбинация уже назначена другому хоткею приложения."
+                String(localized: "Комбинация уже назначена другому хоткею приложения.")
             )
         }
     }

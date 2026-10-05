@@ -13,13 +13,13 @@ struct ClipboardActionEditorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(isCreating ? "Новое действие" : "Параметры действия")
+            Text(isCreating ? String(localized: "Новое действие") : String(localized: "Параметры действия"))
                 .font(.headline)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Название")
+                Text(String(localized: "Название"))
                     .font(.subheadline.weight(.medium))
-                TextField("Название действия", text: $draft.name)
+                TextField(String(localized: "Название действия"), text: $draft.name)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -39,8 +39,8 @@ struct ClipboardActionEditorView: View {
 
             HStack {
                 Spacer()
-                Button("Отменить", action: onCancel)
-                Button("Сохранить", action: onSave)
+                Button(String(localized: "Отменить"), action: onCancel)
+                Button(String(localized: "Сохранить"), action: onSave)
                     .keyboardShortcut(.defaultAction)
                     .disabled(validationError != nil)
             }
@@ -56,7 +56,7 @@ struct ClipboardActionEditorView: View {
                 Image(systemName: draft.iconSystemName)
                     .font(.title2)
                     .frame(width: 34, height: 30)
-                TextField("Имя SF Symbol", text: $draft.iconSystemName)
+                TextField(String(localized: "Имя SF Symbol"), text: $draft.iconSystemName)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -88,7 +88,7 @@ struct ClipboardActionEditorView: View {
 
     private var templateEditor: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Шаблон промпта")
+            Text(String(localized: "Шаблон промпта"))
                 .font(.subheadline.weight(.medium))
 
             PromptTemplateTextView(
@@ -102,11 +102,11 @@ struct ClipboardActionEditorView: View {
             }
 
             HStack {
-                Text("{{input}} будет заменён текстом из буфера обмена.")
+                Text(String(localized: "{{input}} будет заменён текстом из буфера обмена."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("Вставить {{input}}") {
+                Button(String(localized: "Вставить {{input}}")) {
                     placeholderInsertionToken += 1
                 }
                 .controlSize(.small)
