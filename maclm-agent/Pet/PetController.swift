@@ -10,7 +10,7 @@ final class PetController: NSObject {
     private let sceneActions: SceneActions
     private let defaults: UserDefaults
     private let panel: PetPanel
-    private let runtime = PetRuntime()
+    let runtime = PetRuntime()
     private var machine = PetStateMachine()
     private var dragging = false
     private var sleepTimer: Timer?

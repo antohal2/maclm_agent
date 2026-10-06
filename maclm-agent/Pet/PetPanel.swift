@@ -17,14 +17,14 @@ final class PetPanel: NSPanel {
         false
     }
 
-    override func mouseDown(with _: NSEvent) {
-        mouseOrigin = NSEvent.mouseLocation
+    override func mouseDown(with event: NSEvent) {
+        mouseOrigin = screenPoint(event)
         panelOrigin = frame.origin
         dragging = false
     }
 
-    override func mouseDragged(with _: NSEvent) {
-        let mouse = NSEvent.mouseLocation
+    override func mouseDragged(with event: NSEvent) {
+        let mouse = screenPoint(event)
         let delta = CGPoint(x: mouse.x - mouseOrigin.x, y: mouse.y - mouseOrigin.y)
         if !dragging, hypot(delta.x, delta.y) >= 3 {
             dragging = true
@@ -33,6 +33,10 @@ final class PetPanel: NSPanel {
         if dragging {
             setFrameOrigin(CGPoint(x: panelOrigin.x + delta.x, y: panelOrigin.y + delta.y))
         }
+    }
+
+    private func screenPoint(_ event: NSEvent) -> CGPoint {
+        convertPoint(toScreen: event.locationInWindow)
     }
 
     override func mouseUp(with _: NSEvent) {
@@ -46,9 +50,29 @@ final class PetPanel: NSPanel {
     }
 }
 
-/// Keep hit testing in the panel so a click cannot focus the hosting view.
+/// Route native events explicitly; a nil hit target drops clicks before NSPanel receives them.
 final class PetHostingView<Content: View>: NSHostingView<Content> {
-    override func hitTest(_: NSPoint) -> NSView? {
-        nil
+    override var acceptsFirstResponder: Bool {
+        false
+    }
+
+    override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
+        true
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        bounds.contains(point) ? self : nil
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        (window as? PetPanel)?.mouseDown(with: event)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        (window as? PetPanel)?.mouseDragged(with: event)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        (window as? PetPanel)?.mouseUp(with: event)
     }
 }

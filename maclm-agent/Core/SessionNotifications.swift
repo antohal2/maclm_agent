@@ -105,6 +105,8 @@ final class SessionNotifications: NSObject, UNUserNotificationCenterDelegate {
 /// Delay termination until tool cancellation and audit writes have finished.
 @MainActor
 final class SessionApplicationDelegate: NSObject, NSApplicationDelegate {
+    /// The delegate has app lifetime; SwiftUI may reconstruct the App value.
+    lazy var runtime = ApplicationRuntime()
     var registry: SessionRunnerRegistry?
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let registry else { return .terminateNow }

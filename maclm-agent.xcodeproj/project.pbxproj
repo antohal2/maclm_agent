@@ -17,6 +17,7 @@
 		12AC6568B7BE46C21357FD62 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97A3099DCC2211F043E4378 /* Conversation.swift */; };
 		138274F242431F46D9EC58BC /* Core.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE7398ECA365F5138E806E8 /* Core.swift */; };
 		140A8A215CD1EEB0AD2E54B3 /* DefaultClipboardActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D6F843353AC35DA999F2CE /* DefaultClipboardActions.swift */; };
+		1647280BA16ABCDB126AF138 /* PetNativeEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC33D6EE8CAE65932EFE8187 /* PetNativeEventTests.swift */; };
 		176817B1CC643E75A47277CF /* OllamaProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C046215F215DF0CC1686F1E2 /* OllamaProvider.swift */; };
 		1CA5D7E86C7974E16745AE70 /* ClipboardActionTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6295D35C74655F1379C531E8 /* ClipboardActionTemplate.swift */; };
 		210C68B603CB0C1F45A6BE22 /* AuditEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A8F15CCD4A4BE84177CD7D /* AuditEntry.swift */; };
@@ -54,9 +55,11 @@
 		57ABB2AD2CABC5B5E0D9E2D6 /* ClipboardAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */; };
 		58E9F2D5AEC5478BF5F64E16 /* Security.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171819761DB744C3E56AA499 /* Security.swift */; };
 		5D5B04FA39DE8FE74C9F8664 /* Checkpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF774AB249F2AA413AE63452 /* Checkpoint.swift */; };
+		5D5FA7F0D7F10B5956E89746 /* ApplicationRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0B0D6547534ACFAA1181417 /* ApplicationRuntime.swift */; };
 		5ED7B1E478F2AF9F749B6754 /* ConfirmationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */; };
 		6172C12F6B6BE8E6DB055E74 /* lmstudio-v1-live-0.4.25.json in Resources */ = {isa = PBXBuildFile; fileRef = 25DFA4B18EA7846FC61CB35D /* lmstudio-v1-live-0.4.25.json */; };
 		64C749656619891CDC7AE685 /* ollama-ps-synthetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 2755DCD83580F8336144E6E2 /* ollama-ps-synthetic.json */; };
+		660CA1296B8FE7C1EC8EE373 /* PetLiveSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D333D752F52D03FA45A626B /* PetLiveSessionTests.swift */; };
 		679FFE74EB7C0310E64B88CE /* DeleteFileTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C908B3755176AE72C5E947 /* DeleteFileTool.swift */; };
 		6808C1FD47875AF0491663A7 /* LegacyContextAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 399571D76E117021939561D0 /* LegacyContextAdapters.swift */; };
 		6817FAC2C12373063F0B5847 /* MacLMAgentApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93644C8336FE627BD3F3F299 /* MacLMAgentApp.swift */; };
@@ -196,6 +199,7 @@
 		19C0373720418992928F49D9 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		1AF89DD40946291B82206243 /* ToolCallCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallCard.swift; sourceTree = "<group>"; };
 		1C839DEE30EE04BE88444626 /* lmstudio-v0-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "lmstudio-v0-synthetic.json"; sourceTree = "<group>"; };
+		1D333D752F52D03FA45A626B /* PetLiveSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetLiveSessionTests.swift; sourceTree = "<group>"; };
 		1E9505329737F6B909EFA1C7 /* ListDirectoryTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListDirectoryTool.swift; sourceTree = "<group>"; };
 		235E047B7FFA9063CE38C866 /* Pets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Pets; path = "maclm-agent/Resources/Pets"; sourceTree = SOURCE_ROOT; };
 		249A3EEF0B4F9A4ECAD9B553 /* SecurityRulePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityRulePersistenceTests.swift; sourceTree = "<group>"; };
@@ -283,6 +287,7 @@
 		A6A782FDABF4C6E0ABE5F9F3 /* PetPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetPanel.swift; sourceTree = "<group>"; };
 		A6F37E292CEC3EF2103BE3AD /* InterfaceLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceLocalization.swift; sourceTree = "<group>"; };
 		ABADBD1A85FF4C5A0371B282 /* ConfirmationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmationCard.swift; sourceTree = "<group>"; };
+		AC33D6EE8CAE65932EFE8187 /* PetNativeEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PetNativeEventTests.swift; sourceTree = "<group>"; };
 		ACFB3F48EBCF00ED30BB396D /* ClipboardActionRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionRunner.swift; sourceTree = "<group>"; };
 		B0D6E014377C063CC42806C0 /* WorkspaceSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceSupport.swift; sourceTree = "<group>"; };
 		B15433856EDC6CA975D1D26E /* CheckpointLoopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckpointLoopTests.swift; sourceTree = "<group>"; };
@@ -315,6 +320,7 @@
 		DD468E05FD03A5043CFDAE0B /* QuickActionPickerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerModel.swift; sourceTree = "<group>"; };
 		DFE0E6EB345F3D7151A8998B /* SettingsAndKeychainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsAndKeychainTests.swift; sourceTree = "<group>"; };
 		E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardActionStoreTests.swift; sourceTree = "<group>"; };
+		E0B0D6547534ACFAA1181417 /* ApplicationRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationRuntime.swift; sourceTree = "<group>"; };
 		E1215A5DE9FA66DB0EC766FC /* ComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposerView.swift; sourceTree = "<group>"; };
 		E1B0B979529E33A19B67E1ED /* QuickActionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActionPickerView.swift; sourceTree = "<group>"; };
 		E29222DF1BC309839D6F4F7F /* CheckpointService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckpointService.swift; sourceTree = "<group>"; };
@@ -397,6 +403,7 @@
 		55DF9AB23BCB05B9FC5D29D4 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				E0B0D6547534ACFAA1181417 /* ApplicationRuntime.swift */,
 				F385F4BF5D0886C04DCBC378 /* GlobalHotKey.swift */,
 				93644C8336FE627BD3F3F299 /* MacLMAgentApp.swift */,
 				19C0373720418992928F49D9 /* MenuBarController.swift */,
@@ -484,7 +491,9 @@
 				6C8CDD0C4EBC99C3DEE75DCC /* MacLMAgentTests.swift */,
 				900CC41233B21B418D24556A /* ModelSettingsTests.swift */,
 				5DD9F645395A145B8FD101C5 /* PasteServiceTests.swift */,
+				1D333D752F52D03FA45A626B /* PetLiveSessionTests.swift */,
 				0CC555CCF933DF718EE8A99D /* PetLoaderTests.swift */,
+				AC33D6EE8CAE65932EFE8187 /* PetNativeEventTests.swift */,
 				2EA6D13AD6FCC123FC674510 /* PetPanelTests.swift */,
 				89734BC8E6513976A8460E93 /* PetStateTests.swift */,
 				DA6A99809CABE1E56F89F722 /* ProjectPerimeterTests.swift */,
@@ -789,6 +798,7 @@
 				707EA8549A02E38F3AE5BBB3 /* AgentLoopEvents.swift in Sources */,
 				3A7E81D537E5BBC514258A44 /* AppSettings.swift in Sources */,
 				B0C03532B335A1A33A51DDE6 /* ApplicationProtection.swift in Sources */,
+				5D5FA7F0D7F10B5956E89746 /* ApplicationRuntime.swift in Sources */,
 				210C68B603CB0C1F45A6BE22 /* AuditEntry.swift in Sources */,
 				B0AB9485F39FC42A17ACB277 /* AuditLogView.swift in Sources */,
 				DFFE3905F2D5A8FB5FAF2256 /* AutoTitleService.swift in Sources */,
@@ -908,7 +918,9 @@
 				41F8A003E2E8B428D0D9168B /* MacLMAgentTests.swift in Sources */,
 				8FDAC9B442164981522826AA /* ModelSettingsTests.swift in Sources */,
 				56F8C3B8491D024120758649 /* PasteServiceTests.swift in Sources */,
+				660CA1296B8FE7C1EC8EE373 /* PetLiveSessionTests.swift in Sources */,
 				2B995A07037D9F8E56B8B27B /* PetLoaderTests.swift in Sources */,
+				1647280BA16ABCDB126AF138 /* PetNativeEventTests.swift in Sources */,
 				6F358D85215661B94BDA4E5D /* PetPanelTests.swift in Sources */,
 				2CBA0A8C1F00B433B49F0D66 /* PetStateTests.swift in Sources */,
 				6F619BF71C8A918214053878 /* ProjectPerimeterTests.swift in Sources */,
@@ -1034,7 +1046,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.8;
+				MARKETING_VERSION = 0.4.8.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
@@ -1059,7 +1071,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.8;
+				MARKETING_VERSION = 0.4.8.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
