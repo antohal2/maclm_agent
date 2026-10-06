@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.4.10.1] - 2026-10-06
+
+- Ship original AI-generated Scout (Скаут) sprite art through the existing bundle folder resource and production validator.
+- Default to scout, migrate the legacy built-in selection, and log validation failures before using Canvas.
+- Cover bundled art, selection migration, and valid/corrupt fallback paths; v0.4.x is fully closed.
+
 All notable changes to `maclm-agent` are documented in this file.
 
 ## [v0.4.10] - 2026-10-06
@@ -15,7 +21,7 @@ All notable changes to `maclm-agent` are documented in this file.
 
 ### Status
 
-- v0.4.x is complete. Built-in bronya art, live multi-monitor/fullscreen checks,
+- v0.4.x is complete. Live multi-monitor/fullscreen checks,
   and GitHub Release publication remain deferred. Next phase: v0.5 Skills.
 
 ## [v0.4.2] - 2026-10-05

@@ -1106,7 +1106,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.10;
+				MARKETING_VERSION = 0.4.10.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
@@ -1131,7 +1131,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.4.10;
+				MARKETING_VERSION = 0.4.10.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";

@@ -5,13 +5,13 @@
 
 ## Формат
 
-Пример контракта из шага 4.8 (для своего питомца замените `bronya` и имя):
+Пример контракта из шага 4.8 (для своего питомца замените `scout` и имя):
 
 ```json
 {
   "version": 1,
-  "id": "bronya",
-  "name": "Броня",
+  "id": "scout",
+  "name": "Скаут",
   "frameSize": 64,
   "columns": 8,
   "rows": [{ "row": 0, "state": "idle", "frames": 6, "fps": 6, "loop": true }],
@@ -22,7 +22,7 @@
 - `version`: только 1; `frameSize`: только 64.
 - `id`: текущий контракт валидатора `^[a-z0-9-]{1,40}$`. Только ASCII, маленькие
   латинские буквы, цифры и дефис; без точек, слешей, пробелов и управляющих символов.
-  `bronya` зарезервирован; коллизии с установленными проверяются без учёта регистра.
+  `scout` зарезервирован; коллизии с установленными проверяются без учёта регистра.
 - `name`: от 1 до 40 символов; `columns`: от 1 до 16.
 - `rows`: уникальные состояния и индексы строк. `idle` обязателен. Возможные состояния:
   `idle`, `running`, `toolRunning`, `needsApproval`, `ready`, `failed`, `drag`, `sleep`.
@@ -93,8 +93,8 @@ A pet is data only: `pet.json` and `spritesheet.png`. Import one folder in
 Settings → Pet → Add pet…; unrelated files are ignored. Frames are 64×64 PNG,
 1–16 columns; sheet height is `(max row + 1) × 64`. JSON is limited to 64 KiB,
 PNG to 8 MiB and 16,777,216 pixels. `idle` is required. IDs follow the existing
-`[a-z0-9-]{1,40}` contract; `bronya` is reserved and collisions are case-insensitive.
+`[a-z0-9-]{1,40}` contract; `scout` is reserved and collisions are case-insensitive.
 No scripts run. No symlinks are followed for pet files. At most 50 pets can be
 installed. Replacement is confirmed and atomic after disk revalidation.
 Refresh marks invalid entries as broken; a missing or invalid active pet falls
-back to the built-in placeholder. Model tools cannot access the storage directory.
+back to the built-in Scout (Canvas only if bundled art fails). Model tools cannot access the storage directory.

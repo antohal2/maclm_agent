@@ -177,7 +177,11 @@ final class AppSettings {
         self.defaults = defaults
         petHideContent = defaults.bool(forKey: "pet.hideContent")
         petSuppressCompletion = defaults.object(forKey: "pet.suppressCompletion") as? Bool ?? true
-        petSelectedID = defaults.string(forKey: "pet.selectedID") ?? "bronya"
+        let selectedPet = defaults.string(forKey: "pet.selectedID") ?? "scout"
+        petSelectedID = selectedPet == "bronya" ? "scout" : selectedPet
+        if selectedPet == "bronya" {
+            defaults.set("scout", forKey: "pet.selectedID")
+        }
         petEnabled = defaults.bool(forKey: "pet.enabled")
         petScale = min(3, max(1, defaults.object(forKey: "pet.scale") as? Int ?? 2))
         notifySessionCompletion = defaults.object(forKey: "notifications.completion") as? Bool ?? true

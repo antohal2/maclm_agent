@@ -10,7 +10,7 @@ struct PetSettingsView: View {
     var body: some View {
         Form {
             Section(String(localized: "Выбор питомца")) {
-                petRow(id: "bronya", name: String(localized: "Встроенный питомец"), sprite: nil, problem: nil)
+                petRow(id: "scout", name: library.builtinSprite?.manifest.name ?? String(localized: "Встроенный питомец"), sprite: library.builtinSprite, problem: nil)
                 ForEach(library.entries) { entry in
                     petRow(id: entry.id, name: entry.name, sprite: entry.sprite, problem: entry.problem)
                 }
@@ -97,7 +97,7 @@ struct PetSettingsView: View {
             }
             .accessibilityLabel(String(localized: "Выбрать питомца"))
             .disabled(problem != nil)
-            if id != "bronya" {
+            if id != "scout" {
                 Button(String(localized: "Удалить"), role: .destructive) { pendingDelete = id }
             }
         }

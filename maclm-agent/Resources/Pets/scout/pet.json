@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "id": "scout",
+  "name": "Скаут",
+  "frameSize": 64,
+  "columns": 8,
+  "rows": [
+    {
+      "row": 0,
+      "state": "idle",
+      "frames": 6,
+      "fps": 6,
+      "loop": true
+    },
+    {
+      "row": 1,
+      "state": "running",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "row": 2,
+      "state": "toolRunning",
+      "frames": 8,
+      "fps": 10,
+      "loop": true
+    },
+    {
+      "row": 3,
+      "state": "needsApproval",
+      "frames": 6,
+      "fps": 8,
+      "loop": true
+    },
+    {
+      "row": 4,
+      "state": "ready",
+      "frames": 6,
+      "fps": 8,
+      "loop": true
+    },
+    {
+      "row": 5,
+      "state": "failed",
+      "frames": 6,
+      "fps": 8,
+      "loop": true
+    },
+    {
+      "row": 6,
+      "state": "drag",
+      "frames": 4,
+      "fps": 8,
+      "loop": true
+    },
+    {
+      "row": 7,
+      "state": "sleep",
+      "frames": 4,
+      "fps": 3,
+      "loop": true
+    }
+  ],
+  "reduceMotionFrame": 0
+}

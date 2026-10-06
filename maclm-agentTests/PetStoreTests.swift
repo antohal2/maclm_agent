@@ -56,7 +56,7 @@ final class PetStoreTests: XCTestCase {
     func testIdentifiersAndInvalidContentsRejected() throws {
         let fixture = try PetStoreFixture()
         defer { fixture.cleanup() }
-        for id in ["bronya", "Bronya", "..", "a/b", "a\\b", "a\n", " pet", "a..b", "a\u{00}"] {
+        for id in ["scout", "Scout", "..", "a/b", "a\\b", "a\n", " pet", "a..b", "a\u{00}"] {
             try fixture.write(id: id)
             XCTAssertThrowsError(try fixture.store.prepare(source: fixture.source), id)
             XCTAssertThrowsError(try fixture.store.delete(id), id)

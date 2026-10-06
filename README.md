@@ -4,10 +4,11 @@
 designed to work with locally hosted language models and to control the machine
 through an explicit, human-approved tool layer without relying on cloud services.
 
-Version v0.4.10 completes the desktop-pet subphase, including validated custom
+Version v0.4.10.1 completes the desktop-pet subphase, including validated custom
 pet import, selection, replacement, removal, and fallback. See [pet format and
-installation](docs/pets.md). The next phase is v0.5 Skills; built-in bronya art
-and release publication remain pending. Clipboard Actions are part of the
+installation](docs/pets.md). The built-in Scout (Скаут) art ships in v0.4.10.1. It is an original character
+produced with an AI image generator and assembled into a sprite sheet.
+The next phase is v0.5 Skills. Clipboard Actions are part of the
 local-first MVP. It supports
 native tool calling through LM Studio and Ollama. The app
 discovers local servers at `http://localhost:1234` and

@@ -103,19 +103,19 @@
         }
       }
     },
-    "Идентификатор bronya зарезервирован для встроенного питомца" : {
+    "Идентификатор scout зарезервирован для встроенного питомца" : {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Идентификатор bronya зарезервирован для встроенного питомца"
+            "value": "Идентификатор scout зарезервирован для встроенного питомца"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The bronya identifier is reserved for the built-in pet"
+            "value": "The scout identifier is reserved for the built-in pet"
           }
         }
       }

@@ -7,8 +7,8 @@ final class PetLoaderTests: XCTestCase {
     private func manifest() -> [String: Any] {
         [
             "version": 1,
-            "id": "bronya",
-            "name": "Броня",
+            "id": "scout",
+            "name": "Скаут",
             "frameSize": 64,
             "columns": 2,
             "rows": [["row": 0, "state": "idle", "frames": 2, "fps": 6, "loop": true]],
@@ -43,7 +43,7 @@ final class PetLoaderTests: XCTestCase {
         var value = manifest()
         value["unknown"] = "ignored"
         let sprite = try PetLoader.load(manifestData: json(value), imageData: image())
-        XCTAssertEqual(sprite.manifest.name, "Броня")
+        XCTAssertEqual(sprite.manifest.name, "Скаут")
         XCTAssertEqual(sprite.frames[.idle]?.count, 2)
         XCTAssertEqual(sprite.frames[.idle]?.first?.width, 64)
         XCTAssertEqual(sprite.row(for: .failed).state, .idle)

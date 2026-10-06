@@ -9,25 +9,38 @@ final class PetLibrary {
     var errorMessage: String?
     @ObservationIgnored var onReload: ((PetSprite?) -> Void)?
 
-    init(settings: AppSettings, store: PetStore) {
+    let builtinSprite: PetSprite?
+
+    init(
+        settings: AppSettings, store: PetStore,
+        builtinLoader: () throws -> PetSprite = {
+            guard let root = Bundle.main.resourceURL else { throw PetValidationError.imageDecode }
+            return try PetLoader.load(directory: root.appendingPathComponent("Pets/scout"))
+        },
+        log: (String) -> Void = { NSLog("%@", $0) }
+    ) {
         self.settings = settings
         self.store = store
+        do { builtinSprite = try builtinLoader() } catch {
+            builtinSprite = nil
+            log("Builtin pet rejected: " + String(reflecting: error))
+        }
         refresh(reload: false)
     }
 
     func activeSprite() -> PetSprite? {
-        guard settings.petSelectedID != "bronya" else { return nil }
+        guard settings.petSelectedID != "scout" else { return builtinSprite }
         do { return try store.load(settings.petSelectedID) } catch {
             NSLog("Active pet rejected; restoring builtin: %@", String(reflecting: error))
-            settings.petSelectedID = "bronya"
-            return nil
+            settings.petSelectedID = "scout"
+            return builtinSprite
         }
     }
 
     func select(_ id: String) {
-        if id == "bronya" {
+        if id == "scout" {
             settings.petSelectedID = id
-            onReload?(nil)
+            onReload?(builtinSprite)
             return
         }
         do {
@@ -60,7 +73,7 @@ final class PetLibrary {
         do {
             try store.delete(id)
             if settings.petSelectedID.caseInsensitiveCompare(id) == .orderedSame {
-                select("bronya")
+                select("scout")
             }
             refresh(reload: false)
         } catch { errorMessage = PetStorageError.message(error) }

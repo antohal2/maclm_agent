@@ -50,7 +50,7 @@ final class PetController: NSObject {
         viewModel.togglePet = { settings.petEnabled.toggle() }
         configurePanel()
         configureBubble()
-        let sprite = self.library.activeSprite() ?? loadBuiltin()
+        let sprite = self.library.activeSprite()
         panel.contentView = PetHostingView(rootView: PetView(runtime: runtime, sprite: sprite))
         panel.onDrag = { [weak self] value in self?.dragging = value; self?.updateState() }
         panel.onClick = { [weak self] in self?.toggleBubble() }
@@ -58,7 +58,7 @@ final class PetController: NSObject {
         self.library.onReload = { [weak self] sprite in
             guard let self else { return }
             self.panel.contentView = PetHostingView(rootView: PetView(
-                runtime: self.runtime, sprite: sprite ?? self.loadBuiltin()
+                runtime: self.runtime, sprite: sprite
             ))
         }
         settings.resetPetPosition = { [weak self] in self?.resetPosition() }
@@ -91,17 +91,6 @@ final class PetController: NSObject {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         panel.isMovable = false
-    }
-
-    private func loadBuiltin() -> PetSprite? {
-        guard let root = Bundle.main.resourceURL?.appendingPathComponent("Pets/bronya"),
-              FileManager.default.fileExists(atPath: root.path) else { return nil }
-        do {
-            return try PetLoader.load(directory: root)
-        } catch {
-            NSLog("Builtin pet rejected: %@", error.localizedDescription)
-            return nil
-        }
     }
 
     private func observe() {

@@ -24,7 +24,7 @@ enum PetStorageError: Error, LocalizedError {
         case .permission: String(localized: "Нет доступа к файлам питомца")
         case .space: String(localized: "Недостаточно места для установки питомца")
         case .io: String(localized: "Не удалось прочитать или сохранить файлы питомца")
-        case .reserved: String(localized: "Идентификатор bronya зарезервирован для встроенного питомца")
+        case .reserved: String(localized: "Идентификатор scout зарезервирован для встроенного питомца")
         case .replacementRequired: String(localized: "Питомец уже установлен. Требуется подтверждение замены")
         case .limit: String(localized: "Можно установить не больше 50 питомцев")
         case .mismatch: String(localized: "Идентификатор питомца не совпадает с именем папки")

@@ -114,7 +114,7 @@ struct PetStore {
     }
 
     private func customIdentifier(_ id: String) throws {
-        if id.caseInsensitiveCompare("bronya") == .orderedSame {
+        if id.caseInsensitiveCompare("scout") == .orderedSame {
             throw PetStorageError.reserved
         }
         try PetManifest.validateIdentifier(id)
