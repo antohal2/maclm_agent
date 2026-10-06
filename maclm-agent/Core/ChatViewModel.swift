@@ -6,6 +6,7 @@ import SwiftData
 @Observable
 final class ChatViewModel {
     var input = ""
+    @ObservationIgnored var togglePet: (() -> Void)?
     var expandedTraceIDs: Set<UUID> = []
     private(set) var selectedConversation: Conversation?
     var messages: [Message] {
@@ -31,7 +32,10 @@ final class ChatViewModel {
     }
 
     var canSend: Bool {
-        selectedConversation != nil
+        if PetCommand.matches(input), togglePet != nil {
+            return true
+        }
+        return selectedConversation != nil
             && !isGenerating
             && currentRunner?.isRestoringCheckpoint != true
             && providerCoordinator.sessionSelection(selectedConversation) != nil
@@ -163,6 +167,11 @@ final class ChatViewModel {
     }
 
     func send() {
+        if PetCommand.matches(input), let togglePet {
+            input = ""
+            togglePet()
+            return
+        }
         guard let conversation = selectedConversation, ComposerRules.canSubmit(input), !isGenerating else { return }
         guard currentRunner?.isRestoringCheckpoint != true else { return }
         let content = input

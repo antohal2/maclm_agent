@@ -46,6 +46,23 @@ final class AppSettings {
             "clipboardActions.automaticallyPasteResults"
     }
 
+    var petEnabled: Bool {
+        didSet { defaults.set(petEnabled, forKey: "pet.enabled") }
+    }
+
+    var petScale: Int {
+        didSet {
+            let clamped = min(3, max(1, petScale))
+            if petScale != clamped {
+                petScale = clamped
+                return
+            }
+            defaults.set(petScale, forKey: "pet.scale")
+        }
+    }
+
+    @ObservationIgnored var resetPetPosition: (() -> Void)?
+
     var notifySessionCompletion: Bool {
         didSet {
             defaults.set(notifySessionCompletion, forKey: "notifications.completion")
@@ -146,6 +163,8 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        petEnabled = defaults.bool(forKey: "pet.enabled")
+        petScale = min(3, max(1, defaults.object(forKey: "pet.scale") as? Int ?? 2))
         notifySessionCompletion = defaults.object(forKey: "notifications.completion") as? Bool ?? true
         notifySessionApproval = defaults.object(forKey: "notifications.approval") as? Bool ?? true
         interfaceLanguage = defaults.string(forKey: "interface.language") ?? "system"

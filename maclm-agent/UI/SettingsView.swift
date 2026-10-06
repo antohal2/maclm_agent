@@ -22,6 +22,8 @@ struct SettingsView: View {
                 clipboardHotkeyService: clipboardHotkeyService,
                 accessibilityPermissionService: accessibilityPermissionService
             ).tabItem { Label(String(localized: "Буфер обмена"), systemImage: "clipboard") }.tag("clipboard")
+            PetSettingsView(settings: settings)
+                .tabItem { Label(String(localized: "Питомец"), systemImage: "pawprint") }.tag("pet")
             appearanceSettings
                 .tabItem { Label(String(localized: "Внешний вид"), systemImage: "circle.lefthalf.filled") }
                 .tag("appearance")

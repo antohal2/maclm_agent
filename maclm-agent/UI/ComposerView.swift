@@ -146,7 +146,9 @@ struct ComposerView: View {
                         .task { await viewModel.providerCoordinator.refresh() }
                 }
                 Button {
-                    if viewModel.isGenerating {
+                    if PetCommand.matches(viewModel.input) {
+                        viewModel.send()
+                    } else if viewModel.isGenerating {
                         viewModel.stopGeneration()
                     } else {
                         viewModel.send()

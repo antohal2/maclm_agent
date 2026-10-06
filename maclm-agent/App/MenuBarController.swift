@@ -4,6 +4,7 @@ import SwiftUI
 
 @MainActor
 final class MenuBarController: NSObject, NSPopoverDelegate {
+    private let settings: AppSettings
     private let statusItem: NSStatusItem
     private let popover: NSPopover
     private let clipboardActionRunner: ClipboardActionRunner
@@ -21,6 +22,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         sceneActions: SceneActions,
         accessibilityPermissionService: any AccessibilityPermissionService
     ) {
+        self.settings = settings
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         popover = NSPopover()
         self.clipboardActionRunner = clipboardActionRunner
@@ -38,7 +40,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
                 accessibilityDescription: "maclm-agent"
             )
             button.target = self
-            button.action = #selector(togglePopover)
+            button.action = #selector(statusItemClicked)
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         let content = MenuBarPanelRootView(
@@ -69,6 +72,25 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             name: NSApplication.willTerminateNotification,
             object: nil
         )
+    }
+
+    @objc
+    private func statusItemClicked() {
+        if NSApp.currentEvent?.type == .rightMouseUp, let button = statusItem.button {
+            let menu = NSMenu()
+            let title = settings.petEnabled
+                ? String(localized: "Спрятать питомца") : String(localized: "Показать питомца")
+            let item = NSMenuItem(title: title, action: #selector(togglePet), keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.minY), in: button)
+        } else {
+            togglePopover()
+        }
+    }
+
+    @objc private func togglePet() {
+        settings.petEnabled.toggle()
     }
 
     @objc

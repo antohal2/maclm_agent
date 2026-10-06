@@ -8,6 +8,7 @@ struct MacLMAgentApp: App {
     private let sessionPermissions: SessionPermissions
     private let checkpointStore: CheckpointStore
     private let modelContainer: ModelContainer
+    private let petController: PetController
     private let menuBarController: MenuBarController
     private let sceneActions: SceneActions
     private let accessibilityPermissionService: SystemAccessibilityPermissionService
@@ -56,6 +57,7 @@ struct MacLMAgentApp: App {
             _hotKeyController = State(initialValue: globalHotKeyController)
             _clipboardHotkeyService = State(initialValue: clipboardHotkeyService)
             sceneActions = appSceneActions
+            petController = PetController(settings: appSettings, viewModel: viewModel, sceneActions: appSceneActions)
             sessionNotifications = .init(settings: appSettings, viewModel: viewModel, sceneActions: appSceneActions)
             menuBarController = MenuBarController(
                 viewModel: viewModel, clipboardActionRunner: clipboardActionRunner,
