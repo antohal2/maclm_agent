@@ -38,6 +38,7 @@ Tools/          Tool, ToolRegistry, семь инструментов
 Security/       риск, SecurityPolicyEngine, подтверждения, SessionPermissions, редактор правил
 Persistence/    SwiftData-модели, AuditMaintenance, KeychainService
 UI/             чат, настройки, пикер, редакторы, журнал аудита
+Skills/         SkillRecord, SkillStore, парсер, сканер, хэширование, Settings → Skills
 ```
 
 Отдельных `Clipboard/`, `Workspace/`, `Pet/` и `AppState` пока нет. Workspace, питомец и чекпоинты — план Rev 4. `ApplicationRuntime` — единственный владелец, создающий и удерживающий контейнер SwiftData и общие зависимости: `ChatViewModel`, `SessionRunnerRegistry` (через общий `ChatViewModel`), `AppSettings`, `SceneActions`. В текущем коде инициализатор `ChatViewModel` создаёт реестр, а `ApplicationRuntime` удерживает его через `chatViewModel.registry`. `MacLMAgentApp` только получает готовые зависимости из `ApplicationRuntime`; вторых экземпляров нет. `VersionedSchema` / `SchemaMigrationPlan` отсутствуют.
@@ -70,10 +71,11 @@ SwiftUI `Window` и AppKit `MenuBarController` (`NSStatusItem` + `NSPopover` с 
 | `SecurityRule` | правило allow/block (см. 6.3); **Rev 4:** необязательная привязка к проекту |
 | `AuditEntry` | запись журнала вызовов (см. 6.5); **Rev 4:** ссылка на чекпоинт |
 | `Checkpoint` | **Rev 4.** Снимок затрагиваемых файлов перед записью (см. 6.8) |
+| `SkillRecord` | **Шаг 5.0.** Метаданные навыка: id папки, источник, состояние, enabledHash, enabledAt, происхождение; содержимое читается с диска |
 
 Все новые поля добавляются с значениями по умолчанию, чтобы существующее хранилище открывалось облегчённой миграцией без потери данных. Записи `AuditEntry` не удаляются вместе с беседой: журнал переживает удаление.
 
-Контейнер регистрирует восемь моделей: Conversation, Project, Message, ToolCall, ClipboardAction, SecurityRule, AuditEntry, Checkpoint. Настройки — `UserDefaults`. Секреты — Keychain.
+Контейнер регистрирует девять моделей: Conversation, Project, Message, ToolCall, ClipboardAction, SecurityRule, AuditEntry, Checkpoint, SkillRecord. Настройки — `UserDefaults`. Секреты — Keychain.
 
 ---
 

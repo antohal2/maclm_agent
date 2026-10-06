@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Bindable var hotKeyController: GlobalHotKeyController
     @Bindable var clipboardHotkeyService: ClipboardHotkeyService
     let petLibrary: PetLibrary
+    let skillStore: SkillStore
     let sessionPermissions: SessionPermissions
     let accessibilityPermissionService: any AccessibilityPermissionService
 
@@ -28,6 +29,8 @@ struct SettingsView: View {
             appearanceSettings
                 .tabItem { Label(String(localized: "Внешний вид"), systemImage: "circle.lefthalf.filled") }
                 .tag("appearance")
+            SkillsSettingsView(store: skillStore)
+                .tabItem { Label(String(localized: "Навыки"), systemImage: "book.closed") }.tag("skills")
         }
         .frame(width: 900, height: 680)
     }

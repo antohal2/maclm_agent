@@ -8909,6 +8909,754 @@
           }
         }
       }
+    },
+    "Невалидный навык": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Невалидный навык"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid skill"
+          }
+        }
+      }
+    },
+    "Навык выключен": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык выключен"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill disabled"
+          }
+        }
+      }
+    },
+    "Навык включён": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык включён"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill enabled"
+          }
+        }
+      }
+    },
+    "Нужно подтвердить навык заново": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нужно подтвердить навык заново"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill needs reconfirmation"
+          }
+        }
+      }
+    },
+    "SKILL.md должен начинаться с frontmatter между строками ---.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md должен начинаться с frontmatter между строками ---."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md must start with frontmatter between --- lines."
+          }
+        }
+      }
+    },
+    "Некорректный frontmatter навыка.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Некорректный frontmatter навыка."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Malformed skill frontmatter."
+          }
+        }
+      }
+    },
+    "Frontmatter превышает 4 КиБ.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontmatter превышает 4 КиБ."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontmatter exceeds 4 KiB."
+          }
+        }
+      }
+    },
+    "В frontmatter отсутствует name.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В frontmatter отсутствует name."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontmatter is missing name."
+          }
+        }
+      }
+    },
+    "В frontmatter отсутствует description.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В frontmatter отсутствует description."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frontmatter is missing description."
+          }
+        }
+      }
+    },
+    "Имя навыка не соответствует формату a-z, 0-9 и одиночных дефисов (1–64 символа).": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя навыка не соответствует формату a-z, 0-9 и одиночных дефисов (1–64 символа)."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill names must contain a-z, 0-9 and single hyphens (1–64 characters)."
+          }
+        }
+      }
+    },
+    "Имя навыка должно совпадать с именем папки.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя навыка должно совпадать с именем папки."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill name must match its folder name."
+          }
+        }
+      }
+    },
+    "Описание навыка превышает 1024 символа.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Описание навыка превышает 1024 символа."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill description exceeds 1024 characters."
+          }
+        }
+      }
+    },
+    "SKILL.md должен содержать корректный текст UTF-8.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md должен содержать корректный текст UTF-8."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md must contain valid UTF-8 text."
+          }
+        }
+      }
+    },
+    "Символические ссылки в папке навыка запрещены.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Символические ссылки в папке навыка запрещены."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbolic links are not allowed in skill folders."
+          }
+        }
+      }
+    },
+    "В навыке разрешены только папки и обычные файлы.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В навыке разрешены только папки и обычные файлы."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skills may contain only directories and regular files."
+          }
+        }
+      }
+    },
+    "Папка навыка содержит больше 200 файлов.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка навыка содержит больше 200 файлов."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill folder contains more than 200 files."
+          }
+        }
+      }
+    },
+    "Размер папки навыка превышает 5 МиБ.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер папки навыка превышает 5 МиБ."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill folder exceeds 5 MiB."
+          }
+        }
+      }
+    },
+    "SKILL.md превышает 16 КиБ.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md превышает 16 КиБ."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md exceeds 16 KiB."
+          }
+        }
+      }
+    },
+    "В папке навыка отсутствует SKILL.md.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В папке навыка отсутствует SKILL.md."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill folder is missing SKILL.md."
+          }
+        }
+      }
+    },
+    "Не удалось прочитать папку навыка. Проверьте доступ к файлам.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать папку навыка. Проверьте доступ к файлам."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to read the skill folder. Check file access."
+          }
+        }
+      }
+    },
+    "Файлы изменились во время сканирования. Повторите проверку.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы изменились во время сканирования. Повторите проверку."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files changed during scanning. Try again."
+          }
+        }
+      }
+    },
+    "Навык недоступен.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык недоступен."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill is unavailable."
+          }
+        }
+      }
+    },
+    "Изменённый навык требует отдельного подтверждения.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменённый навык требует отдельного подтверждения."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The changed skill requires explicit reconfirmation."
+          }
+        }
+      }
+    },
+    "Навык изменился после предпросмотра. Пересканируйте и подтвердите заново.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык изменился после предпросмотра. Пересканируйте и подтвердите заново."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill changed after preview. Rescan and confirm again."
+          }
+        }
+      }
+    },
+    "Пересканировать навыки": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пересканировать навыки"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan skills"
+          }
+        }
+      }
+    },
+    "Навыки пока не передаются модели.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навыки пока не передаются модели."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skills are not sent to the model yet."
+          }
+        }
+      }
+    },
+    "Выберите навык для просмотра.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите навык для просмотра."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a skill to view."
+          }
+        }
+      }
+    },
+    "Поместите папку с SKILL.md в каталог навыков приложения.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поместите папку с SKILL.md в каталог навыков приложения."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Place a folder containing SKILL.md in the app skills directory."
+          }
+        }
+      }
+    },
+    "Ошибка навыка": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка навыка"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill error"
+          }
+        }
+      }
+    },
+    "Подтвердить изменённый навык?": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подтвердить изменённый навык?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm the changed skill?"
+          }
+        }
+      }
+    },
+    "Подтвердить и включить": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подтвердить и включить"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm and enable"
+          }
+        }
+      }
+    },
+    "Проверьте обновлённый SKILL.md и файлы. Подтверждение сохранит новый хэш навыка.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверьте обновлённый SKILL.md и файлы. Подтверждение сохранит новый хэш навыка."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review the updated SKILL.md and files. Confirmation will save the new skill hash."
+          }
+        }
+      }
+    },
+    "Включить навык": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включить навык"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable skill"
+          }
+        }
+      }
+    },
+    "Папка приложения": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка приложения"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App folder"
+          }
+        }
+      }
+    },
+    "SKILL.md занимает не менее 8 КиБ: большой объём инструкций.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md занимает не менее 8 КиБ: большой объём инструкций."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md is at least 8 KiB: a large amount of guidance."
+          }
+        }
+      }
+    },
+    "Подтвердить изменённый навык…": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подтвердить изменённый навык…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm changed skill…"
+          }
+        }
+      }
+    },
+    "Выключить навык": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выключить навык"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disable skill"
+          }
+        }
+      }
+    },
+    "Предпросмотр записи каталога": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Предпросмотр записи каталога"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catalog entry preview"
+          }
+        }
+      }
+    },
+    "Полный хэш навыка": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Полный хэш навыка"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full skill hash"
+          }
+        }
+      }
+    },
+    "Хэш при включении": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хэш при включении"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hash when enabled"
+          }
+        }
+      }
+    },
+    "Предпросмотр SKILL.md": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Предпросмотр SKILL.md"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKILL.md preview"
+          }
+        }
+      }
+    },
+    "Файлы навыка": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы навыка"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill files"
+          }
+        }
+      }
+    },
+    "Не удалось обновить хранилище навыков.": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось обновить хранилище навыков."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to update the skill store."
+          }
+        }
+      }
+    },
+    "Навыки": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навыки"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skills"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

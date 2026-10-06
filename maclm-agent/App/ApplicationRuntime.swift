@@ -8,6 +8,7 @@ final class ApplicationRuntime {
     let checkpointStore: CheckpointStore
     let modelContainer: ModelContainer
     let petLibrary: PetLibrary
+    let skillStore: SkillStore
     let petController: PetController
     let menuBarController: MenuBarController
     let sceneActions: SceneActions
@@ -21,12 +22,8 @@ final class ApplicationRuntime {
         do {
             let testHost = Self.isTestHost
             let container = try Self.makeContainer(testHost: testHost)
-            guard let bundleID = Bundle.main.bundleIdentifier,
-                  let storeURL = container.configurations.first?.url
-            else {
-                throw CocoaError(.validationMissingMandatoryProperty)
-            }
-            try Self.prepareStore(container: container, storeURL: storeURL, bundleID: bundleID)
+            let (bundleID, skills) = try Self.prepareStore(container: container, testHost: testHost)
+            skillStore = skills
             modelContainer = container
             let policyContext = container.mainContext
             sessionPermissions = SessionPermissions()
@@ -102,10 +99,30 @@ final class ApplicationRuntime {
             || NSClassFromString("XCTestCase") != nil
     }
 
-    private static func prepareStore(container: ModelContainer, storeURL: URL, bundleID: String) throws {
+    private static func prepareStore(container: ModelContainer, testHost: Bool) throws -> (String, SkillStore) {
+        guard let bundleID = Bundle.main.bundleIdentifier,
+              let storeURL = container.configurations.first?.url
+        else {
+            throw CocoaError(.validationMissingMandatoryProperty)
+        }
         try ApplicationProtection.ensure(context: container.mainContext, storeURL: storeURL, bundleID: bundleID)
         try ClipboardActionSeeder.seedIfNeeded(context: container.mainContext)
         try SecurityRuleSeeder.seedIfNeeded(context: container.mainContext)
+        let root = testHost
+            ? FileManager.default.temporaryDirectory.appendingPathComponent("skills-host-" + UUID().uuidString)
+            : FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(bundleID).appendingPathComponent("skills")
+        let skills = SkillStore(root: root, container: container)
+        if !testHost {
+            Task {
+                do {
+                    try await skills.rescan()
+                } catch {
+                    NSLog("Skill startup scan failed: %@", String(describing: error))
+                }
+            }
+        }
+        return (bundleID, skills)
     }
 
     private static func makeCheckpoints(
@@ -206,6 +223,7 @@ final class ApplicationRuntime {
             SecurityRule.self,
             AuditEntry.self,
             Checkpoint.self,
+            SkillRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: testHost)
         )
     }
