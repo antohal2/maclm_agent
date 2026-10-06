@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 struct MoveFileTool: Tool {
@@ -7,11 +8,40 @@ struct MoveFileTool: Tool {
     static let isPolicyEnforceable = true
 
     func computeRisk(arguments: [String: Any], context: ToolRiskContext) -> RiskAssessment {
+        if let destination = arguments["to"] as? String {
+            var destinationInfo = stat()
+            let destinationPath = URL(
+                fileURLWithPath: destination.trimmingCharacters(in: .whitespacesAndNewlines)
+            ).standardizedFileURL.path
+            if lstat(destinationPath, &destinationInfo) == 0 {
+                let sameObject = (arguments["from"] as? String).map {
+                    Self.sameObject($0, destinationPath)
+                } ?? false
+                if !sameObject {
+                    return RiskAssessment(level: .dangerous, reason: "Назначение существует: файл будет перезаписан")
+                }
+            }
+        }
         let paths = ["from", "to"]
         if paths.contains(where: { !context.contains(arguments[$0] as? String) }) {
             return RiskAssessment(level: .dangerous, reason: "путь вне разрешённых директорий")
         }
         return RiskAssessment(level: Self.baseRiskLevel)
+    }
+
+    private static func sameObject(_ source: String, _ destination: String) -> Bool {
+        var sourceInfo = stat()
+        var destinationInfo = stat()
+        let sourcePath = URL(
+            fileURLWithPath: source.trimmingCharacters(in: .whitespacesAndNewlines)
+        ).standardizedFileURL.path
+        let destinationPath = URL(
+            fileURLWithPath: destination.trimmingCharacters(in: .whitespacesAndNewlines)
+        ).standardizedFileURL.path
+        return lstat(sourcePath, &sourceInfo) == 0
+            && lstat(destinationPath, &destinationInfo) == 0
+            && sourceInfo.st_dev == destinationInfo.st_dev
+            && sourceInfo.st_ino == destinationInfo.st_ino
     }
 
     var parametersSchema: JSONSchema {
@@ -55,6 +85,14 @@ struct MoveFileTool: Tool {
         }
 
         do {
+            if sourceURL.path.lowercased() == destinationURL.path.lowercased(),
+               Self.sameObject(sourceURL.path, destinationURL.path) {
+                // Case-only rename must not unlink the source through its destination alias.
+                guard rename(sourceURL.path, destinationURL.path) == 0 else {
+                    throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+                }
+                return .success(content: "Moved \(sourceURL.path) to \(destinationURL.path).")
+            }
             if (try? FileManager.default.attributesOfItem(atPath: destinationURL.path)) != nil {
                 try FileManager.default.removeItem(at: destinationURL)
             }

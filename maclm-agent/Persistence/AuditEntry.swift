@@ -140,7 +140,12 @@ enum AuditSanitizer {
             if let note = output["lifecycleNote"] as? String {
                 summary += "\n" + truncate(note)
             }
-            return (summary, timedOut ? "Shell command timeout" : (code != 0 ? "Shell exit code: \(code)" : nil))
+            return (
+                summary,
+                output["outputLimitExceeded"] as? Bool == true
+                    ? "Shell command output limit exceeded"
+                    : (timedOut ? "Shell command timeout" : (code != 0 ? "Shell exit code: \(code)" : nil))
+            )
         }
         let summary = truncate(result.displayContent ?? result.content)
         return (summary, result.isError ? summary : nil)

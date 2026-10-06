@@ -115,6 +115,104 @@ final class ShellProcessTests: XCTestCase {
         try await assertNoMarkedProcesses(marker)
     }
 
+    func testOutputBufferExactCountsAndUTF8Boundaries() {
+        var buffer = ShellOutputBuffer(limits: .init(headBytes: 8, tailBytes: 8))
+        let bytes = Array("🙂🙂🙂🙂🙂🙂".utf8)
+        for byte in bytes {
+            buffer.append([byte][...])
+        }
+        XCTAssertEqual(buffer.totalBytes, 24)
+        XCTAssertEqual(buffer.retainedBytes, 16)
+        XCTAssertEqual(buffer.rendered, "🙂🙂\n[... 8 bytes omitted ...]\n🙂🙂")
+        var split = ShellOutputBuffer(limits: .init(headBytes: 7, tailBytes: 7))
+        split.append(bytes[...])
+        XCTAssertEqual(split.rendered, "🙂\n[... 16 bytes omitted ...]\n🙂")
+        XCTAssertFalse(split.rendered.contains("�"))
+        var small = ShellOutputBuffer(limits: .init(headBytes: 7, tailBytes: 7))
+        small.append(Array("🙂🙂🙂".utf8)[...])
+        XCTAssertEqual(small.rendered, "🙂🙂🙂")
+        XCTAssertNil(small.truncationNote)
+        var invalid = ShellOutputBuffer(limits: .init(headBytes: 4, tailBytes: 4))
+        invalid.append([UInt8](repeating: 255, count: 20)[...])
+        XCTAssertTrue(invalid.rendered.contains("�"))
+    }
+
+    func testShellSmallOutputFormatUnchanged() async throws {
+        let marker = "maclm-shell-\(UUID().uuidString)"
+        defer { cleanupMarkedProcesses(marker) }
+        let result = try await RunShellTool().execute(arguments: [
+            "command": "printf hello; printf error >&2 # \(marker)",
+        ])
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(result.content.utf8)) as? [String: Any])
+        XCTAssertEqual(Set(json.keys), Set(["stdout", "stderr", "exitCode", "timedOut"]))
+        XCTAssertEqual(json["stdout"] as? String, "hello")
+        XCTAssertEqual(json["stderr"] as? String, "error")
+        XCTAssertFalse(result.isError)
+        try await assertNoMarkedProcesses(marker)
+    }
+
+    func testShellStreamsTruncateIndependentlyAndPreserveExit() async throws {
+        let marker = "maclm-shell-\(UUID().uuidString)"
+        defer { cleanupMarkedProcesses(marker) }
+        let result = try await RunShellTool().execute(arguments: [
+            "command": "/usr/bin/perl -e 'print \"A\" x 102400; print STDERR \"B\" x 102400' # \(marker)",
+        ])
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(result.content.utf8)) as? [String: Any])
+        for (stream, character) in [("stdout", "A"), ("stderr", "B")] {
+            let value = try XCTUnwrap(json[stream] as? String)
+            XCTAssertEqual(
+                value,
+                String(repeating: character, count: 8192)
+                    + "\n[... 86016 bytes omitted ...]\n" + String(repeating: character, count: 8192)
+            )
+            let note = "\(stream): Output truncated: kept first 8192 and last 8192 bytes of 102400."
+            XCTAssertTrue((json["lifecycleNote"] as? String)?.contains(note) == true)
+        }
+        XCTAssertEqual(json["exitCode"] as? Int, 0)
+        XCTAssertEqual(json["timedOut"] as? Bool, false)
+        XCTAssertFalse(result.isError)
+        XCTAssertLessThan(result.content.utf8.count, 34000)
+        XCTAssertTrue(AuditSanitizer.summary(result, toolName: "run_shell", arguments: [:]).0.contains("kept first"))
+        try await assertNoMarkedProcesses(marker)
+        let failed = try await RunShellTool().execute(arguments: ["command": "printf fail >&2; exit 7 # \(marker)"])
+        let failure = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(failed.content.utf8)) as? [String: Any])
+        XCTAssertEqual(failure["exitCode"] as? Int, 7)
+        XCTAssertTrue(failed.isError)
+        let unicode = try await RunShellTool(limits: .init(headBytes: 7, tailBytes: 7)).execute(arguments: [
+            "command": "printf '🙂🙂🙂🙂🙂🙂' # \(marker)",
+        ])
+        let unicodeJSON = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: Data(unicode.content.utf8)) as? [String: Any]
+        )
+        XCTAssertEqual(unicodeJSON["stdout"] as? String, "🙂\n[... 16 bytes omitted ...]\n🙂")
+        try await assertNoMarkedProcesses(marker)
+    }
+
+    func testInfiniteOutputTimeoutAndHardLimitLeaveNoProcesses() async throws {
+        let cases: [(UInt64, String)] = [(UInt64.max, ""), (2 * 1024 * 1024, ""), (2 * 1024 * 1024, " >&2")]
+        for (hardLimit, redirect) in cases {
+            let marker = "maclm-shell-\(UUID().uuidString)"
+            defer { cleanupMarkedProcesses(marker) }
+            let start = ContinuousClock.now
+            let result = try await RunShellTool(limits: .init(hardBytes: hardLimit)).execute(arguments: [
+                "command": "exec -a \(marker) /usr/bin/yes\(redirect)", "timeoutSeconds": 1,
+            ])
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(result.content.utf8)) as? [String: Any])
+            XCTAssertEqual(json["timedOut"] as? Bool, hardLimit == UInt64.max)
+            XCTAssertEqual(json["outputLimitExceeded"] as? Bool, hardLimit == UInt64.max ? nil : true)
+            XCTAssertTrue(result.isError)
+            XCTAssertLessThan(result.content.utf8.count, 34000)
+            XCTAssertLessThan(start.duration(to: .now), .seconds(6))
+            if hardLimit != UInt64.max {
+                XCTAssertEqual(
+                    AuditSanitizer.summary(result, toolName: "run_shell", arguments: [:]).1,
+                    "Shell command output limit exceeded"
+                )
+            }
+            try await assertNoMarkedProcesses(marker)
+        }
+    }
+
     func testShellDescriptionRoutesFileOperations() {
         let description = RunShellTool().description
         XCTAssertTrue(description.contains("Do not"))

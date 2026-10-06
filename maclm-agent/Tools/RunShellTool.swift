@@ -2,6 +2,12 @@ import Darwin
 import Foundation
 
 struct RunShellTool: Tool {
+    let limits: ShellOutputLimits
+
+    init(limits: ShellOutputLimits = .init()) {
+        self.limits = limits
+    }
+
     let name = "run_shell"
     /// Soft routing guidance only: no command parsing or runtime file-operation block.
     let description =
@@ -51,7 +57,7 @@ struct RunShellTool: Tool {
 
         return try await ShellCommandRunner.run(
             command: command,
-            timeoutSeconds: timeoutSeconds
+            timeoutSeconds: timeoutSeconds, limits: limits
         )
     }
 }
@@ -78,7 +84,9 @@ private enum ShellCommandRunner {
     private static let terminationGrace: Duration = .seconds(2)
     private static let outputGrace: Duration = .seconds(2)
 
-    static func run(command: String, timeoutSeconds: Int) async throws -> ToolExecutionResult {
+    static func run(
+        command: String, timeoutSeconds: Int, limits: ShellOutputLimits
+    ) async throws -> ToolExecutionResult {
         let cancellation = ShellCancellation()
         return try await withTaskCancellationHandler {
             try Task.checkCancellation()
@@ -87,7 +95,7 @@ private enum ShellCommandRunner {
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
                         try continuation.resume(returning: runSynchronously(
-                            command: command, timeoutSeconds: timeoutSeconds, cancellation: cancellation
+                            command: command, timeoutSeconds: timeoutSeconds, cancellation: cancellation, limits: limits
                         ))
                     } catch {
                         continuation.resume(throwing: error)
@@ -104,11 +112,12 @@ private enum ShellCommandRunner {
     private static func runSynchronously(
         command: String,
         timeoutSeconds: Int,
-        cancellation: ShellCancellation
+        cancellation: ShellCancellation,
+        limits: ShellOutputLimits
     ) throws -> ToolExecutionResult {
-        let output = try ShellPipe()
+        let output = try ShellPipe(limits: limits)
         defer { output.close() }
-        let error = try ShellPipe()
+        let error = try ShellPipe(limits: limits)
         defer { error.close() }
         let pid: pid_t
         do {
@@ -132,9 +141,18 @@ private enum ShellCommandRunner {
         if truncated {
             notices.append("Output truncated: a descendant kept an output pipe open.")
         }
+        for (name, pipe) in [("stdout", output), ("stderr", error)] {
+            if let note = pipe.buffer.truncationNote {
+                notices.append("\(name): " + note)
+            }
+        }
+        let exceeded = output.buffer.limitExceeded || error.buffer.limitExceeded
+        if exceeded {
+            notices.append("Shell command output limit exceeded.")
+        }
         return result(from: ShellCommandOutput(
-            stdout: decode(output.data), stderr: decode(error.data),
-            exitCode: execution.exitCode, timedOut: timedOut,
+            stdout: output.buffer.rendered, stderr: error.buffer.rendered,
+            exitCode: execution.exitCode, timedOut: timedOut, outputLimitExceeded: exceeded ? true : nil,
             lifecycleNote: notices.isEmpty ? nil : notices.joined(separator: "\n")
         ))
     }
@@ -169,6 +187,9 @@ private enum ShellCommandRunner {
             let deadline = ContinuousClock.now.advanced(by: .seconds(timeoutSeconds))
             while !reaped {
                 collect()
+                if output.buffer.limitExceeded || error.buffer.limitExceeded {
+                    return false
+                }
                 if reaped {
                     return false
                 }
@@ -279,10 +300,6 @@ private enum ShellCommandRunner {
         }
     }
 
-    private static func decode(_ data: Data) -> String {
-        String(bytes: data, encoding: .utf8) ?? "<non-UTF-8 output: \(data.count) bytes>"
-    }
-
     private static func result(from output: ShellCommandOutput) -> ToolExecutionResult {
         let encoded = try? JSONEncoder.toolOutput.encode(output)
         let content: String = if let encoded, let value = String(data: encoded, encoding: .utf8) {
@@ -301,7 +318,7 @@ private enum ShellCommandRunner {
         }
         return ToolExecutionResult(
             content: content, displayContent: lines.joined(separator: "\n\n"),
-            isError: output.timedOut || output.exitCode != 0
+            isError: output.outputLimitExceeded == true || output.timedOut || output.exitCode != 0
         )
     }
 }
@@ -311,10 +328,11 @@ private enum ShellCommandRunner {
 private final class ShellPipe {
     private(set) var reader: Int32
     private(set) var writer: Int32
-    private(set) var data = Data()
+    private(set) var buffer: ShellOutputBuffer
     private(set) var reachedEOF = false
 
-    init() throws {
+    init(limits: ShellOutputLimits) throws {
+        buffer = ShellOutputBuffer(limits: limits)
         var descriptors: [Int32] = [0, 0]
         guard pipe(&descriptors) == 0 else { throw POSIXError(.EMFILE) }
         reader = descriptors[0]
@@ -350,7 +368,7 @@ private final class ShellPipe {
         for _ in 0 ..< 16 {
             let count = Darwin.read(reader, &bytes, bytes.count)
             if count > 0 {
-                data.append(contentsOf: bytes.prefix(count))
+                buffer.append(bytes.prefix(count))
             } else if count == 0 {
                 reachedEOF = true; return
             } else if errno != EINTR {
@@ -365,5 +383,100 @@ private struct ShellCommandOutput: Codable {
     let stderr: String
     let exitCode: Int32
     let timedOut: Bool
+    let outputLimitExceeded: Bool?
     let lifecycleNote: String?
+}
+
+/// Per-stream byte budgets; no user-facing settings.
+struct ShellOutputLimits: Sendable {
+    let headBytes: Int
+    let tailBytes: Int
+    let hardBytes: UInt64
+
+    init(headBytes: Int = 8192, tailBytes: Int = 8192, hardBytes: UInt64 = 32 * 1024 * 1024) {
+        precondition(headBytes >= 4 && tailBytes >= 4 && hardBytes > 0)
+        self.headBytes = headBytes
+        self.tailBytes = tailBytes
+        self.hardBytes = hardBytes
+    }
+}
+
+/// Fixed-capacity ring retains the tail without accumulating discarded middle bytes.
+struct ShellOutputBuffer {
+    let limits: ShellOutputLimits
+    private(set) var totalBytes: UInt64 = 0
+    private var head: [UInt8] = []
+    private var tail: [UInt8]
+    private var tailCount = 0
+    private var cursor = 0
+
+    init(limits: ShellOutputLimits) {
+        self.limits = limits
+        tail = [UInt8](repeating: 0, count: limits.tailBytes)
+        head.reserveCapacity(limits.headBytes)
+    }
+
+    mutating func append(_ bytes: ArraySlice<UInt8>) {
+        totalBytes = totalBytes > UInt64.max - UInt64(bytes.count) ? UInt64.max : totalBytes + UInt64(bytes.count)
+        for byte in bytes {
+            if head.count < limits.headBytes {
+                head.append(byte)
+            } else {
+                tail[cursor] = byte
+                cursor = (cursor + 1) % tail.count
+                tailCount = min(tailCount + 1, tail.count)
+            }
+        }
+    }
+
+    var limitExceeded: Bool {
+        totalBytes > limits.hardBytes
+    }
+
+    var retainedBytes: Int {
+        head.count + tailCount
+    }
+
+    private var orderedTail: [UInt8] {
+        if tailCount < tail.count {
+            return Array(tail.prefix(tailCount))
+        }
+        return Array(tail[cursor...] + tail[..<cursor])
+    }
+
+    private var fragments: ([UInt8], [UInt8]) {
+        var first = head
+        var last = orderedTail
+        // Trim only incomplete boundary scalars; malformed interior bytes decode with replacement.
+        for trim in 0 ... min(3, first.count) {
+            let candidate = Array(first.prefix(first.count - trim))
+            if String(bytes: candidate, encoding: .utf8) != nil {
+                first = candidate; break
+            }
+        }
+        while let byte = last.first, byte & 0xC0 == 0x80 {
+            last.removeFirst()
+        }
+        return (first, last)
+    }
+
+    var rendered: String {
+        guard totalBytes > UInt64(retainedBytes) else {
+            let bytes = head + orderedTail
+            return String(bytes: bytes, encoding: .utf8) ?? "<non-UTF-8 output: \(bytes.count) bytes>"
+        }
+        let (first, last) = fragments
+        let omitted = totalBytes - UInt64(first.count + last.count)
+        // swiftlint:disable optional_data_string_conversion
+        // Lossy decoding is intentional for malformed command output.
+        return String(decoding: first, as: UTF8.self)
+            + "\n[... \(omitted) bytes omitted ...]\n" + String(decoding: last, as: UTF8.self)
+        // swiftlint:enable optional_data_string_conversion
+    }
+
+    var truncationNote: String? {
+        guard totalBytes > UInt64(retainedBytes) else { return nil }
+        let (first, last) = fragments
+        return "Output truncated: kept first \(first.count) and last \(last.count) bytes of \(totalBytes)."
+    }
 }

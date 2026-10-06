@@ -43,6 +43,47 @@ final class RiskLevelTests: XCTestCase {
         XCTAssertEqual(assess(WriteFileTool(), ["path": "/tmp/file"]).level, .dangerous)
     }
 
+    @MainActor
+    func testMoveOverwriteRiskAndSessionMemory() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("source.txt")
+        try Data("source".utf8).write(to: source)
+        let file = root.appendingPathComponent("file")
+        try Data("old".utf8).write(to: file)
+        let directory = root.appendingPathComponent("directory")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let link = root.appendingPathComponent("dangling")
+        try FileManager.default.createSymbolicLink(atPath: link.path, withDestinationPath: root.path + "/missing")
+        let memory = SessionPermissions()
+        let id = UUID()
+        memory.remember(conversationID: id, toolName: "move_file", riskLevel: .caution)
+        for destination in [file, directory, link] {
+            for dirs in [[root.path], []] {
+                let risk = assess(MoveFileTool(), ["from": source.path, "to": destination.path], dirs: dirs)
+                XCTAssertEqual(risk.level, .dangerous)
+                XCTAssertEqual(risk.reason, "Назначение существует: файл будет перезаписан")
+                XCTAssertFalse(memory.allows(conversationID: id, toolName: "move_file", riskLevel: risk.level))
+                XCTAssertFalse(risk.level.canBeRemembered)
+            }
+        }
+        XCTAssertEqual(assess(MoveFileTool(), ["from": source.path, "to": root.path + "/new"], dirs: [root.path]).level, .caution)
+        XCTAssertEqual(assess(MoveFileTool(), ["from": source.path, "to": "  " + file.path + "\n"], dirs: [root.path]).level, .dangerous)
+        let alias = root.appendingPathComponent("SOURCE.TXT")
+        guard FileManager.default.fileExists(atPath: alias.path) else {
+            throw XCTSkip("Requires case-insensitive filesystem")
+        }
+        XCTAssertEqual(assess(MoveFileTool(), ["from": source.path, "to": alias.path], dirs: [root.path]).level, .caution)
+        let moved = try await MoveFileTool().execute(arguments: ["from": source.path, "to": alias.path])
+        XCTAssertFalse(moved.isError)
+        XCTAssertEqual(try String(contentsOf: alias, encoding: .utf8), "source")
+        // A link to the source is a distinct leaf object and must still elevate.
+        let liveLink = root.appendingPathComponent("live-link")
+        try FileManager.default.createSymbolicLink(at: liveLink, withDestinationURL: source)
+        XCTAssertEqual(assess(MoveFileTool(), ["from": source.path, "to": liveLink.path], dirs: [root.path]).level, .dangerous)
+    }
+
     func testSafeToolsNeverElevate() {
         for tool: any Tool in [ReadFileTool(), ListDirectoryTool(), SearchFilesTool()] {
             for args: [String: Any] in [[:], ["path": "/etc/passwd"], ["path": "../../*"], ["path": 42], ["query": "*"]] {

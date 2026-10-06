@@ -7756,6 +7756,23 @@
           }
         }
       }
+    },
+    "Назначение существует: файл будет перезаписан": {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назначение существует: файл будет перезаписан"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination exists: the file will be overwritten"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
