@@ -32,28 +32,45 @@ final class PetLiveSessionTests: XCTestCase {
         actions.openMainWindowAction = { opened = true }
         let previous = Set(NSApp.windows.map(\.windowNumber))
         let controller = PetController(
-            settings: AppSettings(defaults: defaults),
+            settings: enabledSettings(defaults),
             viewModel: model,
             sceneActions: actions,
             defaults: defaults
         )
+        defer { controller.closeBubble() }
         let runtime = controller.runtime
         let panel = try XCTUnwrap(NSApp.windows.first { $0 is PetPanel && !previous.contains($0.windowNumber) }
             as? PetPanel)
         defer { panel.orderOut(nil) }
-        XCTAssertFalse(panel.isVisible)
+        XCTAssertTrue(panel.isVisible)
         runner.send("background")
         try await wait { runtime.state == .running }
         try await wait { runtime.state == .needsApproval }
+        try nativeClick(panel)
+        XCTAssertTrue(controller.bubble.isVisible)
+        XCTAssertFalse(opened)
         XCTAssertEqual(model.selectedConversationID, foreground.id)
-        XCTAssertEqual(PetState.conversationID(for: model.registry.aggregate), background.id)
-        panel.onClick?()
-        XCTAssertTrue(opened)
-        XCTAssertEqual(model.selectedConversationID, background.id)
+        try nativeClick(panel)
+        XCTAssertFalse(controller.bubble.isVisible)
         model.selectConversation(foreground)
         try await completeBackground(runner, background: background, runtime: runtime)
         try await checkPriority(model, foreground: foreground, runtime: runtime, panel: panel)
         withExtendedLifetime(controller) {}
+    }
+
+    private func enabledSettings(_ defaults: UserDefaults) -> AppSettings {
+        let settings = AppSettings(defaults: defaults)
+        settings.petEnabled = true
+        return settings
+    }
+
+    private func nativeClick(_ panel: NSWindow) throws {
+        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+            try panel.sendEvent(XCTUnwrap(NSEvent.mouseEvent(
+                with: type, location: CGPoint(x: 20, y: 20), modifierFlags: [], timestamp: 0,
+                windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1
+            )))
+        }
     }
 
     private func coordinator() -> ProviderCoordinator {
@@ -85,8 +102,8 @@ final class PetLiveSessionTests: XCTestCase {
         XCTAssertEqual(model.registry.aggregate.kind, .failed)
         XCTAssertEqual(PetState.conversationID(for: model.registry.aggregate), failedID)
         try await wait { runtime.state == .needsApproval }
-        panel.onClick?()
-        XCTAssertEqual(model.selectedConversationID, approval.id)
+        try nativeClick(panel)
+        XCTAssertEqual(model.selectedConversationID, foreground.id)
         await model.registry.cancelAllAndWait()
     }
 

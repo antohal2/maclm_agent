@@ -29,6 +29,7 @@ final class PetPanelTests: XCTestCase {
             sceneActions: actions,
             defaults: defaults
         )
+        defer { controller.closeBubble() }
         let panel = try XCTUnwrap(NSApp.windows.first { $0 is PetPanel && !previous.contains($0.windowNumber) })
         defer { panel.orderOut(nil) }
         XCTAssertFalse(panel.isVisible)
@@ -43,7 +44,8 @@ final class PetPanelTests: XCTestCase {
         XCTAssertEqual(defaults.double(forKey: "pet.x"), panel.frame.origin.x)
         XCTAssertEqual(defaults.double(forKey: "pet.y"), panel.frame.origin.y)
         checkReadyClick(panel, model: model)
-        XCTAssertTrue(opened)
+        XCTAssertFalse(opened)
+        XCTAssertTrue(controller.bubble.isVisible)
         settings.petEnabled = false
         try await Task.sleep(for: .milliseconds(100))
         XCTAssertFalse(panel.isVisible)
@@ -59,9 +61,16 @@ final class PetPanelTests: XCTestCase {
         let idle = model.createConversation()
         ready.hasUnreadResult = true
         XCTAssertEqual(model.selectedConversationID, idle.id)
-        (panel as? PetPanel)?.onClick?()
-        XCTAssertEqual(model.selectedConversationID, ready.id)
-        XCTAssertFalse(ready.hasUnreadResult)
+        for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+            if let event = NSEvent.mouseEvent(
+                with: type, location: CGPoint(x: 20, y: 20), modifierFlags: [], timestamp: 0,
+                windowNumber: panel.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1
+            ) {
+                panel.sendEvent(event)
+            }
+        }
+        XCTAssertEqual(model.selectedConversationID, idle.id)
+        XCTAssertTrue(ready.hasUnreadResult)
     }
 
     @MainActor private func checkPanelConfiguration(_ panel: NSWindow) {

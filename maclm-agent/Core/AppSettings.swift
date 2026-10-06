@@ -50,6 +50,14 @@ final class AppSettings {
         didSet { defaults.set(petEnabled, forKey: "pet.enabled") }
     }
 
+    var petHideContent: Bool {
+        didSet { defaults.set(petHideContent, forKey: "pet.hideContent") }
+    }
+
+    var petSuppressCompletion: Bool {
+        didSet { defaults.set(petSuppressCompletion, forKey: "pet.suppressCompletion") }
+    }
+
     var petScale: Int {
         didSet {
             let clamped = min(3, max(1, petScale))
@@ -163,6 +171,8 @@ final class AppSettings {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        petHideContent = defaults.bool(forKey: "pet.hideContent")
+        petSuppressCompletion = defaults.object(forKey: "pet.suppressCompletion") as? Bool ?? true
         petEnabled = defaults.bool(forKey: "pet.enabled")
         petScale = min(3, max(1, defaults.object(forKey: "pet.scale") as? Int ?? 2))
         notifySessionCompletion = defaults.object(forKey: "notifications.completion") as? Bool ?? true

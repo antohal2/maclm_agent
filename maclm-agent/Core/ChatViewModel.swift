@@ -9,6 +9,7 @@ final class ChatViewModel {
     @ObservationIgnored var togglePet: (() -> Void)?
     var expandedTraceIDs: Set<UUID> = []
     private(set) var selectedConversation: Conversation?
+    private(set) var quickChatRequiresNew = false
     var messages: [Message] {
         selectedConversation?.orderedMessages ?? []
     }
@@ -100,6 +101,7 @@ final class ChatViewModel {
     }
 
     func selectConversation(_ conversation: Conversation) {
+        quickChatRequiresNew = false
         selectedConversation = conversation
         Task { await providerCoordinator.refresh() }
         registry.selectedConversationID = conversation.id
@@ -156,7 +158,8 @@ final class ChatViewModel {
 
     private func removeConversation(_ conversation: Conversation, id: UUID) {
         guard removedConversationIDs.insert(id).inserted else { return }
-        if selectedConversationID == id {
+        let removedQuickTarget = selectedConversationID == id
+        if removedQuickTarget {
             selectedConversation = nil
             registry.selectedConversationID = nil
         }
@@ -164,19 +167,54 @@ final class ChatViewModel {
         modelContext.delete(conversation)
         saveContext()
         ensureConversationSelected()
+        if removedQuickTarget {
+            quickChatRequiresNew = true
+        }
     }
 
     func send() {
-        if PetCommand.matches(input), let togglePet {
-            input = ""
-            togglePet()
-            return
+        if handlePetCommand(input) {
+            input = ""; return
         }
         guard let conversation = selectedConversation, ComposerRules.canSubmit(input), !isGenerating else { return }
         guard currentRunner?.isRestoringCheckpoint != true else { return }
         let content = input
         input = ""
         registry.runner(for: conversation).send(content)
+    }
+
+    @discardableResult
+    func handlePetCommand(_ content: String) -> Bool {
+        guard PetCommand.matches(content), let togglePet else { return false }
+        togglePet()
+        return true
+    }
+
+    func canQuickSend(_ content: String, newChat: Bool) -> Bool {
+        if PetCommand.matches(content), togglePet != nil {
+            return true
+        }
+        guard ComposerRules.canSubmit(content) else { return false }
+        let target = newChat || quickChatRequiresNew ? nil : selectedConversation
+        guard providerCoordinator.sessionSelection(target) != nil else { return false }
+        let runner = target.flatMap { registry.runners[$0.id] }
+        return runner?.isGenerating != true && runner?.isRestoringCheckpoint != true
+            && runner?.canStart() != false && !registry.isShuttingDown
+    }
+
+    @discardableResult
+    func quickSend(_ content: String, newChat: Bool) -> Bool {
+        if handlePetCommand(content) {
+            return true
+        }
+        guard canQuickSend(content, newChat: newChat) else { return false }
+        let target: Conversation = if !newChat, !quickChatRequiresNew, let selectedConversation {
+            selectedConversation
+        } else {
+            createConversation()
+        }
+        registry.runner(for: target).send(content)
+        return true
     }
 
     func stopGeneration() {

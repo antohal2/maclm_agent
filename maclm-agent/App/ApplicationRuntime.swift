@@ -18,8 +18,7 @@ final class ApplicationRuntime {
 
     init() {
         do {
-            let testHost = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-                || NSClassFromString("XCTestCase") != nil
+            let testHost = Self.isTestHost
             let container = try Self.makeContainer(testHost: testHost)
             guard let bundleID = Bundle.main.bundleIdentifier,
                   let storeURL = container.configurations.first?.url
@@ -57,7 +56,7 @@ final class ApplicationRuntime {
             self.clipboardHotkeyService = clipboardHotkeyService
             sceneActions = appSceneActions
             petController = PetController(settings: appSettings, viewModel: viewModel, sceneActions: appSceneActions)
-            sessionNotifications = .init(settings: appSettings, viewModel: viewModel, sceneActions: appSceneActions)
+            sessionNotifications = Self.makeNotifications(appSettings, viewModel, appSceneActions, petController)
             menuBarController = MenuBarController(
                 viewModel: viewModel, clipboardActionRunner: clipboardActionRunner,
                 modelContainer: container, settings: appSettings,
@@ -67,6 +66,17 @@ final class ApplicationRuntime {
         } catch {
             Self.reportStartupFailure(error)
         }
+    }
+
+    private static func makeNotifications(
+        _ settings: AppSettings, _ model: ChatViewModel, _ actions: SceneActions, _ pet: PetController
+    ) -> SessionNotifications {
+        SessionNotifications(settings: settings, viewModel: model, sceneActions: actions, petController: pet)
+    }
+
+    private static var isTestHost: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
     }
 
     private static func prepareStore(container: ModelContainer, storeURL: URL, bundleID: String) throws {

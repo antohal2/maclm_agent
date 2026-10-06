@@ -5,6 +5,7 @@ actor AgentLoop {
     private let confirmationCoordinator: ConfirmationCoordinator
     nonisolated let sessionPermissions: SessionPermissions
     private var pendingConfirmations: [UUID: ConfirmationRequest] = [:]
+    private var decisionSources: [UUID: ApprovalSource] = [:]
     private var pendingContexts: [UUID: (ToolInvocationContext, Int)] = [:]
     private let riskContext: @MainActor @Sendable () -> ToolRiskContext
     private let securityRules: @MainActor @Sendable () throws -> [SecurityRuleSnapshot]
@@ -50,9 +51,17 @@ actor AgentLoop {
         )
     }
 
-    func resolveConfirmation(requestID: UUID, decision: ConfirmationDecision, rememberForSession: Bool = false) async {
+    func resolveConfirmation(
+        requestID: UUID, decision: ConfirmationDecision,
+        rememberForSession: Bool = false, source: ApprovalSource = .feed
+    ) async {
+        guard let pending = pendingConfirmations[requestID] else { return }
+        guard decision == .rejected || PetApprovalPolicy.allows(
+            risk: pending.riskLevel, source: source, hidden: false
+        ) else { return }
+        decisionSources[requestID] = source
         if
-            decision == .approved, rememberForSession,
+            decision == .approved, rememberForSession, source == .feed,
             let request = pendingConfirmations[requestID],
             let (invocation, epoch) = pendingContexts[requestID]
         {
@@ -189,6 +198,9 @@ extension AgentLoop {
                 audit.errorDescription = AuditSanitizer.truncate(error.localizedDescription)
             }
             execution = .failure(error)
+        }
+        if let source = decisionSources.removeValue(forKey: persistentCallID) {
+            audit.resultSummary += "\n[approvalSource: \(source.rawValue)]"
         }
         try await auditSink(audit)
         var result = try execution.get()

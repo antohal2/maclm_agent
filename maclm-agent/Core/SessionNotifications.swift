@@ -8,17 +8,24 @@ final class SessionNotifications: NSObject, UNUserNotificationCenterDelegate {
     private let settings: AppSettings
     private let viewModel: ChatViewModel
     private let sceneActions: SceneActions
+    var petIsVisible: () -> Bool = { false }
     var mainWindowIsVisible = false
     var mainWindowIsKey = false
 
-    init(settings: AppSettings, viewModel: ChatViewModel, sceneActions: SceneActions) {
+    init(
+        settings: AppSettings, viewModel: ChatViewModel, sceneActions: SceneActions, petController: PetController? = nil
+    ) {
         self.settings = settings
         self.viewModel = viewModel
         self.sceneActions = sceneActions
         super.init()
+        petIsVisible = { [weak petController] in petController?.isVisible == true }
         center.delegate = self
         viewModel.registry.onCompletion = { [weak self] conversation, status in
             guard let self, self.settings.notifySessionCompletion, !self.isVisible(conversation) else { return }
+            guard !PetNotificationPolicy.suppress(
+                approval: false, enabled: self.settings.petSuppressCompletion, visible: self.petIsVisible()
+            ) else { return }
             let body = if case .failed = status {
                 String(localized: "Ошибка")
             } else {

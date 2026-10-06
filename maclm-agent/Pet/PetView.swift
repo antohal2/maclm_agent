@@ -31,7 +31,7 @@ struct PetView: View {
         }
         .frame(width: CGFloat(64 * runtime.scale), height: CGFloat(64 * runtime.scale), alignment: .topLeading)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(runtime.state.accessibilityTitle)
+        .accessibilityLabel(runtime.hideContent ? String(localized: "Питомец") : runtime.state.accessibilityTitle)
         .accessibilityValue(runtime.state.accessibilityTitle)
         .onChange(of: runtime.state) { epoch = Date() }
     }

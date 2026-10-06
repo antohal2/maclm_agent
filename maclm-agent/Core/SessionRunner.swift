@@ -31,6 +31,8 @@ final class SessionRunner {
     var toolsEnabled: () -> Bool = { true }
     var canStart: () -> Bool = { true }
     var onFinish: ((SessionRunner, Bool) -> Void)?
+    private(set) var pendingApproval: ConfirmationRequest?
+    var petContentHidden: () -> Bool = { UserDefaults.standard.bool(forKey: "pet.hideContent") }
     var onApproval: ((Conversation, ConfirmationRequest) -> Void)?
     private var generatingConversationID: UUID? {
         conversation.id
@@ -120,18 +122,28 @@ final class SessionRunner {
         await generationTask?.value
     }
 
-    func resolveApproval(id: UUID, decision: ConfirmationDecision, rememberForSession: Bool = false) {
-        guard isGenerating, let toolCall = persistentToolCall(id: id),
+    func resolveApproval(
+        id: UUID, decision: ConfirmationDecision, rememberForSession: Bool = false, source: ApprovalSource = .feed
+    ) {
+        guard isGenerating, let request = pendingApproval, request.id == id,
+              let toolCall = persistentToolCall(id: id),
               toolCall.message?.conversation?.id == conversationID,
               toolCall.message?.id == generatingMessageID,
               toolCall.status == .pending else { return }
+        guard decision == .rejected || PetApprovalPolicy.allows(
+            risk: request.riskLevel, source: source, hidden: petContentHidden()
+        ) else {
+            NSLog("Approval refused by pet policy: %@", id.uuidString)
+            return
+        }
+        pendingApproval = nil
         toolCall.status = decision == .approved ? .approved : .rejected
         saveContext()
         Task { [agentLoop] in
             await agentLoop.resolveConfirmation(
                 requestID: id,
                 decision: decision,
-                rememberForSession: rememberForSession
+                rememberForSession: source == .feed && rememberForSession, source: source
             )
         }
     }
@@ -243,6 +255,7 @@ final class SessionRunner {
                 message.content += delta
             }
         case let .confirmationRequested(request):
+            pendingApproval = request
             status = .needsApproval(risk: request.riskLevel)
             onApproval?(conversation, request)
             isWaitingForFirstToken = false
@@ -464,6 +477,7 @@ extension SessionRunner {
             }
             traceEndings[user.id] = TraceRunEnd(timestamp: Date(), cancelled: cancelled, failed: failed)
         }
+        pendingApproval = nil
         generationToken = nil
         isGenerating = false
         isWaitingForFirstToken = false
@@ -476,21 +490,5 @@ extension SessionRunner {
         }
         saveContext()
         onFinish?(self, cancelled)
-    }
-
-    func persistentMessage(id: UUID) -> Message? {
-        conversation.messages.first { $0.id == id }
-    }
-
-    func persistentToolCall(id: UUID) -> ToolCall? {
-        conversation.messages.flatMap(\.toolCalls).first { $0.id == id }
-    }
-
-    func saveContext() {
-        do {
-            try modelContext.save()
-        } catch {
-            assertionFailure("SwiftData save failed: \(error.localizedDescription)")
-        }
     }
 }
