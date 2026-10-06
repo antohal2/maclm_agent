@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import ImageIO
 
@@ -26,12 +27,9 @@ enum PetLoader {
     }
 
     private static func read(_ url: URL, limit: Int, error: PetValidationError) throws -> Data {
-        let handle = try FileHandle(forReadingFrom: url)
-        defer { try? handle.close() }
-        // A bounded read also handles a file that changes after its metadata was checked.
-        let data = try handle.read(upToCount: limit + 1) ?? Data()
-        guard data.count <= limit else { throw error }
-        return data
+        let directory = try PetFileAccess.directory(url.deletingLastPathComponent())
+        defer { close(directory) }
+        return try PetFileAccess.read(url.lastPathComponent, parent: directory, limit: limit, oversized: error)
     }
 
     static func load(manifestData: Data, imageData: Data) throws -> PetSprite {

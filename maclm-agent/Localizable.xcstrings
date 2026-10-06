@@ -1,6 +1,346 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Символические ссылки в питомце запрещены" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Символические ссылки в питомце запрещены"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbolic links are not allowed in pets"
+          }
+        }
+      }
+    },
+    "Для питомца нужны обычные файлы и настоящая папка" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для питомца нужны обычные файлы и настоящая папка"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A pet requires regular files and a real directory"
+          }
+        }
+      }
+    },
+    "Папка питомца или обязательный файл отсутствует" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка питомца или обязательный файл отсутствует"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pet directory or a required file is missing"
+          }
+        }
+      }
+    },
+    "Нет доступа к файлам питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет доступа к файлам питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot access pet files"
+          }
+        }
+      }
+    },
+    "Недостаточно места для установки питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недостаточно места для установки питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough space to install the pet"
+          }
+        }
+      }
+    },
+    "Не удалось прочитать или сохранить файлы питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать или сохранить файлы питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read or save pet files"
+          }
+        }
+      }
+    },
+    "Идентификатор bronya зарезервирован для встроенного питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Идентификатор bronya зарезервирован для встроенного питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The bronya identifier is reserved for the built-in pet"
+          }
+        }
+      }
+    },
+    "Питомец уже установлен. Требуется подтверждение замены" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Питомец уже установлен. Требуется подтверждение замены"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pet is already installed. Confirm replacement first"
+          }
+        }
+      }
+    },
+    "Можно установить не больше 50 питомцев" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Можно установить не больше 50 питомцев"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can install at most 50 pets"
+          }
+        }
+      }
+    },
+    "Идентификатор питомца не совпадает с именем папки" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Идентификатор питомца не совпадает с именем папки"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The pet identifier does not match its directory name"
+          }
+        }
+      }
+    },
+    "Выбор питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбор питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pet selection"
+          }
+        }
+      }
+    },
+    "Встроенный питомец" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроенный питомец"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in pet"
+          }
+        }
+      }
+    },
+    "Добавить питомца…" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить питомца…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add pet…"
+          }
+        }
+      }
+    },
+    "Обновить список" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обновить список"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh list"
+          }
+        }
+      }
+    },
+    "Ошибка питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pet error"
+          }
+        }
+      }
+    },
+    "Заменить питомца?" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заменить питомца?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace pet?"
+          }
+        }
+      }
+    },
+    "Заменить" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Заменить"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        }
+      }
+    },
+    "Удалить питомца?" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить питомца?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete pet?"
+          }
+        }
+      }
+    },
+    "Неисправный питомец" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Неисправный питомец"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broken pet"
+          }
+        }
+      }
+    },
+    "Выбрать питомца" : {
+      "extractionState": "manual",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать питомца"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select pet"
+          }
+        }
+      }
+    },
     "Сессий нет" : {
       "localizations": {
         "ru": {

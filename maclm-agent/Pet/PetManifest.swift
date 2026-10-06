@@ -19,9 +19,7 @@ struct PetManifest: Codable {
 
     func validate() throws {
         guard version == 1 else { throw PetValidationError.version }
-        guard id.range(of: "^[a-z0-9-]{1,40}$", options: .regularExpression) != nil,
-              id.utf8.allSatisfy({ $0 == 45 || (48 ... 57).contains($0) || (97 ... 122).contains($0) })
-        else { throw PetValidationError.identifier }
+        try Self.validateIdentifier(id)
         guard (1 ... 40).contains(name.count) else { throw PetValidationError.name }
         guard frameSize == 64 else { throw PetValidationError.frameSize }
         guard (1 ... 16).contains(columns) else { throw PetValidationError.columns }
@@ -29,6 +27,12 @@ struct PetManifest: Codable {
         guard Set(rows.map(\.row)).count == rows.count else { throw PetValidationError.duplicateRow }
         guard rows.contains(where: { $0.state == .idle }) else { throw PetValidationError.missingIdle }
         try validateRows()
+    }
+
+    static func validateIdentifier(_ id: String) throws {
+        guard id.range(of: "^[a-z0-9-]{1,40}$", options: .regularExpression) != nil,
+              id.utf8.allSatisfy({ $0 == 45 || (48 ... 57).contains($0) || (97 ... 122).contains($0) })
+        else { throw PetValidationError.identifier }
     }
 
     private func validateRows() throws {

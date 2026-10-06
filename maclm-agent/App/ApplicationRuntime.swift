@@ -7,6 +7,7 @@ final class ApplicationRuntime {
     let sessionPermissions: SessionPermissions
     let checkpointStore: CheckpointStore
     let modelContainer: ModelContainer
+    let petLibrary: PetLibrary
     let petController: PetController
     let menuBarController: MenuBarController
     let sceneActions: SceneActions
@@ -28,9 +29,8 @@ final class ApplicationRuntime {
             try Self.prepareStore(container: container, storeURL: storeURL, bundleID: bundleID)
             modelContainer = container
             let policyContext = container.mainContext
-            let permissions = SessionPermissions()
-            sessionPermissions = permissions
-            let appSettings = AppSettings()
+            sessionPermissions = SessionPermissions()
+            let appSettings = try Self.makeSettings(testHost: testHost)
             let (checkpointService, checkpoints) = Self.makeCheckpoints(
                 testHost: testHost, bundleID: bundleID, policyContext: policyContext
             )
@@ -39,10 +39,9 @@ final class ApplicationRuntime {
             Self.scheduleAuditMaintenance(container: container, appSettings: appSettings)
             let viewModel = Self.makeViewModel(
                 policyContext: policyContext, checkpointService: checkpointService, checkpoints: checkpoints,
-                permissions: permissions, appSettings: appSettings
+                permissions: sessionPermissions, appSettings: appSettings
             )
-            let accessibilityPermissionService = SystemAccessibilityPermissionService()
-            self.accessibilityPermissionService = accessibilityPermissionService
+            accessibilityPermissionService = SystemAccessibilityPermissionService()
             let clipboardActionRunner = Self.makeClipboardActionRunner(
                 viewModel: viewModel, appSettings: appSettings,
                 accessibilityPermissionService: accessibilityPermissionService
@@ -55,7 +54,10 @@ final class ApplicationRuntime {
             self.hotKeyController = globalHotKeyController
             self.clipboardHotkeyService = clipboardHotkeyService
             sceneActions = appSceneActions
-            petController = PetController(settings: appSettings, viewModel: viewModel, sceneActions: appSceneActions)
+            (petLibrary, petController) = Self.makePet(
+                settings: appSettings, model: viewModel, actions: appSceneActions,
+                bundleID: bundleID, testHost: testHost
+            )
             sessionNotifications = Self.makeNotifications(appSettings, viewModel, appSceneActions, petController)
             menuBarController = MenuBarController(
                 viewModel: viewModel, clipboardActionRunner: clipboardActionRunner,
@@ -66,6 +68,27 @@ final class ApplicationRuntime {
         } catch {
             Self.reportStartupFailure(error)
         }
+    }
+
+    private static func makeSettings(testHost: Bool) throws -> AppSettings {
+        if !testHost {
+            return AppSettings()
+        }
+        guard let defaults = UserDefaults(suiteName: "maclm-test-host-" + UUID().uuidString) else {
+            throw CocoaError(.validationMissingMandatoryProperty)
+        }
+        return AppSettings(defaults: defaults)
+    }
+
+    private static func makePet(
+        settings: AppSettings, model: ChatViewModel, actions: SceneActions, bundleID: String, testHost: Bool
+    ) -> (PetLibrary, PetController) {
+        let root = testHost
+            ? FileManager.default.temporaryDirectory.appendingPathComponent("pet-host-" + UUID().uuidString)
+            : FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(bundleID).appendingPathComponent("Pets")
+        let library = PetLibrary(settings: settings, store: PetStore(root: root))
+        return (library, PetController(settings: settings, viewModel: model, sceneActions: actions, library: library))
     }
 
     private static func makeNotifications(

@@ -46,6 +46,10 @@ final class AppSettings {
             "clipboardActions.automaticallyPasteResults"
     }
 
+    var petSelectedID: String {
+        didSet { defaults.set(petSelectedID, forKey: "pet.selectedID") }
+    }
+
     var petEnabled: Bool {
         didSet { defaults.set(petEnabled, forKey: "pet.enabled") }
     }
@@ -173,6 +177,7 @@ final class AppSettings {
         self.defaults = defaults
         petHideContent = defaults.bool(forKey: "pet.hideContent")
         petSuppressCompletion = defaults.object(forKey: "pet.suppressCompletion") as? Bool ?? true
+        petSelectedID = defaults.string(forKey: "pet.selectedID") ?? "bronya"
         petEnabled = defaults.bool(forKey: "pet.enabled")
         petScale = min(3, max(1, defaults.object(forKey: "pet.scale") as? Int ?? 2))
         notifySessionCompletion = defaults.object(forKey: "notifications.completion") as? Bool ?? true

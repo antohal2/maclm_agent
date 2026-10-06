@@ -8,6 +8,7 @@ final class PetController: NSObject {
     private let settings: AppSettings
     private let viewModel: ChatViewModel
     private let sceneActions: SceneActions
+    private let library: PetLibrary
     private let defaults: UserDefaults
     private let panel: PetPanel
     let bubble = PetBubblePanel(
@@ -29,13 +30,16 @@ final class PetController: NSObject {
         settings: AppSettings,
         viewModel: ChatViewModel,
         sceneActions: SceneActions,
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        library: PetLibrary? = nil
     ) {
         bubbleModel = PetBubbleModel(viewModel: viewModel, settings: settings)
         self.settings = settings
         self.viewModel = viewModel
         self.sceneActions = sceneActions
         self.defaults = defaults
+        self.library = library ?? PetLibrary(settings: settings, store: PetStore(root: FileManager.default
+                .temporaryDirectory.appendingPathComponent("pet-test-" + UUID().uuidString)))
         panel = PetPanel(
             contentRect: .zero,
             styleMask: [.nonactivatingPanel, .borderless],
@@ -46,11 +50,17 @@ final class PetController: NSObject {
         viewModel.togglePet = { settings.petEnabled.toggle() }
         configurePanel()
         configureBubble()
-        let sprite = loadBuiltin()
+        let sprite = self.library.activeSprite() ?? loadBuiltin()
         panel.contentView = PetHostingView(rootView: PetView(runtime: runtime, sprite: sprite))
         panel.onDrag = { [weak self] value in self?.dragging = value; self?.updateState() }
         panel.onClick = { [weak self] in self?.toggleBubble() }
         panel.onPosition = { [weak self] in self?.savePosition($0) }
+        self.library.onReload = { [weak self] sprite in
+            guard let self else { return }
+            self.panel.contentView = PetHostingView(rootView: PetView(
+                runtime: self.runtime, sprite: sprite ?? self.loadBuiltin()
+            ))
+        }
         settings.resetPetPosition = { [weak self] in self?.resetPosition() }
         NotificationCenter.default.addObserver(
             self,

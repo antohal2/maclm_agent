@@ -35,6 +35,7 @@ struct MacLMAgentApp: App {
                 settings: runtime.settings,
                 hotKeyController: runtime.hotKeyController,
                 clipboardHotkeyService: runtime.clipboardHotkeyService,
+                petLibrary: runtime.petLibrary,
                 sessionPermissions: runtime.sessionPermissions,
                 accessibilityPermissionService: runtime.accessibilityPermissionService
             )

@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Bindable var settings: AppSettings
     @Bindable var hotKeyController: GlobalHotKeyController
     @Bindable var clipboardHotkeyService: ClipboardHotkeyService
+    let petLibrary: PetLibrary
     let sessionPermissions: SessionPermissions
     let accessibilityPermissionService: any AccessibilityPermissionService
 
@@ -22,7 +23,7 @@ struct SettingsView: View {
                 clipboardHotkeyService: clipboardHotkeyService,
                 accessibilityPermissionService: accessibilityPermissionService
             ).tabItem { Label(String(localized: "Буфер обмена"), systemImage: "clipboard") }.tag("clipboard")
-            PetSettingsView(settings: settings)
+            PetSettingsView(settings: settings, library: petLibrary)
                 .tabItem { Label(String(localized: "Питомец"), systemImage: "pawprint") }.tag("pet")
             appearanceSettings
                 .tabItem { Label(String(localized: "Внешний вид"), systemImage: "circle.lefthalf.filled") }

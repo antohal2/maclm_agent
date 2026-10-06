@@ -2,6 +2,22 @@
 
 All notable changes to `maclm-agent` are documented in this file.
 
+## [v0.4.10] - 2026-10-06
+
+### Added
+
+- Custom pet folders: bounded descriptor-based reads without following symlinks,
+  shared JSON/PNG validation, reserved and case-insensitive identifier checks,
+  a 50-pet limit, and atomic install/replacement after disk revalidation.
+- Pet selection, thumbnails, confirmed deletion, refresh with broken-entry reasons,
+  and automatic built-in fallback for missing or invalid active pets.
+- Russian/English messages, adversarial storage tests, and `docs/pets.md`.
+
+### Status
+
+- v0.4.x is complete. Built-in bronya art, live multi-monitor/fullscreen checks,
+  and GitHub Release publication remain deferred. Next phase: v0.5 Skills.
+
 ## [v0.4.2] - 2026-10-05
 
 ### Added
