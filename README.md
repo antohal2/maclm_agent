@@ -8,7 +8,7 @@ Version v0.4.10.1 completes the desktop-pet subphase, including validated custom
 pet import, selection, replacement, removal, and fallback. See [pet format and
 installation](docs/pets.md). The built-in Scout (Скаут) art ships in v0.4.10.1. It is an original character
 produced with an AI image generator and assembled into a sprite sheet.
-The next phase is v0.5 Skills. Clipboard Actions are part of the
+Version v0.4.11 documents the v0.5 Skills design in [SPEC Rev 5, section 15](docs/maclm-agent-swift_SPEC.md#15-skills-rev-5-v05) and the [Rev 5 roadmap](docs/maclm-agent-swift_ROADMAP.md#v05-skills); implementation follows in steps 5.0–5.5. Clipboard Actions are part of the
 local-first MVP. It supports
 native tool calling through LM Studio and Ollama. The app
 discovers local servers at `http://localhost:1234` and
