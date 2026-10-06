@@ -51,8 +51,11 @@ final class SessionPermissionsTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: name) }
         let settings = AppSettings(defaults: defaults)
         func risk(_ path: String) -> RiskLevel {
-            ToolRiskEvaluator.evaluate(WriteFileTool(), arguments: ["path": path],
-                                      context: .init(allowedDirectories: settings.allowedDirectories)).level
+            ToolRiskEvaluator.evaluate(
+                WriteFileTool(),
+                arguments: ["path": path],
+                context: .init(allowedDirectories: settings.allowedDirectories)
+            ).level
         }
         let inside = fixture.allowed.appendingPathComponent("file").path
         let outside = fixture.root.appendingPathComponent("outside").path
@@ -69,30 +72,42 @@ final class SessionPermissionsTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: fixture.root) }
         let inside = fixture.allowed.appendingPathComponent("inside.txt").path
         let outside = fixture.root.appendingPathComponent("outside.txt").path
-        let calls = [
-            try call("write_file", ["path": inside, "content": "first", "mode": "overwrite"]),
-            try call("write_file", ["path": inside, "content": "second", "mode": "overwrite"]),
-            try call("write_file", ["path": outside, "content": "outside", "mode": "overwrite"]),
-            try call("write_file", ["path": outside, "content": "outside", "mode": "overwrite"]),
-            try call("run_shell", ["command": "printf session-test"]),
-            try call("run_shell", ["command": "printf session-test"]),
-            try call("read_file", ["path": inside]),
+        let calls = try [
+            call("write_file", ["path": inside, "content": "first", "mode": "overwrite"]),
+            call("write_file", ["path": inside, "content": "second", "mode": "overwrite"]),
+            call("write_file", ["path": outside, "content": "outside", "mode": "overwrite"]),
+            call("write_file", ["path": outside, "content": "outside", "mode": "overwrite"]),
+            call("run_shell", ["command": "printf session-test"]),
+            call("run_shell", ["command": "printf session-test"]),
+            call("read_file", ["path": inside]),
         ]
         let memory = SessionPermissions()
         let context = ToolRiskContext(allowedDirectories: [fixture.allowed.path])
-        let loop = AgentLoop(maximumIterations: 12, sessionPermissions: memory,
-                             riskContext: { context }, securityRules: { [] })
+        let loop = AgentLoop(
+            maximumIterations: 12,
+            sessionPermissions: memory,
+            riskContext: { context },
+            securityRules: { [] }
+        )
         let recorder = SessionEventRecorder()
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: SessionCallingProvider(calls: calls)) { event in
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: SessionCallingProvider(calls: calls)
+        ) { event in
             await recorder.append(event)
             if case let .confirmationRequested(request) = event {
                 await loop.resolveConfirmation(requestID: request.id, decision: .approved, rememberForSession: true)
             }
         }
         let requests = await recorder.requests
-        XCTAssertEqual(requests.filter { $0.toolCall.function.name == "write_file" }.map(\.riskLevel), [.caution, .dangerous, .dangerous])
-        XCTAssertEqual(requests.filter { $0.toolCall.function.name == "run_shell" }.map(\.riskLevel), [.dangerous, .dangerous])
+        XCTAssertEqual(
+            requests.filter { $0.toolCall.function.name == "write_file" }.map(\.riskLevel),
+            [.caution, .dangerous, .dangerous]
+        )
+        XCTAssertEqual(
+            requests.filter { $0.toolCall.function.name == "run_shell" }.map(\.riskLevel),
+            [.dangerous, .dangerous]
+        )
         XCTAssertFalse(requests.contains { $0.toolCall.function.name == "read_file" })
         XCTAssertEqual(memory.sortedPermissions, [.init(toolName: "write_file", riskLevel: .caution)])
         XCTAssertEqual(try String(contentsOfFile: inside, encoding: .utf8), "second")
@@ -109,9 +124,11 @@ final class SessionPermissionsTests: XCTestCase {
         let context = ToolRiskContext(allowedDirectories: [fixture.allowed.path])
         let loop = AgentLoop(sessionPermissions: memory, riskContext: { context }, securityRules: { [] })
         let recorder = SessionEventRecorder()
-        let calls = [try call("write_file", ["path": file, "content": "never", "mode": "overwrite"])]
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: SessionCallingProvider(calls: calls)) { event in
+        let calls = try [call("write_file", ["path": file, "content": "never", "mode": "overwrite"])]
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: SessionCallingProvider(calls: calls)
+        ) { event in
             await recorder.append(event)
             if case let .confirmationRequested(request) = event {
                 await loop.resolveConfirmation(requestID: request.id, decision: .rejected, rememberForSession: true)
@@ -133,12 +150,22 @@ final class SessionPermissionsTests: XCTestCase {
         memory.remember(toolName: "write_file", riskLevel: .caution)
         let pattern = fixture.allowed.path + "/**"
         let context = ToolRiskContext(allowedDirectories: [fixture.allowed.path])
-        let loop = AgentLoop(sessionPermissions: memory, riskContext: { context },
-                             securityRules: { [.init(pattern: pattern, action: .block)] })
+        let loop = AgentLoop(
+            sessionPermissions: memory,
+            riskContext: { context },
+            securityRules: { [.init(pattern: pattern, action: .block)] }
+        )
         let recorder = SessionEventRecorder()
         let file = fixture.allowed.appendingPathComponent("blocked.txt").path
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: SessionCallingProvider(calls: [try call("write_file", ["path": file, "content": "never", "mode": "overwrite"])])) {
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: SessionCallingProvider(calls: [
+                call(
+                    "write_file",
+                    ["path": file, "content": "never", "mode": "overwrite"]
+                ),
+            ])
+        ) {
             await recorder.append($0)
         }
         let requests = await recorder.requests
@@ -150,7 +177,9 @@ final class SessionPermissionsTests: XCTestCase {
     }
 
     private func call(_ name: String, _ arguments: [String: String]) throws -> SessionTestCall {
-        .init(name: name, json: String(decoding: try JSONEncoder().encode(arguments), as: UTF8.self))
+        // Test helper encodes JSON as UTF-8; preserve existing test semantics.
+        // swiftlint:disable:next optional_data_string_conversion
+        try .init(name: name, json: String(decoding: JSONEncoder().encode(arguments), as: UTF8.self))
     }
 
     private func makeFixture() throws -> (root: URL, allowed: URL) {
@@ -165,25 +194,44 @@ private struct SessionTestCall: Sendable { let name: String; let json: String }
 private actor SessionEventRecorder {
     private var events: [AgentLoopEvent] = []
     var requests: [ConfirmationRequest] {
-        events.compactMap { if case let .confirmationRequested(request) = $0 { request } else { nil } }
+        events.compactMap {
+            if case let .confirmationRequested(request) = $0 {
+                request
+            } else {
+                nil
+            }
+        }
     }
+
     var results: [ToolExecutionResult] {
         events.flatMap { event -> [ToolExecutionResult] in
-            if case let .toolCallsCompleted(items) = event { return items.map(\.result) }
+            if case let .toolCallsCompleted(items) = event {
+                return items.map(\.result)
+            }
             return []
         }
     }
-    func append(_ event: AgentLoopEvent) { events.append(event) }
+
+    func append(_ event: AgentLoopEvent) {
+        events.append(event)
+    }
 }
+
 private struct SessionCallingProvider: LLMProvider {
     let name = "Session memory regression provider"
     let calls: [SessionTestCall]
-    func streamChat(messages: [ChatMessage], tools: [ToolDefinition]) -> AsyncThrowingStream<ChatStreamEvent, Error> {
+    func streamChat(messages: [ChatMessage], tools _: [ToolDefinition]) -> AsyncThrowingStream<ChatStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             let index = messages.filter { $0.role == .tool }.count
             if index < calls.count {
                 let call = calls[index]
-                continuation.yield(.toolCallDelta(.init(index: 0, id: "session-\(index)", type: "function", functionName: call.name, argumentsDelta: call.json)))
+                continuation.yield(.toolCallDelta(.init(
+                    index: 0,
+                    id: "session-\(index)",
+                    type: "function",
+                    functionName: call.name,
+                    argumentsDelta: call.json
+                )))
             } else {
                 continuation.yield(.contentDelta(messages.last(where: { $0.role == .tool })?.content ?? "done"))
             }

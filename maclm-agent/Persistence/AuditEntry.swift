@@ -28,8 +28,8 @@ enum AuditOutcome: String, Codable, Sendable { case success, failure, cancelled,
     var errorDescription: String?
     var durationMilliseconds: Int?
     var conversationID: UUID?
-    var checkpointID: UUID? = nil
-    var toolCallID: UUID? = nil
+    var checkpointID: UUID?
+    var toolCallID: UUID?
 
     init(_ record: AuditRecord) {
         id = record.id
@@ -84,8 +84,8 @@ struct AuditRecord: Codable, Sendable {
     var errorDescription: String?
     var durationMilliseconds: Int?
     var conversationID: UUID?
-    var checkpointID: UUID? = nil
-    var toolCallID: UUID? = nil
+    var checkpointID: UUID?
+    var toolCallID: UUID?
 }
 
 enum AuditSanitizer {
@@ -133,7 +133,8 @@ enum AuditSanitizer {
         }
         if toolName == "run_shell", let data = result.content.data(using: .utf8),
            let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let code = output["exitCode"] as? Int, let timedOut = output["timedOut"] as? Bool {
+           let code = output["exitCode"] as? Int, let timedOut = output["timedOut"] as? Bool
+        {
             var summary = "exitCode: \(code)\ntimedOut: \(timedOut)"
                 + "\nstdout:\n\(truncate(output["stdout"] as? String ?? ""))"
                 + "\nstderr:\n\(truncate(output["stderr"] as? String ?? ""))"
@@ -154,8 +155,8 @@ enum AuditSanitizer {
 
 struct AuditFilter: Equatable, Sendable {
     var conversationID: UUID?
-    var checkpointID: UUID? = nil
-    var toolCallID: UUID? = nil
+    var checkpointID: UUID?
+    var toolCallID: UUID?
     var start: Date?
     var end: Date?
     var tool = ""

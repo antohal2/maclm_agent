@@ -54,7 +54,8 @@ struct ComposerView: View {
                 .onKeyPress(keys: [.return], phases: .down) { press in
                     // The native field editor owns marked-text commits (IME).
                     if let editor = NSApp.keyWindow?.firstResponder as? NSTextView,
-                       editor.hasMarkedText() {
+                       editor.hasMarkedText()
+                    {
                         return .ignored
                     }
                     guard !press.modifiers.contains(.shift) else { return .ignored }
@@ -101,7 +102,8 @@ struct ComposerView: View {
                             Text(endpoint.provider.displayName + " · " + endpoint.baseURL.absoluteString)
                                 .font(.caption).foregroundStyle(.secondary)
                             if let provider = viewModel.providerCoordinator.detectedProviders
-                                .first(where: { $0.id == endpoint.id }) {
+                                .first(where: { $0.id == endpoint.id })
+                            {
                                 ForEach(provider.availableModels.filter { !$0.isEmbedding }) { model in
                                     Button {
                                         viewModel.selectedConversation?.modelID = model.id
@@ -164,7 +166,8 @@ struct ComposerView: View {
                 if let project = viewModel.selectedConversation?.project {
                     Text(project.name)
                     if let path = project.workingDirectoryPath,
-                       let branch = GitHeadReader.read(workingDirectory: path) {
+                       let branch = GitHeadReader.read(workingDirectory: path)
+                    {
                         Text(branch)
                     }
                 }

@@ -16,10 +16,8 @@ actor AgentLoop {
     private var isGenerating = false
 
     init(
-        toolRegistry: ToolRegistry = .all,
-        confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
-        maximumIterations: Int = 8,
-        checkpoints: CheckpointService? = nil,
+        toolRegistry: ToolRegistry = .all, confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
+        maximumIterations: Int = 8, checkpoints: CheckpointService? = nil,
         checkpointSink: @escaping @MainActor @Sendable (CheckpointSnapshot) throws -> Void = { _ in },
         checkpointMaintenance: @escaping @MainActor @Sendable () async throws -> Void = {},
         sessionPermissions: SessionPermissions = SessionPermissions(),
@@ -45,78 +43,51 @@ actor AgentLoop {
 
     nonisolated func independentRun() -> AgentLoop {
         AgentLoop(
-            toolRegistry: toolRegistry,
-            maximumIterations: maximumIterations,
-            checkpoints: checkpoints,
-            checkpointSink: checkpointSink,
-            checkpointMaintenance: checkpointMaintenance,
-            sessionPermissions: sessionPermissions,
-            riskContext: riskContext,
-            auditSink: auditSink,
+            toolRegistry: toolRegistry, maximumIterations: maximumIterations, checkpoints: checkpoints,
+            checkpointSink: checkpointSink, checkpointMaintenance: checkpointMaintenance,
+            sessionPermissions: sessionPermissions, riskContext: riskContext, auditSink: auditSink,
             securityRules: securityRules
         )
     }
 
-    func resolveConfirmation(
-        requestID: UUID,
-        decision: ConfirmationDecision,
-        rememberForSession: Bool = false
-    ) async {
+    func resolveConfirmation(requestID: UUID, decision: ConfirmationDecision, rememberForSession: Bool = false) async {
         if
             decision == .approved, rememberForSession,
             let request = pendingConfirmations[requestID],
-            let (invocation, epoch) = pendingContexts[requestID] {
+            let (invocation, epoch) = pendingContexts[requestID]
+        {
             await sessionPermissions.remember(
                 conversationID: invocation.conversationID, toolName: request.toolCall.function.name,
                 riskLevel: request.riskLevel, expectedEpoch: epoch
             )
         }
-        await confirmationCoordinator.resolve(
-            requestID: requestID,
-            decision: decision
-        )
+        await confirmationCoordinator.resolve(requestID: requestID, decision: decision)
     }
 
     func streamResponse(
-        to messages: [ChatMessage],
-        using provider: any LLMProvider,
-        toolsEnabled: Bool = true,
+        to messages: [ChatMessage], using provider: any LLMProvider, toolsEnabled: Bool = true,
         invocationContext: @escaping @MainActor @Sendable () -> ToolInvocationContext,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
         guard !isGenerating else {
             throw AgentLoopError.alreadyGenerating
         }
-
         isGenerating = true
         defer { isGenerating = false }
-
         var history = messages
-
         for iteration in 0 ..< maximumIterations {
             if iteration > 0 {
                 await onEvent(.assistantResponseStarted)
             }
-
             let turn = try await receiveTurn(
-                history: history,
-                provider: provider,
-                toolsEnabled: toolsEnabled,
+                history: history, provider: provider, toolsEnabled: toolsEnabled,
                 onEvent: onEvent
             )
             guard !turn.toolCalls.isEmpty else {
                 await onEvent(.done)
                 return
             }
-
-            history.append(
-                ChatMessage(
-                    role: .assistant,
-                    content: turn.content,
-                    toolCalls: turn.toolCalls
-                )
-            )
-
+            history.append(ChatMessage(role: .assistant, content: turn.content, toolCalls: turn.toolCalls))
             var executions: [AgentToolCallExecution] = []
             for (index, toolCall) in turn.toolCalls.enumerated() {
                 let execution: AgentToolCallExecution
@@ -135,16 +106,9 @@ actor AgentLoop {
                     throw CancellationError()
                 }
                 executions.append(execution)
-                history.append(
-                    ChatMessage(
-                        role: .tool,
-                        content: execution.result.content,
-                        toolCallID: toolCall.id
-                    )
-                )
+                history.append(ChatMessage(role: .tool, content: execution.result.content, toolCallID: toolCall.id))
             }
             await onEvent(.toolCallsCompleted(executions))
-
             if iteration == maximumIterations - 1 {
                 await onEvent(.assistantResponseStarted)
                 throw AgentLoopError.maximumIterationsReached(maximumIterations)
@@ -159,21 +123,17 @@ actor AgentLoop {
     ) -> ToolInvocationContext {
         let snapshot = source()
         return ToolInvocationContext(
-            conversationID: snapshot.conversationID,
-            project: snapshot.project,
+            conversationID: snapshot.conversationID, project: snapshot.project,
             permissionEpoch: permissions.epoch(for: snapshot.conversationID)
         )
     }
 
     private func receiveTurn(
-        history: [ChatMessage],
-        provider: any LLMProvider,
-        toolsEnabled: Bool,
+        history: [ChatMessage], provider: any LLMProvider, toolsEnabled: Bool,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AssistantTurn {
         var content = ""
         var toolCallAccumulators: [Int: ToolCallAccumulator] = [:]
-
         await onEvent(.contextRequestStarted)
         for try await event in provider.streamChat(
             messages: history,
@@ -192,7 +152,6 @@ actor AgentLoop {
                 break
             }
         }
-
         return AssistantTurn(
             content: content,
             toolCalls: (toolsEnabled ? toolCallAccumulators : [:])
@@ -205,8 +164,7 @@ actor AgentLoop {
 /// Execution keeps its policy checks in one actor, separate from streaming orchestration.
 extension AgentLoop {
     private func execute(
-        _ toolCall: ChatToolCall,
-        invocation: ToolInvocationContext,
+        _ toolCall: ChatToolCall, invocation: ToolInvocationContext,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AgentToolCallExecution {
         let persistentCallID = UUID()
@@ -219,9 +177,7 @@ extension AgentLoop {
         let execution: Result<AgentToolCallExecution, Error>
         do {
             execution = try await .success(executeAudited(
-                toolCall,
-                invocation: invocation,
-                audit: &audit,
+                toolCall, invocation: invocation, audit: &audit,
                 onEvent: onEvent
             ))
         } catch {
@@ -240,10 +196,10 @@ extension AgentLoop {
         return result
     }
 
+    // Keep the existing operation and error ordering unchanged.
+    // swiftlint:disable:next function_body_length
     private func executeAudited(
-        _ toolCall: ChatToolCall,
-        invocation: ToolInvocationContext,
-        audit: inout AuditRecord,
+        _ toolCall: ChatToolCall, invocation: ToolInvocationContext, audit: inout AuditRecord,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AgentToolCallExecution {
         audit.outcome = .failure
@@ -262,17 +218,12 @@ extension AgentLoop {
             audit.errorDescription = "Invalid JSON arguments"
             return AgentToolCallExecution(
                 toolCall: toolCall,
-                result: .failure(
-                    "Invalid JSON arguments for \(tool.name): \(toolCall.function.arguments)"
-                )
+                result: .failure("Invalid JSON arguments for \(tool.name): \(toolCall.function.arguments)")
             )
         }
-
         var context = await riskContext()
         var assessment = ToolRiskEvaluator.evaluate(
-            tool,
-            arguments: arguments,
-            context: context,
+            tool, arguments: arguments, context: context,
             invocation: invocation
         )
         audit.riskLevel = assessment.level
@@ -293,16 +244,12 @@ extension AgentLoop {
         }
         let executionArguments = policy.executionArguments(for: tool, arguments: arguments)
         assessment = ToolRiskEvaluator.evaluate(
-            tool,
-            arguments: executionArguments,
-            context: context,
+            tool, arguments: executionArguments, context: context,
             invocation: invocation
         )
         if invocation.workingDirectory != nil {
             let original = ToolRiskEvaluator.evaluate(
-                tool,
-                arguments: arguments,
-                context: context,
+                tool, arguments: arguments, context: context,
                 invocation: invocation
             )
             if original.level > assessment.level {
@@ -325,12 +272,8 @@ extension AgentLoop {
         }
         return try await executeAllowed(
             .init(
-                tool: tool,
-                toolCall: toolCall,
-                arguments: arguments,
-                executionArguments: executionArguments,
-                invocation: invocation,
-                policy: policy,
+                tool: tool, toolCall: toolCall, arguments: arguments, executionArguments: executionArguments,
+                invocation: invocation, policy: policy,
                 assessment: assessment
             ),
             audit: &audit, onEvent: onEvent
@@ -338,8 +281,7 @@ extension AgentLoop {
     }
 
     private func executeAllowed(
-        _ operation: EvaluatedToolOperation,
-        audit: inout AuditRecord,
+        _ operation: EvaluatedToolOperation, audit: inout AuditRecord,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> AgentToolCallExecution {
         let tool = operation.tool, toolCall = operation.toolCall
@@ -351,17 +293,14 @@ extension AgentLoop {
             let strings = executionArguments.compactMapValues { $0 as? String }
             do {
                 prepared = try await FilePreviewService.prepare(
-                    tool: tool.name,
-                    arguments: strings,
-                    policy: policy,
+                    tool: tool.name, arguments: strings, policy: policy,
                     checkpoints: checkpoints
                 )
             } catch CheckpointError.unavailable {
                 // Never promise rollback or execute against an unknown approved state.
                 prepared = .init(
                     preview: .init(
-                        kind: "unavailable",
-                        paths: [],
+                        kind: "unavailable", paths: [],
                         rollbackReason: CheckpointError.unavailable.rawValue
                     ),
                     plan: .init(fingerprints: [], bytes: 0, reason: .unavailable)
@@ -372,10 +311,7 @@ extension AgentLoop {
             }
         }
         let confirmation = try await confirmIfNeeded(
-            toolCall: toolCall,
-            assessment: assessment,
-            invocation: invocation,
-            callID: audit.toolCallID ?? UUID(),
+            toolCall: toolCall, assessment: assessment, invocation: invocation, callID: audit.toolCallID ?? UUID(),
             prepared: prepared,
             onEvent: onEvent
         )
@@ -386,7 +322,6 @@ extension AgentLoop {
             audit.resultSummary = "User rejected execution"
             return rejection
         }
-
         await onEvent(.toolExecutionStarted(toolName: tool.name))
         try Task.checkCancellation()
         let started = ContinuousClock.now
@@ -397,10 +332,10 @@ extension AgentLoop {
         return try await executeCheckpointed(operation, prepared: prepared, confirmation: confirmation, audit: &audit)
     }
 
+    // Preserve existing security, rollback, operation and error ordering.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func executeCheckpointed(
-        _ operation: EvaluatedToolOperation,
-        prepared: PreparedFileOperation?,
-        confirmation: ToolConfirmation,
+        _ operation: EvaluatedToolOperation, prepared: PreparedFileOperation?, confirmation: ToolConfirmation,
         audit: inout AuditRecord
     ) async throws -> AgentToolCallExecution {
         let tool = operation.tool, toolCall = operation.toolCall
@@ -417,13 +352,12 @@ extension AgentLoop {
                 try await checkpoints.verify(prepared.plan, policy: freshPolicy)
                 if prepared.plan.canRestore {
                     let value = try await checkpoints.create(
-                        tool: tool.name,
-                        conversationID: invocation.conversationID,
-                        expected: prepared.plan,
+                        tool: tool.name, conversationID: invocation.conversationID, expected: prepared.plan,
                         policy: freshPolicy
                     )
-                    do { try await checkpointSink(value) }
-                    catch { try? await checkpoints.discard(value.id); throw error }
+                    do { try await checkpointSink(value) } catch {
+                        try? await checkpoints.discard(value.id); throw error
+                    }
                     checkpoint = value
                     audit.checkpointID = value.id
                 }
@@ -457,9 +391,7 @@ extension AgentLoop {
             audit.resultSummary = summary.0
             audit.errorDescription = summary.1
             return AgentToolCallExecution(
-                toolCall: toolCall,
-                result: result,
-                confirmationDecision: confirmation.decision,
+                toolCall: toolCall, result: result, confirmationDecision: confirmation.decision,
                 confirmationRequestID: confirmation.requestID
             )
         } catch is CancellationError {
@@ -476,8 +408,7 @@ extension AgentLoop {
             audit.outcome = .failure
             audit.errorDescription = AuditSanitizer.truncate(error.localizedDescription)
             return AgentToolCallExecution(
-                toolCall: toolCall,
-                result: .failure("Tool \(tool.name) failed: \(error.localizedDescription)"),
+                toolCall: toolCall, result: .failure("Tool \(tool.name) failed: \(error.localizedDescription)"),
                 confirmationDecision: confirmation.decision,
                 confirmationRequestID: confirmation.requestID
             )
@@ -493,33 +424,27 @@ extension AgentLoop {
         }
     }
 
+    // Preserve the existing security operation signature.
+    // swiftlint:disable:next function_parameter_count
     private func confirmIfNeeded(
-        toolCall: ChatToolCall,
-        assessment: RiskAssessment,
-        invocation: ToolInvocationContext,
-        callID: UUID,
+        toolCall: ChatToolCall, assessment: RiskAssessment, invocation: ToolInvocationContext, callID: UUID,
         prepared: PreparedFileOperation?,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws -> ToolConfirmation {
         guard assessment.level.requiresConfirmation else {
             return ToolConfirmation()
         }
-
         if
             prepared?.plan.canRestore != false, await sessionPermissions.allows(
-                conversationID: invocation.conversationID,
-                toolName: toolCall.function.name,
+                conversationID: invocation.conversationID, toolName: toolCall.function.name,
                 riskLevel: assessment.level,
                 expectedEpoch: invocation.permissionEpoch
-            ) {
+            )
+        {
             return ToolConfirmation(decision: .approved)
         }
-
         let request = ConfirmationRequest(
-            id: callID,
-            toolCall: toolCall,
-            riskLevel: assessment.level,
-            riskReason: assessment.reason,
+            id: callID, toolCall: toolCall, riskLevel: assessment.level, riskReason: assessment.reason,
             filePreview: prepared?.preview
         )
         pendingConfirmations[request.id] = request
@@ -529,21 +454,17 @@ extension AgentLoop {
             pendingContexts.removeValue(forKey: request.id)
         }
         await onEvent(.confirmationRequested(request))
-        let decision = try await confirmationCoordinator.waitForDecision(
-            requestID: request.id
-        )
+        let decision = try await confirmationCoordinator.waitForDecision(requestID: request.id)
         try Task.checkCancellation()
         guard decision == .approved else {
             return ToolConfirmation(
-                decision: decision,
-                requestID: request.id,
+                decision: decision, requestID: request.id,
                 rejection: AgentToolCallExecution(
                     toolCall: toolCall,
                     result: .failure(
                         "User rejected execution of tool '\(toolCall.function.name)'. "
                             + "Do not retry it without a new explicit request."
-                    ),
-                    confirmationDecision: decision,
+                    ), confirmationDecision: decision,
                     confirmationRequestID: request.id
                 )
             )

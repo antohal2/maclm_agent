@@ -7,11 +7,18 @@ enum PathCanonicalizer {
     static func canonicalize(_ path: String) -> String {
         let expanded = (path.trimmingCharacters(in: .whitespacesAndNewlines) as NSString)
             .expandingTildeInPath
-        var current = URL(fileURLWithPath: expanded.hasPrefix("/")
-                          ? "/" : FileManager.default.currentDirectoryPath, isDirectory: true)
+        var current = URL(
+            fileURLWithPath: expanded.hasPrefix("/")
+                ? "/" : FileManager.default.currentDirectoryPath,
+            isDirectory: true
+        )
         for component in expanded.split(separator: "/") {
-            if component == "." { continue }
-            if component == ".." { current.deleteLastPathComponent(); continue }
+            if component == "." {
+                continue
+            }
+            if component == ".." {
+                current.deleteLastPathComponent(); continue
+            }
             current.appendPathComponent(String(component))
             if let resolved = current.path.withCString({ realpath($0, nil) }) {
                 defer { free(resolved) }
@@ -54,9 +61,13 @@ enum PathGlob {
         let glob = Array(pattern)
         struct Position: Hashable { let value: Int; let glob: Int }
         var memo: [Position: Bool] = [:]
+        // Preserve the existing recursive path-matching algorithm.
+        // swiftlint:disable:next identifier_name
         func match(_ i: Int, _ j: Int) -> Bool {
             let position = Position(value: i, glob: j)
-            if let cached = memo[position] { return cached }
+            if let cached = memo[position] {
+                return cached
+            }
             let result: Bool
             if j == glob.count {
                 result = i == value.count
@@ -75,7 +86,9 @@ enum PathGlob {
             memo[position] = result
             return result
         }
-        if pattern.hasSuffix("/**"), path == String(pattern.dropLast(3)) { return true }
+        if pattern.hasSuffix("/**"), path == String(pattern.dropLast(3)) {
+            return true
+        }
         return match(0, 0)
     }
 }

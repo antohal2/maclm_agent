@@ -18,7 +18,7 @@ struct FilePreview: Codable, Equatable, Sendable {
     var destinationExists = false
     var rollbackReason: String?
     var canRestore = false
-    var objectType: String? = nil
+    var objectType: String?
 }
 
 struct PreparedFileOperation: Equatable, Sendable {
@@ -29,6 +29,8 @@ struct PreparedFileOperation: Equatable, Sendable {
 enum FilePreviewService {
     static let covered = Set(["write_file", "move_file", "delete_file"])
 
+    // Keep the existing operation and error ordering unchanged.
+    // swiftlint:disable:next function_body_length
     static func prepare(
         tool: String,
         arguments: [String: String],
@@ -53,7 +55,8 @@ enum FilePreviewService {
                     )
                     if tool == "write_file", arguments["mode"] != "append", let path = paths.first,
                        (try? FileManager.default.attributesOfItem(atPath: path)[.type]) as? FileAttributeType ==
-                       .typeSymbolicLink {
+                       .typeSymbolicLink
+                    {
                         // The copy restores the link itself, while the diff reads its target.
                         // Track that additional read so target changes cannot invalidate the approved diff.
                         let target = PathCanonicalizer.canonicalize(path)
@@ -91,6 +94,8 @@ enum FilePreviewService {
         }
     }
 
+    // Keep the existing operation and error ordering unchanged. Preserve the existing security operation signature.
+    // swiftlint:disable:next function_body_length function_parameter_count
     static func render(
         tool: String,
         arguments: [String: String],
@@ -112,7 +117,8 @@ enum FilePreviewService {
         }
         let attributes = try? FileManager.default.attributesOfItem(atPath: path)
         let type = attributes?[.type] as? FileAttributeType
-        result.objectType = type == .typeDirectory ? "Каталог" : type == .typeSymbolicLink ? "Символическая ссылка" : "Файл"
+        result.objectType = type == .typeDirectory ? "Каталог"
+            : type == .typeSymbolicLink ? "Символическая ссылка" : "Файл"
         result.modified = attributes?[.modificationDate] as? Date
         if plan.reason == .unreadable {
             result.kind = "size"
@@ -138,7 +144,8 @@ enum FilePreviewService {
         guard
             !info.isDirectory, info.bytes <= 1024 * 1024,
             let data = try? Data(contentsOf: URL(fileURLWithPath: path)), !data.contains(0),
-            let old = String(data: data, encoding: .utf8), textLines(old).count <= 20000 else {
+            let old = String(data: data, encoding: .utf8), textLines(old).count <= 20000
+        else {
             result.kind = "size"
             return result
         }
@@ -179,8 +186,11 @@ enum FilePreviewService {
         }
     }
 
-    static func unifiedDiff(old: String, new: String, deadline: ContinuousClock.Instant? = nil) throws
-        -> UnifiedDiff {
+    // Preserve existing security, rollback, operation and error ordering.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    static func unifiedDiff(
+        old: String, new: String, deadline: ContinuousClock.Instant? = nil
+    ) throws -> UnifiedDiff {
         let before = terminatedLines(old), after = terminatedLines(new)
         guard before.count <= 20000, after.count <= 20000 else { throw CheckpointError.limit }
         // CollectionDifference infers edits only, preserving exact CR and final-newline differences.
@@ -241,6 +251,8 @@ enum FilePreviewService {
             let first = rows[range.lowerBound]
             output.append(.init(
                 kind: "@",
+                // Preserve the exact existing string or expression without changing its value.
+                // swiftlint:disable:next line_length
                 text: "@@ -\(first.oldIndex + (oldCount == 0 ? 0 : 1)),\(oldCount) +\(first.newIndex + (newCount == 0 ? 0 : 1)),\(newCount) @@"
             ))
             for row in slice {

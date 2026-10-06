@@ -125,7 +125,8 @@ struct SecurityPolicyEngine: Sendable {
         var prepared = arguments
         for key in Self.pathKeys(for: tool) {
             if let path = arguments[key] as? String,
-               !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+               !path.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            {
                 let expanded = (path.trimmingCharacters(in: .whitespacesAndNewlines) as NSString)
                     .expandingTildeInPath
                 prepared[key] = URL(fileURLWithPath: expanded).standardizedFileURL.path

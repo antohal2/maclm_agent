@@ -1,12 +1,13 @@
 import Foundation
-import SwiftData
 @testable import maclm_agent
+import SwiftData
 import XCTest
 
 final class SecurityPolicyTests: XCTestCase {
     private func engine(_ rules: [SecurityRuleSnapshot]) -> SecurityPolicyEngine {
         SecurityPolicyEngine(rules: rules)
     }
+
     private func block(_ pattern: String, order: Int = 0) -> SecurityRuleSnapshot {
         .init(pattern: pattern, action: .block, order: order)
     }
@@ -26,20 +27,27 @@ final class SecurityPolicyTests: XCTestCase {
         let link = root.appendingPathComponent("link")
         try FileManager.default.createSymbolicLink(at: link, withDestinationURL: root.appendingPathComponent("blocked"))
         let policy = engine([block(root.appendingPathComponent("blocked").path + "/**")])
-        XCTAssertFalse(policy.decision(for: link.appendingPathComponent("missing/new.txt").path, dimension: .path).isAllowed)
+        XCTAssertFalse(policy.decision(for: link.appendingPathComponent("missing/new.txt").path, dimension: .path)
+            .isAllowed)
         XCTAssertFalse(policy.decision(for: link.path, dimension: .path).isAllowed)
-        XCTAssertEqual(PathCanonicalizer.canonicalize(link.path + "/../visible.txt"), root.appendingPathComponent("visible.txt").path)
+        XCTAssertEqual(
+            PathCanonicalizer.canonicalize(link.path + "/../visible.txt"),
+            root.appendingPathComponent("visible.txt").path
+        )
         let systemLink = root.appendingPathComponent("system")
         try FileManager.default.createSymbolicLink(at: systemLink, withDestinationURL: URL(fileURLWithPath: "/etc"))
-        XCTAssertFalse(engine(DefaultSecurityRules.rules).decision(for: systemLink.path + "/passwd", dimension: .path).isAllowed)
+        XCTAssertFalse(engine(DefaultSecurityRules.rules).decision(for: systemLink.path + "/passwd", dimension: .path)
+            .isAllowed)
     }
 
     func testCaseSensitivityMatchesVolume() throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }
         let policy = engine([block(root.path + "/VISIBLE.TXT")])
-        XCTAssertEqual(policy.decision(for: root.path + "/visible.txt", dimension: .path).isAllowed,
-                       PathCanonicalizer.isCaseSensitive(root.path))
+        XCTAssertEqual(
+            policy.decision(for: root.path + "/visible.txt", dimension: .path).isAllowed,
+            PathCanonicalizer.isCaseSensitive(root.path)
+        )
     }
 
     func testExecutionPreservesSymlinkAndChecksBothTraversalForms() throws {
@@ -53,16 +61,24 @@ final class SecurityPolicyTests: XCTestCase {
             let args = ["path": link.path]
             let prepared = try XCTUnwrap(policy.executionArguments(for: tool, arguments: args)["path"] as? String)
             XCTAssertEqual(URL(fileURLWithPath: prepared).lastPathComponent, "file-link")
-            XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: prepared)[.type] as? FileAttributeType, .typeSymbolicLink)
+            XCTAssertEqual(
+                try FileManager.default.attributesOfItem(atPath: prepared)[.type] as? FileAttributeType,
+                .typeSymbolicLink
+            )
             XCTAssertFalse(policy.decision(for: tool, arguments: args).isAllowed)
         }
         let directoryLink = root.appendingPathComponent("directory-link")
-        try FileManager.default.createSymbolicLink(at: directoryLink, withDestinationURL: root.appendingPathComponent("blocked/nested"))
+        try FileManager.default.createSymbolicLink(
+            at: directoryLink,
+            withDestinationURL: root.appendingPathComponent("blocked/nested")
+        )
         let args = ["path": directoryLink.path + "/../visible.txt"]
         // Existing tools normalize '..' lexically to root/visible.txt, while
         // POSIX traversal resolves to root/blocked/visible.txt. Check both.
-        XCTAssertFalse(engine([block(root.path + "/visible.txt")]).decision(for: ReadFileTool(), arguments: args).isAllowed)
-        XCTAssertFalse(engine([block(root.path + "/blocked/**")]).decision(for: ReadFileTool(), arguments: args).isAllowed)
+        XCTAssertFalse(engine([block(root.path + "/visible.txt")]).decision(for: ReadFileTool(), arguments: args)
+            .isAllowed)
+        XCTAssertFalse(engine([block(root.path + "/blocked/**")]).decision(for: ReadFileTool(), arguments: args)
+            .isAllowed)
     }
 
     func testGlobSemantics() {
@@ -108,12 +124,25 @@ final class SecurityPolicyTests: XCTestCase {
         }
         let arguments = ["path": "/policy-root/public/file"]
         XCTAssertEqual(policy.decision(for: WriteFileTool(), arguments: arguments).disposition, .allowed)
-        XCTAssertEqual(ToolRiskEvaluator.evaluate(WriteFileTool(), arguments: arguments, context: .init()).level, .dangerous)
+        XCTAssertEqual(
+            ToolRiskEvaluator.evaluate(WriteFileTool(), arguments: arguments, context: .init()).level,
+            .dangerous
+        )
     }
 
     func testBuiltInSystemBoundariesAndSecrets() {
         let policy = engine(DefaultSecurityRules.rules)
-        for path in ["/usr/bin/tool", "/bin/tool", "/tmp/test", "/var/test", "/etc/passwd", "~/.aws/new", "~/Library/Keychains/new", "/somewhere/.env", "/somewhere/.git/config"] {
+        for path in [
+            "/usr/bin/tool",
+            "/bin/tool",
+            "/tmp/test",
+            "/var/test",
+            "/etc/passwd",
+            "~/.aws/new",
+            "~/Library/Keychains/new",
+            "/somewhere/.env",
+            "/somewhere/.git/config",
+        ] {
             XCTAssertFalse(policy.decision(for: path, dimension: .path).isAllowed, path)
         }
         XCTAssertEqual(policy.decision(for: "/usr/local/tool", dimension: .path), .noDecision)
@@ -123,14 +152,20 @@ final class SecurityPolicyTests: XCTestCase {
     func testDirectoryTraversalFiltersBlockedChildrenAndSymlinks() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }
-        try FileManager.default.createSymbolicLink(at: root.appendingPathComponent("alias"), withDestinationURL: root.appendingPathComponent("blocked"))
+        try FileManager.default.createSymbolicLink(
+            at: root.appendingPathComponent("alias"),
+            withDestinationURL: root.appendingPathComponent("blocked")
+        )
         let policy = engine([block(root.appendingPathComponent("blocked").path + "/**")])
         let listing = try await ListDirectoryTool().execute(arguments: ["path": root.path], policy: policy)
         XCTAssertFalse(listing.isError)
         XCTAssertFalse(listing.content.contains("blocked"))
         XCTAssertFalse(listing.content.contains("alias"))
         XCTAssertTrue(listing.content.contains("visible.txt"))
-        let search = try await SearchFilesTool().execute(arguments: ["root": root.path, "pattern": ".txt"], policy: policy)
+        let search = try await SearchFilesTool().execute(
+            arguments: ["root": root.path, "pattern": ".txt"],
+            policy: policy
+        )
         XCTAssertFalse(search.isError)
         XCTAssertFalse(search.content.contains("secret"))
         XCTAssertFalse(search.content.contains("blocked"))
@@ -151,9 +186,13 @@ final class SecurityPolicyTests: XCTestCase {
         ] {
             let recorder = PolicyEventRecorder()
             let loop = AgentLoop(toolRegistry: registry)
-            let json = String(decoding: try JSONSerialization.data(withJSONObject: arguments), as: UTF8.self)
-            try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                          using: PolicyCallingProvider(toolName: name, json: json)) { event in
+            // Test helper encodes JSON as UTF-8; preserve existing test semantics.
+            // swiftlint:disable:next optional_data_string_conversion
+            let json = try String(decoding: JSONSerialization.data(withJSONObject: arguments), as: UTF8.self)
+            try await loop.streamResponse(
+                to: [.init(role: .user, content: "test")],
+                using: PolicyCallingProvider(toolName: name, json: json)
+            ) { event in
                 await recorder.append(event)
                 // Avoid hanging if confirmation regresses; then assert it was absent.
                 if case let .confirmationRequested(request) = event {
@@ -161,9 +200,17 @@ final class SecurityPolicyTests: XCTestCase {
                 }
             }
             let events = await recorder.events
-            XCTAssertFalse(events.contains { if case .confirmationRequested = $0 { true } else { false } }, name)
+            XCTAssertFalse(events.contains {
+                if case .confirmationRequested = $0 {
+                    true
+                } else {
+                    false
+                }
+            }, name)
             let executions = events.flatMap { event -> [AgentToolCallExecution] in
-                if case let .toolCallsCompleted(items) = event { return items }
+                if case let .toolCallsCompleted(items) = event {
+                    return items
+                }
                 return []
             }
             let result = try XCTUnwrap(executions.first?.result)
@@ -177,12 +224,20 @@ final class SecurityPolicyTests: XCTestCase {
         let arguments = ["command": "cat ~/.ssh/id_rsa"]
         let policy = engine(DefaultSecurityRules.rules)
         XCTAssertEqual(policy.decision(for: RunShellTool(), arguments: arguments), .noDecision)
-        XCTAssertEqual(policy.executionArguments(for: RunShellTool(), arguments: arguments)["command"] as? String, arguments["command"])
-        XCTAssertEqual(ToolRiskEvaluator.evaluate(RunShellTool(), arguments: arguments, context: .init()).level, .dangerous)
+        XCTAssertEqual(
+            policy.executionArguments(for: RunShellTool(), arguments: arguments)["command"] as? String,
+            arguments["command"]
+        )
+        XCTAssertEqual(
+            ToolRiskEvaluator.evaluate(RunShellTool(), arguments: arguments, context: .init()).level,
+            .dangerous
+        )
         let recorder = PolicyEventRecorder()
         let loop = AgentLoop()
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: PolicyCallingProvider(toolName: "run_shell", json: "{\"command\":\"cat ~/.ssh/id_rsa\"}")) { event in
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: PolicyCallingProvider(toolName: "run_shell", json: "{\"command\":\"cat ~/.ssh/id_rsa\"}")
+        ) { event in
             await recorder.append(event)
             if case let .confirmationRequested(request) = event {
                 await loop.resolveConfirmation(requestID: request.id, decision: .rejected)
@@ -190,7 +245,9 @@ final class SecurityPolicyTests: XCTestCase {
         }
         let events = await recorder.events
         let requests = events.compactMap { event -> ConfirmationRequest? in
-            if case let .confirmationRequested(request) = event { return request }
+            if case let .confirmationRequested(request) = event {
+                return request
+            }
             return nil
         }
         XCTAssertEqual(requests.count, 1)
@@ -203,16 +260,31 @@ final class SecurityPolicyTests: XCTestCase {
         let pattern = root.appendingPathComponent("blocked").path + "/**"
         let loop = AgentLoop(securityRules: { [.init(pattern: pattern, action: .block)] })
         let recorder = PolicyEventRecorder()
-        let json = String(decoding: try JSONSerialization.data(withJSONObject: ["path": root.path + "/./visible.txt"]), as: UTF8.self)
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: PolicyCallingProvider(toolName: "read_file", json: json)) {
+        // Test helper encodes JSON as UTF-8; preserve existing test semantics.
+        // swiftlint:disable:next optional_data_string_conversion
+        let json = try String(
+            decoding: JSONSerialization.data(withJSONObject: ["path": root.path + "/./visible.txt"]),
+            as: UTF8.self
+        )
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: PolicyCallingProvider(toolName: "read_file", json: json)
+        ) {
             await recorder.append($0)
         }
         let events = await recorder.events
-        XCTAssertFalse(events.contains { if case .confirmationRequested = $0 { true } else { false } })
+        XCTAssertFalse(events.contains {
+            if case .confirmationRequested = $0 {
+                true
+            } else {
+                false
+            }
+        })
         XCTAssertTrue(events.contains(.contentDelta("public")))
         XCTAssertTrue(events.contains { event in
-            if case let .toolCallsCompleted(items) = event { return items.first?.result.isError == false }
+            if case let .toolCallsCompleted(items) = event {
+                return items.first?.result.isError == false
+            }
             return false
         })
     }
@@ -220,8 +292,10 @@ final class SecurityPolicyTests: XCTestCase {
     func testFailedRuleFetchFailsClosed() async throws {
         let loop = AgentLoop(securityRules: { throw CocoaError(.fileReadNoPermission) })
         let recorder = PolicyEventRecorder()
-        try await loop.streamResponse(to: [.init(role: .user, content: "test")],
-                                      using: PolicyCallingProvider(toolName: "read_file", json: "{\"path\":\"/a\"}")) {
+        try await loop.streamResponse(
+            to: [.init(role: .user, content: "test")],
+            using: PolicyCallingProvider(toolName: "read_file", json: "{\"path\":\"/a\"}")
+        ) {
             await recorder.append($0)
         }
         let events = await recorder.events
@@ -235,7 +309,10 @@ final class SecurityPolicyTests: XCTestCase {
 
     private func fixture() throws -> URL {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("policy-" + UUID().uuidString)
-        try FileManager.default.createDirectory(at: root.appendingPathComponent("blocked/nested"), withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: root.appendingPathComponent("blocked/nested"),
+            withIntermediateDirectories: true
+        )
         try Data("public".utf8).write(to: root.appendingPathComponent("visible.txt"))
         try Data("private-content".utf8).write(to: root.appendingPathComponent("blocked/nested/secret.txt"))
         return URL(fileURLWithPath: PathCanonicalizer.canonicalize(root.path))
@@ -244,17 +321,25 @@ final class SecurityPolicyTests: XCTestCase {
 
 private actor PolicyEventRecorder {
     private(set) var events: [AgentLoopEvent] = []
-    func append(_ event: AgentLoopEvent) { events.append(event) }
+    func append(_ event: AgentLoopEvent) {
+        events.append(event)
+    }
 }
 
 private struct PolicyCallingProvider: LLMProvider {
     let name = "Policy regression provider"
     let toolName: String
     let json: String
-    func streamChat(messages: [ChatMessage], tools: [ToolDefinition]) -> AsyncThrowingStream<ChatStreamEvent, Error> {
+    func streamChat(messages: [ChatMessage], tools _: [ToolDefinition]) -> AsyncThrowingStream<ChatStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             if !messages.contains(where: { $0.role == .tool }) {
-                continuation.yield(.toolCallDelta(.init(index: 0, id: "policy_call", type: "function", functionName: toolName, argumentsDelta: json)))
+                continuation.yield(.toolCallDelta(.init(
+                    index: 0,
+                    id: "policy_call",
+                    type: "function",
+                    functionName: toolName,
+                    argumentsDelta: json
+                )))
             } else {
                 // Verify that the model receives the actual failure, not a success.
                 continuation.yield(.contentDelta(messages.last(where: { $0.role == .tool })?.content ?? ""))

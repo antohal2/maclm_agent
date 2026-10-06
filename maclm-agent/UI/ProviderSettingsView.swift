@@ -24,7 +24,8 @@ struct ProviderSettingsView: View {
                     exposureLabel(endpoint.baseURL.absoluteString)
                     HStack {
                         if coordinator.detectedProviders
-                            .contains(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL }) {
+                            .contains(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL })
+                        {
                             Label(String(localized: "Доступен"), systemImage: "checkmark.circle")
                                 .foregroundStyle(.green)
                         } else {
@@ -36,7 +37,8 @@ struct ProviderSettingsView: View {
                             .disabled(coordinator.isDiscovering)
                     }
                     if let detected = coordinator.detectedProviders
-                        .first(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL }) {
+                        .first(where: { $0.provider == endpoint.provider && $0.baseURL == endpoint.baseURL })
+                    {
                         ForEach(detected.availableModels.filter { showHidden || !$0.isEmbedding }) { model in
                             Button {
                                 coordinator.select(detected, model: model.id)

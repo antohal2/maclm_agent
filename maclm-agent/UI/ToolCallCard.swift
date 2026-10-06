@@ -40,7 +40,8 @@ struct ToolCallCard: View {
 
             let result = rawResult ?? toolCall.resultJSON ?? String(localized: "Ожидание результата…")
             if toolCall.toolName == "run_shell", let data = result.data(using: .utf8),
-               let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+               let output = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            {
                 Text(
                     "exitCode: \(output["exitCode"] as? Int ?? -1) · timedOut: \(output["timedOut"] as? Bool ?? false)"
                 )

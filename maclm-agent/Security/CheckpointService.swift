@@ -93,6 +93,8 @@ actor CheckpointService {
         return .init(fingerprints: fingerprints, bytes: bytes, reason: reason)
     }
 
+    // Keep the existing operation and error ordering unchanged.
+    // swiftlint:disable:next function_body_length
     func create(
         tool: String,
         conversationID: UUID?,
@@ -193,7 +195,9 @@ actor CheckpointService {
     private func validateRoot() throws {
         guard PathCanonicalizer.canonicalize(root.path) == root.path else { throw CheckpointError.corrupt }
     }
+}
 
+extension CheckpointService {
     func snapshots() throws -> [CheckpointSnapshot] {
         try validateRoot()
         guard FileManager.default.fileExists(atPath: root.path) else { return [] }
@@ -305,8 +309,7 @@ actor CheckpointService {
             expected: preview.current,
             policy: policy
         )
-        do { try await persist(undo) }
-        catch { try? discard(undo.id); throw error }
+        do { try await persist(undo) } catch { try? discard(undo.id); throw error }
         do {
             try Task.checkCancellation()
             try verify(preview.current, policy: policy)

@@ -23,7 +23,6 @@ extension Conversation {
     }
 }
 
-
 extension AuditDecision {
     var interfaceLabel: String {
         self == .userInitiated ? String(localized: "Действие пользователя") : rawValue

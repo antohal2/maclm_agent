@@ -83,12 +83,14 @@ enum ModelMetadataParser {
                     .contains("embedding") ? .embedding : .unknown
             }
             if let info = root["model_info"] as? [String: Any],
-               let architecture = info["general.architecture"] as? String {
+               let architecture = info["general.architecture"] as? String
+            {
                 result.contextLength = info["\(architecture).context_length"] as? Int
             }
         }
         if let running, let root = (try? JSONSerialization.jsonObject(with: running)) as? [String: Any],
-           let models = root["models"] as? [[String: Any]] {
+           let models = root["models"] as? [[String: Any]]
+        {
             result.loadedContextLength = models
                 .first { ($0["name"] as? String ?? $0["model"] as? String) == model.id }?["context_length"] as? Int
             result.isLoaded = models.contains { ($0["name"] as? String ?? $0["model"] as? String) == model.id }

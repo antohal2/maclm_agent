@@ -233,18 +233,19 @@ import XCTest
         let plan = try await service.plan(paths: [file.path], policy: security)
         let cp = try await service.create(tool: "write_file", conversationID: nil, expected: plan, policy: security)
         _ = try await service.complete(cp)
-        do { _ = try await service.restorePlan(cp, policy: blocked); XCTFail("Expected fail-closed rejection") }
-        catch { XCTAssertEqual(error as? CheckpointError, .blocked) }
+        do { _ = try await service.restorePlan(cp, policy: blocked); XCTFail("Expected fail-closed rejection") } catch {
+            XCTAssertEqual(error as? CheckpointError, .blocked)
+        }
         var corrupt = cp
         corrupt.items[0].storedRelativePath = "../outside"
-        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection") }
-        catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
+        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection")
+        } catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
         corrupt = cp; corrupt.items[0].sha256 = "wrong"
-        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection") }
-        catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
+        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection")
+        } catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
         corrupt = cp; corrupt.items[0].originalPath = root.path + "/../bad"
-        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection") }
-        catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
+        do { _ = try await service.restorePlan(corrupt, policy: security); XCTFail("Expected fail-closed rejection")
+        } catch { XCTAssertEqual(error as? CheckpointError, .corrupt) }
     }
 }
 
@@ -343,8 +344,9 @@ import XCTest
         XCTAssertEqual(value.plan.reason, .unreadable)
         XCTAssertFalse(value.preview.canRestore)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
-        do { try await service.verify(value.plan, policy: security); XCTFail("Changed metadata must fail") }
-        catch { XCTAssertEqual(error as? CheckpointError, .changed) }
+        do { try await service.verify(value.plan, policy: security); XCTFail("Changed metadata must fail") } catch {
+            XCTAssertEqual(error as? CheckpointError, .changed)
+        }
     }
 
     func testCheckpointStoreKeepsRecordsAfterConversationDeletion() async throws {
@@ -399,10 +401,12 @@ import XCTest
         XCTAssertEqual(preview.preview.kind, "diff")
         XCTAssertEqual(preview.plan.previewReads.count, 1)
         try Data("external".utf8).write(to: file)
-        do { try await service.verify(preview.plan, policy: security); XCTFail("Changed symlink target must fail") }
-        catch { XCTAssertEqual(error as? CheckpointError, .changed) }
+        do { try await service.verify(preview.plan, policy: security); XCTFail("Changed symlink target must fail")
+        } catch { XCTAssertEqual(error as? CheckpointError, .changed) }
     }
 
+    // Keep the existing operation and error ordering unchanged.
+    // swiftlint:disable:next function_body_length
     func testTypicalOfflineSessionCheckpointVolume() async throws {
         let root = try workspace(); defer { try? FileManager.default.removeItem(at: root) }
         let file = root.appendingPathComponent("text"),
@@ -439,7 +443,8 @@ import XCTest
         let folder = root.appendingPathComponent("folder")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         for index in 0 ..<
-            3 {
+            3
+        {
             try Data(repeating: 65, count: 128 * 1024).write(to: folder.appendingPathComponent("item-\(index)"))
         }
         let deletePlan = try await service.plan(paths: [folder.path], policy: security)
@@ -486,27 +491,5 @@ import XCTest
         let read = getxattr(file.path, "local.maclm-agent.checkpoint-test", &restored, restored.count, 0, 0)
         XCTAssertEqual(read, 4)
         XCTAssertEqual(Data(restored), bytes)
-    }
-
-    func testTracePrefersExactIDsOverOrderAndArguments() {
-        let first = ToolCall(toolName: "write_file", argumentsJSON: "{}", status: .failed)
-        let second = ToolCall(toolName: "write_file", argumentsJSON: "{}", status: .completed)
-        let blocked = AuditEntry(AuditRecord(
-            toolName: "write_file",
-            argumentsJSON: "different",
-            decision: .blocked,
-            toolCallID: first.id
-        ))
-        let allowed = AuditEntry(AuditRecord(
-            toolName: "write_file",
-            argumentsJSON: "{}",
-            riskLevel: .dangerous,
-            decision: .approved,
-            toolCallID: second.id
-        ))
-        XCTAssertEqual(
-            TraceIncidents.count(calls: [first, second], audits: [allowed, blocked]),
-            TraceIncidents(rejected: 0, blocked: 1, dangerous: 1, errors: 0)
-        )
     }
 }

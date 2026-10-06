@@ -96,11 +96,13 @@ struct ProviderDiscovery: Sendable {
         case .lmStudio:
             models = try ModelMetadataParser.lmStudio(data)
             if let metadata = await fetch(endpoint.baseURL.lmStudioMetadataBaseURL.appending(path: "api/v1/models")),
-               let detailed = try? ModelMetadataParser.lmStudio(metadata), !detailed.isEmpty {
+               let detailed = try? ModelMetadataParser.lmStudio(metadata), !detailed.isEmpty
+            {
                 models = detailed
             } else if let metadata = await fetch(endpoint.baseURL.lmStudioMetadataBaseURL
                 .appending(path: "api/v0/models")),
-                let detailed = try? ModelMetadataParser.lmStudio(metadata), !detailed.isEmpty {
+                let detailed = try? ModelMetadataParser.lmStudio(metadata), !detailed.isEmpty
+            {
                 models = detailed
             }
         case .ollama:

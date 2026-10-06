@@ -55,3 +55,6 @@ trailing_comma:
   mandatory_comma: true
 
 reporter: xcode
+
+opening_brace:
+  ignore_multiline_statement_conditions: true

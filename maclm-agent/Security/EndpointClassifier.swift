@@ -23,7 +23,8 @@ enum EndpointClassifier {
                 return .loopback
             }
             if first == 10 || (first == 172 && (16 ... 31).contains(second)) || (first == 192 && second == 168) ||
-                (first == 169 && second == 254) {
+                (first == 169 && second == 254)
+            {
                 return .lan
             }
             return .external

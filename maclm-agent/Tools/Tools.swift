@@ -157,7 +157,8 @@ struct ToolRegistry: Sendable {
     mutating func register(_ tool: any Tool) {
         #if DEBUG
             if !type(of: tool).isPolicyEnforceable,
-               type(of: tool).baseRiskLevel < .dangerous {
+               type(of: tool).baseRiskLevel < .dangerous
+            {
                 assertionFailure("Universal tool '\(tool.name)' must declare baseRiskLevel .dangerous.")
             }
         #endif

@@ -137,6 +137,8 @@ struct SecuritySettingsView: View {
             }
         } message: {
             Text(
+                // Preserve the exact existing string or expression without changing its value.
+                // swiftlint:disable:next line_length
                 "Папка \(broadDirectory ?? "") включает конфигурации оболочки и автозапуска. Запись в них без подтверждения каждый раз опасна. Разрешение caution на инструмент можно будет запомнить для всей этой области."
             )
         }

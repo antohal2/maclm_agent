@@ -80,13 +80,15 @@ struct MoveFileTool: Tool {
         let destinationOperation = CheckpointFileState.operationPath(destinationURL.path)
         guard sourceOperation != destinationOperation,
               !destinationOperation.hasPrefix(sourceOperation + "/"),
-              !sourceOperation.hasPrefix(destinationOperation + "/") else {
+              !sourceOperation.hasPrefix(destinationOperation + "/")
+        else {
             return .failure("Source and destination must be distinct, non-nested paths.")
         }
 
         do {
             if sourceURL.path.lowercased() == destinationURL.path.lowercased(),
-               Self.sameObject(sourceURL.path, destinationURL.path) {
+               Self.sameObject(sourceURL.path, destinationURL.path)
+            {
                 // Case-only rename must not unlink the source through its destination alias.
                 guard rename(sourceURL.path, destinationURL.path) == 0 else {
                     throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)

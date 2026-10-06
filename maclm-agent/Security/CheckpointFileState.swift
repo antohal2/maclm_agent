@@ -5,7 +5,7 @@ struct FileFingerprint: Codable, Equatable, Sendable {
     var path: String
     var exists: Bool
     var digest: String?
-    var metadata: String? = nil
+    var metadata: String?
 }
 
 struct FileInspection: Sendable {
@@ -50,7 +50,8 @@ enum CheckpointFileState {
         }
         if
             tool == "move_file",
-            paths[0] == paths[1] || paths[0].hasPrefix(paths[1] + "/") || paths[1].hasPrefix(paths[0] + "/") {
+            paths[0] == paths[1] || paths[0].hasPrefix(paths[1] + "/") || paths[1].hasPrefix(paths[0] + "/")
+        {
             throw CheckpointError.corrupt
         }
         return paths
@@ -71,6 +72,8 @@ enum CheckpointFileState {
         }.joined(separator: "|") + "|" + String(modified)
     }
 
+    // Keep the existing operation and error ordering unchanged.
+    // swiftlint:disable:next function_body_length
     static func inspect(
         _ path: String,
         policy: SecurityPolicyEngine? = nil,
@@ -124,8 +127,11 @@ enum CheckpointFileState {
         }
         try check(path)
         let attrs: [FileAttributeKey: Any]
-        do { attrs = try fm.attributesOfItem(atPath: path) }
-        catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError {
+        do { attrs = try fm.attributesOfItem(atPath: path) } catch let error as NSError
+            where error.domain == NSCocoaErrorDomain && error.code == NSFileReadNoSuchFileError
+        // SwiftFormat wraps this catch condition; preserve the existing error filter.
+        // swiftlint:disable:next opening_brace
+        {
             return .init(
                 fingerprint: .init(path: path, exists: false, digest: nil),
                 bytes: 0,

@@ -129,8 +129,9 @@ struct CheckpointsView: View {
                 runner.isRestoringCheckpoint = true
                 Task {
                     defer { busy = false; runner.isRestoringCheckpoint = false; self.pending = nil }
-                    do { try await store.restore(pending, conversation: conversation) }
-                    catch { self.error = error.localizedDescription }
+                    do { try await store.restore(pending, conversation: conversation) } catch {
+                        self.error = error.localizedDescription
+                    }
                 }
             }.disabled(isRunning)
             Button(String(localized: "Отмена"), role: .cancel) { pending = nil }
@@ -169,6 +170,8 @@ struct CheckpointSettingsView: View {
             Stepper(String(localized: "Срок хранения: \(days) дней"), value: $days, in: 1 ... 3650)
             Text(
                 String(
+                    // Preserve the exact existing string or expression without changing its value.
+                    // swiftlint:disable:next line_length
                     localized: "Текущий объём: \(ByteCountFormatter.string(fromByteCount: store?.usage ?? 0, countStyle: .file))"
                 )
             )

@@ -17,9 +17,9 @@ final class ToolCall {
     var argumentsJSON: String
     var resultJSON: String?
     // Effective risk snapshot for confirmation display; session grants are never persisted.
-    var confirmationRiskRawValue: Int? = nil
-    var confirmationRiskReason: String? = nil
-    var filePreview: FilePreview? = nil
+    var confirmationRiskRawValue: Int?
+    var confirmationRiskReason: String?
+    var filePreview: FilePreview?
     private var statusRawValue: String
     var timestamp: Date
     var message: Message?

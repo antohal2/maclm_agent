@@ -60,7 +60,8 @@ enum RunTraceGrouping {
             }
             if
                 !unfinished, let last = turns[index].steps.last, last.toolCalls.isEmpty,
-                !last.content.hasPrefix("Ошибка:") || turns[index].end?.failed == false {
+                !last.content.hasPrefix("Ошибка:") || turns[index].end?.failed == false
+            {
                 turns[index].final = turns[index].steps.removeLast()
             }
         }
@@ -90,7 +91,8 @@ struct TraceIncidents: Equatable {
                 result.blocked += 1
             } else if
                 audit?
-                    .decision == .rejected || (call.status == .rejected && call.resultJSON != "Cancelled by user") {
+                .decision == .rejected || (call.status == .rejected && call.resultJSON != "Cancelled by user")
+            {
                 result.rejected += 1
             }
             if audit?.decision == .approved, audit?.riskLevel == .dangerous {

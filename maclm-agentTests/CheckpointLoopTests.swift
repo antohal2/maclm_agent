@@ -120,8 +120,9 @@ import XCTest
                     }
                 }
             }
-            do { try await task.value; XCTAssertFalse(cancel) }
-            catch { XCTAssertTrue(cancel); XCTAssertTrue(error is CancellationError) }
+            do { try await task.value; XCTAssertFalse(cancel) } catch {
+                XCTAssertTrue(cancel); XCTAssertTrue(error is CancellationError)
+            }
             XCTAssertEqual(try Data(contentsOf: file), Data((cancel ? "old" : "external").utf8))
             let snapshots = try await service.snapshots()
             XCTAssertTrue(snapshots.isEmpty)
@@ -189,6 +190,8 @@ private struct CheckpointCallingProvider: LLMProvider {
             if messages.contains(where: { $0.role == .tool }) {
                 continuation.yield(.contentDelta("Finished"))
             } else {
+                // Existing deterministic JSON test fixture; preserve test semantics.
+                // swiftlint:disable:next force_try
                 let data = try! JSONSerialization.data(withJSONObject: [
                     "path": path,
                     "mode": "overwrite",
@@ -199,6 +202,8 @@ private struct CheckpointCallingProvider: LLMProvider {
                     id: "fixture",
                     type: "function",
                     functionName: "write_file",
+                    // Test helper encodes JSON as UTF-8; preserve existing test semantics.
+                    // swiftlint:disable:next optional_data_string_conversion
                     argumentsDelta: String(decoding: data, as: UTF8.self)
                 )))
             }

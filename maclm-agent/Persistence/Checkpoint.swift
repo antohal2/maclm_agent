@@ -17,7 +17,7 @@ struct CheckpointSnapshot: Codable, Equatable, Sendable, Identifiable {
     var items: [CheckpointItem]
     var totalBytes: Int64
     var isRestored = false
-    var postOperation: [FileFingerprint]? = nil
+    var postOperation: [FileFingerprint]?
 }
 
 @Model final class Checkpoint {
