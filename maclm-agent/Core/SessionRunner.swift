@@ -166,10 +166,7 @@ final class SessionRunner {
         let conversationID = conversation.id
         let token = UUID()
         generationToken = token
-        let conversation = self.conversation
-        let invocationContext: @MainActor @Sendable () -> ToolInvocationContext = {
-            Self.toolInvocation(for: conversation)
-        }
+        let invocationContext = makeInvocationContext()
         generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
                 try await self?.skills?.refreshCatalog()
@@ -182,6 +179,9 @@ final class SessionRunner {
                     systemPrompt: { [weak self] in await self?.currentSystemPrompt() ?? "" },
                     skillSuggestion: { [weak self] name, reason in
                         await self?.suggestSkill(name, reason: reason) ?? "unavailable: no skill session"
+                    },
+                    skillFileRequest: { [weak self] request in
+                        await self?.skills?.fileRequest(request) ?? .failure("unavailable: no skill session")
                     },
                     onEvent: { [weak self] event in
                         guard await self?.generationToken == token else { return }

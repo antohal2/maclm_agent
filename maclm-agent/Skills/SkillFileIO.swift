@@ -53,11 +53,26 @@ enum SkillFileIO {
 
     static func readFile(_ file: SkillFile, root: Int32) throws -> Data {
         let parts = file.path.components(separatedBy: "/")
-        guard let last = parts.last, !parts.contains(".."), !parts.contains(""),
+        guard !parts.isEmpty, !parts.contains(".."), !parts.contains(""),
               !parts.contains(where: SkillFilePolicy.isIgnored)
         else {
             throw SkillValidationError.unreadable
         }
+        return try withResolvedPath(file.path, root: root, modelVisible: false) { descriptor in
+            try readOpenedFile(descriptor, expectedSize: file.size)
+        }
+    }
+
+    /// The model-facing gate performs lexical checks before any filesystem access.
+    /// A nil path pins the root for enumeration; all children use the same no-follow walk.
+    static func withResolvedPath<T>(
+        _ path: String?, root: Int32, directory: Bool = false, modelVisible: Bool = true,
+        body: (Int32) throws -> T
+    ) throws -> T {
+        if let path, modelVisible {
+            try validateModelPath(path)
+        }
+        let parts = path?.components(separatedBy: "/") ?? []
         var parent = dup(root)
         guard parent >= 0 else { throw SkillValidationError.unreadable }
         defer { close(parent) }
@@ -66,17 +81,40 @@ enum SkillFileIO {
             close(parent)
             parent = next
         }
-        let descriptor = openat(parent, last, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
+        guard let last = parts.last else { return try body(parent) }
+        let flags = O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC | (directory ? O_DIRECTORY : 0)
+        let descriptor = openat(parent, last, flags)
         guard descriptor >= 0 else { throw failure() }
         defer { close(descriptor) }
+        var info = stat()
+        guard fstat(descriptor, &info) == 0, kind(info) == (directory ? S_IFDIR : S_IFREG) else {
+            throw SkillValidationError.unsupportedFile
+        }
+        return try body(descriptor)
+    }
+
+    static func validateModelPath(_ path: String) throws {
+        let parts = path.components(separatedBy: "/")
+        guard !path.isEmpty, !path.hasPrefix("/"), !path.hasPrefix("~"), !path.contains("\\"),
+              !path.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }),
+              !path.contains("%") || path.removingPercentEncoding == path,
+              !parts.contains(where: { component in
+                  let normalized = component.precomposedStringWithCompatibilityMapping
+                  return component.isEmpty || component.hasPrefix(".") || normalized == "."
+                      || normalized == ".." || normalized.contains("/")
+              })
+        else { throw SkillFileAccessError.invalidPath }
+    }
+
+    static func readOpenedFile(_ descriptor: Int32, expectedSize: Int) throws -> Data {
         var before = stat()
         guard fstat(descriptor, &before) == 0, kind(before) == S_IFREG else {
             throw SkillValidationError.unsupportedFile
         }
-        guard before.st_size == file.size else { throw SkillValidationError.changedDuringScan }
-        let data = try readBytes(descriptor, expectedSize: file.size)
+        guard before.st_size == expectedSize else { throw SkillValidationError.changedDuringScan }
+        let data = try readBytes(descriptor, expectedSize: expectedSize)
         var after = stat()
-        guard fstat(descriptor, &after) == 0, data.count == file.size,
+        guard fstat(descriptor, &after) == 0, data.count == expectedSize,
               before.st_size == after.st_size,
               before.st_mtimespec.tv_sec == after.st_mtimespec.tv_sec,
               before.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec,

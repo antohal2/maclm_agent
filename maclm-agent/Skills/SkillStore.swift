@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import SwiftData
 
@@ -177,4 +178,92 @@ actor SkillStore {
             decision: automatic ? .auto : .userInitiated, outcome: .success, resultSummary: event
         )))
     }
+}
+
+extension SkillStore {
+    /// Authorization, IO and durable audit execute without actor suspension.
+    /// This deliberately checks metadata only, not the folder hash (SPEC 15.13).
+    func fileRequest(
+        _ request: SkillFileRequest, attachment: SkillAttachment?, conversationID: UUID
+    ) -> ToolExecutionResult {
+        var source = attachment?.source ?? "unknown"
+        var bytes = 0
+        let result: ToolExecutionResult
+        do {
+            guard let id = request.skill, SkillParser.validName(id), attachment?.id == id else {
+                throw SkillRequestRejection(reason: "not attached")
+            }
+            guard let current = try record(id) else {
+                throw SkillRequestRejection(reason: "unavailable: unknown skill")
+            }
+            source = current.source
+            guard current.state == .enabled, current.source == attachment?.source,
+                  current.enabledHash == attachment?.hash
+            else {
+                throw SkillRequestRejection(reason: "unavailable: skill is \(current.state.rawValue) or trust changed")
+            }
+            if let error = request.argumentError {
+                throw SkillRequestRejection(reason: error)
+            }
+            if let path = request.path {
+                try SkillFileIO.validateModelPath(path)
+            }
+            let parent = try SkillFileIO.directory(root.path)
+            defer { close(parent) }
+            let folder = try SkillFileIO.childDirectory(id, parent: parent)
+            defer { close(folder) }
+            switch request.action {
+            case .list:
+                let files = try SkillFileAccess.list(root: folder)
+                let output = files.map { SkillFileListing(path: $0.path, size: $0.size) }
+                let data = try JSONEncoder.toolOutput.encode(output)
+                guard let content = String(data: data, encoding: .utf8) else {
+                    throw SkillValidationError.unreadable
+                }
+                bytes = files.reduce(0) { $0 + $1.size }
+                result = .success(content: content)
+            case .read:
+                let text = try SkillFileAccess.read(request.path ?? "SKILL.md", root: folder)
+                bytes = text.utf8.count
+                result = .success(content: text)
+            }
+        } catch {
+            result = .failure((error as? SkillRequestRejection)?.reason ?? SkillFileAccess.reason(error))
+        }
+        return auditFileRequest(request, result: result, source: source, bytes: bytes, conversationID: conversationID)
+    }
+
+    private func auditFileRequest(
+        _ request: SkillFileRequest, result: ToolExecutionResult, source: String, bytes: Int, conversationID: UUID
+    ) -> ToolExecutionResult {
+        do {
+            let arguments: [String: Any] = [
+                "skill": request.skill ?? "", "source": source, "path": request.path ?? "",
+                "byteCount": bytes, "conversationID": conversationID.uuidString,
+                "reason": result.isError ? result.content : "success",
+            ]
+            let data = try JSONSerialization.data(withJSONObject: arguments, options: .sortedKeys)
+            guard let json = String(data: data, encoding: .utf8) else { throw SkillValidationError.unreadable }
+            context.insert(AuditEntry(.init(
+                toolName: request.event, argumentsJSON: json, riskLevel: .safe,
+                decision: result.isError ? .blocked : .auto, outcome: result.isError ? .failure : .success,
+                resultSummary: result.isError ? result.content : "\(request.event): \(bytes) bytes",
+                errorDescription: result.isError ? result.content : nil, conversationID: conversationID
+            )))
+            try context.save()
+            return result
+        } catch {
+            context.rollback()
+            return .failure("unavailable: skill file audit persistence failed")
+        }
+    }
+}
+
+private struct SkillRequestRejection: Error {
+    let reason: String
+}
+
+private struct SkillFileListing: Encodable {
+    let path: String
+    let size: Int
 }

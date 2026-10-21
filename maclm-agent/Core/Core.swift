@@ -17,6 +17,8 @@ actor AgentLoop {
     private var isGenerating = false
     private var skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)?
 
+    private var skillFileRequest: (@MainActor @Sendable (SkillFileRequest) async -> ToolExecutionResult)?
+
     init(
         toolRegistry: ToolRegistry = .all, confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
         maximumIterations: Int = 8, checkpoints: CheckpointService? = nil,
@@ -79,6 +81,7 @@ actor AgentLoop {
         invocationContext: @escaping @MainActor @Sendable () -> ToolInvocationContext,
         systemPrompt: (@MainActor @Sendable () async -> String)? = nil,
         skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)? = nil,
+        skillFileRequest: (@MainActor @Sendable (SkillFileRequest) async -> ToolExecutionResult)? = nil,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
         guard !isGenerating else {
@@ -86,7 +89,8 @@ actor AgentLoop {
         }
         isGenerating = true
         self.skillSuggestion = skillSuggestion
-        defer { isGenerating = false; self.skillSuggestion = nil }
+        self.skillFileRequest = skillFileRequest
+        defer { isGenerating = false; self.skillSuggestion = nil; self.skillFileRequest = nil }
         var history = messages
         for iteration in 0 ..< maximumIterations {
             if iteration > 0 {
@@ -127,18 +131,6 @@ actor AgentLoop {
                 throw AgentLoopError.maximumIterationsReached(maximumIterations)
             }
         }
-    }
-
-    @MainActor
-    private static func captureInvocation(
-        _ source: @MainActor @Sendable () -> ToolInvocationContext,
-        permissions: SessionPermissions
-    ) -> ToolInvocationContext {
-        let snapshot = source()
-        return ToolInvocationContext(
-            conversationID: snapshot.conversationID, project: snapshot.project,
-            permissionEpoch: permissions.epoch(for: snapshot.conversationID)
-        )
     }
 
     private func receiveTurn(
@@ -244,6 +236,16 @@ extension AgentLoop {
         )
         audit.riskLevel = assessment.level
         audit.elevationReason = assessment.reason
+        // Skill-relative paths have their own descriptor perimeter. Do not load or consult project rules.
+        if tool is ListSkillFilesTool || tool is ReadSkillFileTool {
+            try Task.checkCancellation()
+            await onEvent(.toolExecutionStarted(toolName: tool.name))
+            let request = SkillFileRequest(action: tool is ListSkillFilesTool ? .list : .read, arguments: arguments)
+            let result = await skillFileRequest?(request) ?? .failure("unavailable: no skill session")
+            audit.decision = .auto
+            audit.complete(result, toolName: tool.name, arguments: arguments)
+            return AgentToolCallExecution(toolCall: toolCall, result: result)
+        }
         let policy: SecurityPolicyEngine
         do {
             policy = try await SecurityPolicyEngine(rules: securityRules(), invocation: invocation)
@@ -412,10 +414,7 @@ extension AgentLoop {
                     NSLog("Checkpoint finalization failed: %@", error.localizedDescription)
                 }
             }
-            audit.outcome = result.isError ? .failure : .success
-            let summary = AuditSanitizer.summary(result, toolName: tool.name, arguments: executionArguments)
-            audit.resultSummary = summary.0
-            audit.errorDescription = summary.1
+            audit.complete(result, toolName: tool.name, arguments: executionArguments)
             return AgentToolCallExecution(
                 toolCall: toolCall, result: result, confirmationDecision: confirmation.decision,
                 confirmationRequestID: confirmation.requestID

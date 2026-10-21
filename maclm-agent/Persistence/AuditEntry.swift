@@ -88,6 +88,15 @@ struct AuditRecord: Codable, Sendable {
     var toolCallID: UUID?
 }
 
+extension AuditRecord {
+    mutating func complete(_ result: ToolExecutionResult, toolName: String, arguments: [String: Any]) {
+        outcome = result.isError ? .failure : .success
+        let summary = AuditSanitizer.summary(result, toolName: toolName, arguments: arguments)
+        resultSummary = summary.0
+        errorDescription = summary.1
+    }
+}
+
 enum AuditSanitizer {
     static let limit = 2000
     static let commandLimit = 10000
@@ -128,7 +137,7 @@ enum AuditSanitizer {
         toolName: String,
         arguments: [String: Any]
     ) -> (String, String?) {
-        if toolName == "read_file", !result.isError {
+        if toolName == "read_file" || toolName == "read_skill_file", !result.isError {
             return ("Read file: \(arguments["path"] as? String ?? "")\nSize: \(result.content.utf8.count) bytes", nil)
         }
         if toolName == "run_shell", let data = result.content.data(using: .utf8),

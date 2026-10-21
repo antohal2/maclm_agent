@@ -135,6 +135,11 @@ final class SessionSkills {
         } catch { notices.append(error.localizedDescription) }
     }
 
+    func fileRequest(_ request: SkillFileRequest) async -> ToolExecutionResult {
+        let reference = attached.first { $0.id == request.skill }?.reference
+        return await store.fileRequest(request, attachment: reference, conversationID: conversation.id)
+    }
+
     func selectFromPalette(_ id: String) async -> Bool {
         do { _ = try await attach(id); return true } catch { notices.append(error.localizedDescription); return false }
     }

@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Список файлов навыка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List skill files"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Список файлов навыка"
+          }
+        }
+      }
+    },
+    "Чтение файла навыка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read skill file"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтение файла навыка"
+          }
+        }
+      }
+    },
     "Символические ссылки в питомце запрещены" : {
       "extractionState": "manual",
       "localizations": {

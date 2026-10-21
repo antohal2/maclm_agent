@@ -12,7 +12,7 @@ struct ToolCallCard: View {
             HStack(spacing: 7) {
                 Image(systemName: "wrench.and.screwdriver")
                     .foregroundStyle(.secondary)
-                Text(toolCall.toolName)
+                Text(toolTitle)
                     .font(.subheadline.monospaced().weight(.semibold))
                 Spacer(minLength: 8)
                 statusLabel
@@ -64,6 +64,14 @@ struct ToolCallCard: View {
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(.separator.opacity(0.45))
+        }
+    }
+
+    private var toolTitle: String {
+        switch toolCall.toolName {
+        case "list_skill_files": String(localized: "Список файлов навыка")
+        case "read_skill_file": String(localized: "Чтение файла навыка")
+        default: toolCall.toolName
         }
     }
 

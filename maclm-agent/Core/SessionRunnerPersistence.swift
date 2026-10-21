@@ -61,6 +61,11 @@ extension SessionRunner {
         }
     }
 
+    func makeInvocationContext() -> @MainActor @Sendable () -> ToolInvocationContext {
+        let conversation = self.conversation
+        return { Self.toolInvocation(for: conversation) }
+    }
+
     static func toolInvocation(for conversation: Conversation) -> ToolInvocationContext {
         ToolInvocationContext(conversationID: conversation.id, project: conversation.project.map {
             ProjectSecuritySnapshot(id: $0.id, workingDirectoryPath: $0.workingDirectoryPath)
