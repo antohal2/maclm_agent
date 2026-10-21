@@ -21,6 +21,7 @@ enum SkillState: String, Sendable, CaseIterable {
     var enabledHash: String?
     var enabledAt: Date?
     var lastUsedAt: Date?
+    var manifestsData: Data?
     var origin: String = "manual"
 
     init(skillID: String) {
@@ -33,7 +34,7 @@ enum SkillState: String, Sendable, CaseIterable {
     }
 }
 
-struct SkillFile: Sendable, Equatable, Identifiable {
+struct SkillFile: Codable, Sendable, Equatable, Identifiable {
     var path: String
     var size: Int
     var digest: String = ""

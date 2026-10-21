@@ -18,6 +18,8 @@ final class Conversation {
     var titleIsManual: Bool = false
     var attachedSkillsData: Data?
     var declinedSkillsData: Data?
+    var detachedPinnedSkillsData: Data?
+    var skillCatalogOrderData: Data?
     var updatedAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \Message.conversation)

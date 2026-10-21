@@ -125,7 +125,7 @@ import XCTest
         )
     }
 
-    /// v0.4.7.1 snapshot plus Skills metadata and the additive v0.5.1 session skill fields.
+    /// v0.5.3: additive pin, snapshot manifest, explicit-detach and stable catalog fields.
     private static let expectedSchema = """
     attribute|AuditEntry|argumentsJSON|Swift.String|false
     attribute|AuditEntry|checkpointID|Swift.Optional<Foundation.UUID>|true
@@ -162,6 +162,7 @@ import XCTest
     attribute|Conversation|attachedSkillsData|Swift.Optional<Foundation.Data>|true
     attribute|Conversation|createdAt|Foundation.Date|false
     attribute|Conversation|declinedSkillsData|Swift.Optional<Foundation.Data>|true
+    attribute|Conversation|detachedPinnedSkillsData|Swift.Optional<Foundation.Data>|true
     attribute|Conversation|hasUnreadResult|Swift.Bool|false
     attribute|Conversation|id|Foundation.UUID|false
     attribute|Conversation|isArchived|Swift.Bool|false
@@ -169,6 +170,7 @@ import XCTest
     attribute|Conversation|lastContextTokens|Swift.Optional<Swift.Int>|true
     attribute|Conversation|modelID|Swift.Optional<Swift.String>|true
     attribute|Conversation|providerID|Swift.Optional<Swift.String>|true
+    attribute|Conversation|skillCatalogOrderData|Swift.Optional<Foundation.Data>|true
     attribute|Conversation|titleIsManual|Swift.Bool|false
     attribute|Conversation|title|Swift.String|false
     attribute|Conversation|updatedAt|Foundation.Date|false
@@ -181,6 +183,7 @@ import XCTest
     attribute|Project|id|Foundation.UUID|false
     attribute|Project|instructions|Swift.String|false
     attribute|Project|name|Swift.String|false
+    attribute|Project|pinnedSkillsData|Swift.Optional<Foundation.Data>|true
     attribute|Project|sortOrder|Swift.Int|false
     attribute|Project|workingDirectoryPath|Swift.Optional<Swift.String>|true
     attribute|SecurityRule|action|maclm_agent.RuleAction|false
@@ -195,6 +198,7 @@ import XCTest
     attribute|SkillRecord|enabledAt|Swift.Optional<Foundation.Date>|true
     attribute|SkillRecord|enabledHash|Swift.Optional<Swift.String>|true
     attribute|SkillRecord|lastUsedAt|Swift.Optional<Foundation.Date>|true
+    attribute|SkillRecord|manifestsData|Swift.Optional<Foundation.Data>|true
     attribute|SkillRecord|origin|Swift.String|false
     attribute|SkillRecord|skillID|Swift.String|false
     attribute|SkillRecord|source|Swift.String|false

@@ -6,16 +6,20 @@ import SwiftData
 /// never on the main thread. Only Sendable snapshots cross the boundary to Settings.
 actor SkillStore {
     let root: URL
-    private let container: ModelContainer
+    let container: ModelContainer
+    nonisolated let snapshotRoot: URL
     private var persistence: ModelContext?
     private var snapshots: [SkillSnapshot] = []
 
     init(root: URL, container: ModelContainer) {
         self.root = root
         self.container = container
+        snapshotRoot = root.deletingLastPathComponent().appendingPathComponent(
+            root.lastPathComponent == "skills" ? "skill-snapshots" : root.lastPathComponent + "-snapshots"
+        )
     }
 
-    private var context: ModelContext {
+    var context: ModelContext {
         if let persistence {
             return persistence
         }
@@ -58,8 +62,10 @@ actor SkillStore {
         try approve(id, expectedHash: expectedHash, reconfirm: false)
     }
 
-    func reconfirm(_ id: String, expectedHash: String) throws -> [SkillSnapshot] {
-        try approve(id, expectedHash: expectedHash, reconfirm: true)
+    func reconfirm(
+        _ id: String, expectedHash: String, referenceHash: String? = nil, projectID: UUID? = nil
+    ) throws -> [SkillSnapshot] {
+        try approve(id, expectedHash: expectedHash, reconfirm: true, referenceHash: referenceHash, projectID: projectID)
     }
 
     func disable(_ id: String) throws -> [SkillSnapshot] {
@@ -75,6 +81,7 @@ actor SkillStore {
             try context.save()
             snapshots[index].state = record.state
             snapshots[index].enabledHash = nil
+            try cleanupSnapshots()
             return snapshots
         } catch { context.rollback(); throw error }
     }
@@ -121,7 +128,9 @@ actor SkillStore {
         }
     }
 
-    private func approve(_ id: String, expectedHash: String, reconfirm: Bool) throws -> [SkillSnapshot] {
+    private func approve(
+        _ id: String, expectedHash: String, reconfirm: Bool, referenceHash: String? = nil, projectID: UUID? = nil
+    ) throws -> [SkillSnapshot] {
         _ = try rescan()
         guard let index = snapshots.firstIndex(where: { $0.id == id }), let record = try record(id),
               snapshots[index].problem == nil, let hash = snapshots[index].hash
@@ -131,21 +140,36 @@ actor SkillStore {
         guard hash == expectedHash else { throw SkillValidationError.changedSincePreview }
         guard record.state != .needsReconfirm || reconfirm else { throw SkillValidationError.reconfirmRequired }
         if record.state == .enabled {
-            return snapshots
+            do {
+                try captureSnapshot(snapshots[index], record: record)
+                if reconfirm {
+                    try auditReconfirm(
+                        id: id, oldHash: referenceHash ?? record.enabledHash, newHash: hash, projectID: projectID
+                    )
+                }
+                try context.save()
+                return snapshots
+            } catch { context.rollback(); throw error }
         }
         do {
+            let oldHash = record.enabledHash
+            try captureSnapshot(snapshots[index], record: record)
             record.state = .enabled
             record.enabledHash = hash
             record.enabledAt = Date()
             try audit("skill.enable", record: record, hash: hash)
+            if reconfirm {
+                try auditReconfirm(id: id, oldHash: referenceHash ?? oldHash, newHash: hash, projectID: projectID)
+            }
             try context.save()
             snapshots[index].state = .enabled
             snapshots[index].enabledHash = hash
+            try cleanupSnapshots()
             return snapshots
         } catch { context.rollback(); throw error }
     }
 
-    private func record(_ id: String) throws -> SkillRecord? {
+    func record(_ id: String) throws -> SkillRecord? {
         try context.fetch(FetchDescriptor<SkillRecord>(predicate: #Predicate { $0.skillID == id })).first
     }
 

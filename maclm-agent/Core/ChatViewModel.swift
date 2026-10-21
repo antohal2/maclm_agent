@@ -105,6 +105,14 @@ final class ChatViewModel {
         selectedConversation = conversation
         Task { await providerCoordinator.refresh() }
         registry.selectedConversationID = conversation.id
+        if registry.skillStore != nil {
+            let id = conversation.id
+            let skills = registry.runner(for: conversation).skills
+            Task { [weak self] in
+                guard let self, !self.removedConversationIDs.contains(id) else { return }
+                do { try await skills?.refreshCatalog() } catch { skills?.notices.append(error.localizedDescription) }
+            }
+        }
         conversation.hasUnreadResult = false
         saveContext()
     }
@@ -135,6 +143,7 @@ final class ChatViewModel {
                 self.removedProjectIDs.insert(projectID)
                 self.modelContext.delete(project)
                 self.saveContext()
+                self.cleanupSkillSnapshots()
             }
         } else {
             for conversation in project.conversations {
@@ -143,6 +152,16 @@ final class ChatViewModel {
             }
             modelContext.delete(project)
             saveContext()
+            cleanupSkillSnapshots()
+        }
+    }
+
+    private func cleanupSkillSnapshots() {
+        guard let store = registry.skillStore else { return }
+        Task {
+            do { try await store.cleanupSnapshots() } catch {
+                NSLog("Skill snapshot cleanup failed: %@", error.localizedDescription)
+            }
         }
     }
 

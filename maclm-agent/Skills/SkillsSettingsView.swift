@@ -10,6 +10,7 @@ struct SkillsSettingsView: View {
     @State private var visible = false
     @State private var errorMessage: String?
     @State private var pendingReconfirm: SkillSnapshot?
+    @State private var pendingRemoval: SkillSnapshot?
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -61,22 +62,28 @@ struct SkillsSettingsView: View {
         )) {
             Button(String(localized: "OK")) { errorMessage = nil }
         } message: { Text(errorMessage ?? "") }
-        .confirmationDialog(String(localized: "Подтвердить изменённый навык?"), isPresented: Binding(
-            get: { pendingReconfirm != nil }, set: {
+        .confirmationDialog(String(localized: "Удалить навык?"), isPresented: Binding(
+            get: { pendingRemoval != nil }, set: {
                 if !$0 {
-                    pendingReconfirm = nil
+                    pendingRemoval = nil
                 }
             }
         ), titleVisibility: .visible) {
-            Button(String(localized: "Подтвердить и включить")) {
-                if let entry = pendingReconfirm, let hash = entry.hash {
-                    Task { await perform { try await store.reconfirm(entry.id, expectedHash: hash) } }
+            Button(String(localized: "Удалить"), role: .destructive) {
+                if let entry = pendingRemoval {
+                    Task { await perform { try await store.remove(entry.id) } }
                 }
-                pendingReconfirm = nil
+                pendingRemoval = nil
             }
-            Button(String(localized: "Отмена"), role: .cancel) { pendingReconfirm = nil }
+            Button(String(localized: "Отмена"), role: .cancel) { pendingRemoval = nil }
         } message: {
-            Text(String(localized: "Проверьте обновлённый SKILL.md и файлы. Подтверждение сохранит новый хэш навыка."))
+            Text(String(localized: "Навык будет перемещён в корзину. Его закрепления и снимки будут удалены."))
+        }
+        .sheet(item: $pendingReconfirm) { entry in
+            SkillReviewView(store: store, skillID: entry.id, referenceHash: entry.enabledHash) { review in
+                guard let hash = review.current.hash else { throw SkillValidationError.unavailable }
+                entries = try await store.reconfirm(entry.id, expectedHash: hash)
+            }
         }
     }
 
@@ -115,7 +122,13 @@ struct SkillsSettingsView: View {
 
     private func details(_ entry: SkillSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(verbatim: entry.id).font(.title2)
+            HStack {
+                Text(verbatim: entry.id).font(.title2)
+                Spacer()
+                if entry.source == "appFolder" {
+                    Button(String(localized: "Удалить"), role: .destructive) { pendingRemoval = entry }
+                }
+            }
             if let problem = entry.problem {
                 Label(problem.localizedDescription, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
             }

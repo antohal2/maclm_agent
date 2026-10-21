@@ -71,6 +71,7 @@ struct ConversationListView: View {
         .sheet(isPresented: $showProjectEditor) {
             ProjectEditorView(
                 project: editingProject,
+                skillStore: viewModel.registry.skillStore,
                 onDirectoryChange: viewModel.resetProjectPermissions
             ) { project in
                 if editingProject == nil {

@@ -57,7 +57,7 @@ struct WorkspaceInspectorView: View {
             VStack(alignment: .leading, spacing: 18) {
                 GroupBox(String(localized: "Навыки")) {
                     if let skills = viewModel.currentRunner?.skills {
-                        SkillAttachmentList(skills: skills)
+                        SkillAttachmentList(skills: skills, showPinButton: true)
                         if skills.attached.isEmpty {
                             Text(String(localized: "Нет подключённых навыков"))
                         }
@@ -125,7 +125,10 @@ struct WorkspaceInspectorView: View {
         .inspectorColumnWidth(min: 260, ideal: 320, max: 460)
         .sheet(isPresented: $editing) {
             if let project = viewModel.selectedConversation?.project {
-                ProjectEditorView(project: project, onDirectoryChange: viewModel.resetProjectPermissions) {
+                ProjectEditorView(
+                    project: project, skillStore: viewModel.registry.skillStore,
+                    onDirectoryChange: viewModel.resetProjectPermissions
+                ) {
                     viewModel.saveProject($0)
                 }
             }

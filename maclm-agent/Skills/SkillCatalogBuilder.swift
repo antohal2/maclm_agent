@@ -10,18 +10,12 @@ enum SkillCatalogBuilder {
     }
 
     static func build(
-        _ skills: [SkillSnapshot], contextWindow: Int? = nil, pinned: Set<String> = []
+        _ skills: [SkillSnapshot], contextWindow: Int? = nil, pinned: Set<String> = [], stableOrder: [String]? = nil
     ) -> String {
         let budget = min(2000, window(contextWindow) / 20)
-        let ordered = skills.filter { $0.state == .enabled }.sorted {
-            if pinned.contains($0.id) != pinned.contains($1.id) {
-                return pinned.contains($0.id)
-            }
-            if $0.lastUsedAt != $1.lastUsedAt {
-                return ($0.lastUsedAt ?? .distantPast) > ($1.lastUsedAt ?? .distantPast)
-            }
-            return $0.id < $1.id
-        }
+        let ids = stableOrder ?? orderedIDs(skills, pinned: pinned)
+        let enabled = Dictionary(uniqueKeysWithValues: skills.filter { $0.state == .enabled }.map { ($0.id, $0) })
+        let ordered = ids.compactMap { enabled[$0] }
         var entries: [String] = []
         for skill in ordered {
             guard entries.count < 20 else { break }
@@ -32,6 +26,19 @@ enum SkillCatalogBuilder {
             }
         }
         return entries.isEmpty ? "" : render(entries)
+    }
+
+    static func orderedIDs(_ skills: [SkillSnapshot], pinned: Set<String> = []) -> [String] {
+        skills.filter { $0.state == .enabled }.sorted {
+            if pinned.contains($0.id) != pinned.contains($1.id) {
+                return pinned.contains($0.id)
+            }
+            if $0.lastUsedAt != $1.lastUsedAt {
+                return ($0.lastUsedAt ?? .distantPast) > ($1.lastUsedAt ?? .distantPast)
+            }
+            return $0.id < $1.id
+        }
+        .map(\.id)
     }
 
     private static func render(_ entries: [String]) -> String {

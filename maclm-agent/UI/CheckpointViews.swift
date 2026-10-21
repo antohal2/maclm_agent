@@ -42,17 +42,24 @@ struct FilePreviewView: View {
                 }
             }
             if !preview.lines.isEmpty {
-                ScrollView([.horizontal, .vertical]) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        ForEach(Array(preview.lines.enumerated()), id: \.offset) { _, line in
-                            Text(line.kind == "…" ? "…" : line
-                                .kind + (line.kind == "\\" ? InterfaceLocalization.text(line.text) : line.text))
-                                .font(.caption.monospaced()).foregroundStyle(color(line.kind)).textSelection(.enabled)
-                        }
-                    }
-                }.frame(maxHeight: 240)
+                DiffPreviewLines(lines: preview.lines)
             }
         }
+    }
+}
+
+struct DiffPreviewLines: View {
+    let lines: [DiffLine]
+    var body: some View {
+        ScrollView([.horizontal, .vertical]) {
+            VStack(alignment: .leading, spacing: 1) {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    Text(line.kind == "…" ? "…" : line
+                        .kind + (line.kind == "\\" ? InterfaceLocalization.text(line.text) : line.text))
+                        .font(.caption.monospaced()).foregroundStyle(color(line.kind)).textSelection(.enabled)
+                }
+            }
+        }.frame(maxHeight: 240)
     }
 
     private func color(_ kind: String) -> Color {

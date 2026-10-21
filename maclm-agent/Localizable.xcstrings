@@ -9945,6 +9945,182 @@
           }
         }
       }
+    },
+    "Добавлен": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавлен"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added"
+          }
+        }
+      }
+    },
+    "Удалён": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалён"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removed"
+          }
+        }
+      }
+    },
+    "Изменён": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменён"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changed"
+          }
+        }
+      }
+    },
+    "Текущий файл": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Текущий файл"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current file"
+          }
+        }
+      }
+    },
+    "Проверить изменения навыка": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить изменения навыка"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review skill changes"
+          }
+        }
+      }
+    },
+    "Снимок прежней версии отсутствует. Показаны текущие файлы и полный SKILL.md.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Снимок прежней версии отсутствует. Показаны текущие файлы и полный SKILL.md."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No previous snapshot is available. Current files and the full SKILL.md are shown."
+          }
+        }
+      }
+    },
+    "Навык изменён, нужно проверить": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык изменён, нужно проверить"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skill changed, review required"
+          }
+        }
+      }
+    },
+    "Закрепить за проектом": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрепить за проектом"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin to project"
+          }
+        }
+      }
+    },
+    "Нет закреплённых навыков": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет закреплённых навыков"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pinned skills"
+          }
+        }
+      }
+    },
+    "Удалить навык?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить навык?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove skill?"
+          }
+        }
+      }
+    },
+    "Навык будет перемещён в корзину. Его закрепления и снимки будут удалены.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навык будет перемещён в корзину. Его закрепления и снимки будут удалены."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skill will be moved to Trash. Its pins and snapshots will be removed."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

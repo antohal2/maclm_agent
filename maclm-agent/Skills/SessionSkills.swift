@@ -17,10 +17,10 @@ struct SkillProposal: Identifiable, Sendable {
 final class SessionSkills {
     let store: SkillStore
     let conversation: Conversation
-    private let context: ModelContext
+    let context: ModelContext
     var contextWindow: () -> Int? = { nil }
     private(set) var attached: [AttachedSkill] = []
-    private(set) var available: [SkillSnapshot] = []
+    var available: [SkillSnapshot] = []
     private(set) var pending: SkillProposal?
     var notices: [String] = []
     var onPendingChanged: ((Bool) -> Void)?
@@ -28,6 +28,9 @@ final class SessionSkills {
     private var continuation: CheckedContinuation<String, Never>?
     private var preparation: Task<Void, Error>?
     private var attaching = false
+    private(set) var detachedPins: Set<String> = []
+    var changedPins: [SkillAttachment] = []
+    var reportedPinMismatches: Set<String> = []
     private var resolvingProposal: UUID?
 
     init(store: SkillStore, conversation: Conversation, context: ModelContext) {
@@ -37,7 +40,7 @@ final class SessionSkills {
     }
 
     var prompt: String {
-        ([SkillCatalogBuilder.build(available, contextWindow: contextWindow())]
+        ([stableCatalog()]
             + attached.map(\.rendered)).filter { !$0.isEmpty }.joined(separator: "\n\n")
     }
 
@@ -71,9 +74,13 @@ final class SessionSkills {
             notices.append(skill.id + ": " + String(localized: "Навык отключён после проверки сессии."))
         }
         try checkBudget(attached)
+        try await autoAttachPins()
     }
 
     private func restore() async throws {
+        detachedPins = try Set(JSONDecoder().decode(
+            [String].self, from: conversation.detachedPinnedSkillsData ?? Data("[]".utf8)
+        ))
         declined = try Set(JSONDecoder().decode(
             [String].self,
             from: conversation.declinedSkillsData ?? Data("[]".utf8)
@@ -97,11 +104,19 @@ final class SessionSkills {
             }
         }
         attached = restored
+        available = try await store.rescan()
+        try await autoAttachPins()
     }
 
     @discardableResult
     func attach(_ id: String, expectedHash: String? = nil) async throws -> String {
         try await prepare()
+        return try await attachVerified(id, expectedHash: expectedHash)
+    }
+
+    func attachVerified(
+        _ id: String, expectedHash: String? = nil, automaticPin: SkillAttachment? = nil
+    ) async throws -> String {
         guard !attaching else { throw SkillAttachError.busy }
         if attached.contains(where: { $0.id == id }) {
             return "attached"
@@ -114,7 +129,21 @@ final class SessionSkills {
         try await store.noteUsed(id, expectedHash: skill.reference.hash)
         try checkBudget(attached + [skill])
         try Task.checkCancellation()
-        try persist((attached + [skill]).map(\.reference), event: "skill.attached", reference: skill.reference)
+        if let automaticPin {
+            guard conversation.project?.pinnedSkills.contains(automaticPin) == true,
+                  !detachedPins.contains(id) else { throw SkillValidationError.changedSincePreview }
+        } else {
+            let next = detachedPins.subtracting([id])
+            conversation.detachedPinnedSkillsData = try JSONEncoder().encode(next.sorted())
+        }
+        try persist(
+            (attached + [skill]).map(\.reference),
+            event: automaticPin == nil ? "skill.attached" : "skill.autoAttached",
+            reference: skill.reference
+        )
+        if automaticPin == nil {
+            detachedPins.remove(id)
+        }
         attached.append(skill)
         if let index = available.firstIndex(where: { $0.id == id }) {
             available[index].lastUsedAt = Date()
@@ -125,6 +154,8 @@ final class SessionSkills {
     func detach(_ id: String) {
         guard let skill = attached.first(where: { $0.id == id }) else { return }
         do {
+            let next = detachedPins.union([id])
+            conversation.detachedPinnedSkillsData = try JSONEncoder().encode(next.sorted())
             try persist(
                 attached.filter { $0.id != id }.map(\.reference),
                 event: "skill.detached",
@@ -132,6 +163,7 @@ final class SessionSkills {
                 reason: "user"
             )
             attached.removeAll { $0.id == id }
+            detachedPins.insert(id)
         } catch { notices.append(error.localizedDescription) }
     }
 
@@ -244,17 +276,21 @@ final class SessionSkills {
         } catch { context.rollback(); throw error }
     }
 
-    private func log(_ event: String, reference: SkillAttachment, reason: String? = nil) throws {
+    func log(_ event: String, reference: SkillAttachment, reason: String? = nil) throws {
         var arguments = ["skill": reference.id, "source": reference.source, "hash": reference.hash]
         if let reason {
             arguments["reason"] = reason
         }
+        if let project = conversation.project {
+            arguments["projectID"] = project.id.uuidString
+        }
         let data = try JSONEncoder().encode(arguments)
         guard let json = String(data: data, encoding: .utf8) else { throw SkillValidationError.unreadable }
+        let automatic = ["skill.proposed", "skill.autoAttached", "skill.hashMismatch"].contains(event)
+            || reason == "relaunchMismatch" || reason == "disabled"
         context.insert(AuditEntry(.init(
             toolName: event, argumentsJSON: json, riskLevel: .safe,
-            decision: event == "skill.proposed" || reason == "relaunchMismatch" || reason == "disabled"
-                ? .auto : .userInitiated,
+            decision: automatic ? .auto : .userInitiated,
             outcome: .success, resultSummary: event, conversationID: conversation.id
         )))
     }

@@ -74,6 +74,9 @@ final class ApplicationRuntime {
             let model = viewModel?.providerCoordinator.modelInfo(for: conversation)
             return model?.loadedContextLength ?? model?.contextLength
         }
+        if let conversation = viewModel.selectedConversation {
+            viewModel.selectConversation(conversation)
+        }
     }
 
     private static func makeSettings(testHost: Bool) throws -> AppSettings {
@@ -126,6 +129,7 @@ final class ApplicationRuntime {
             Task {
                 do {
                     try await skills.rescan()
+                    try await skills.cleanupSnapshots()
                 } catch {
                     NSLog("Skill startup scan failed: %@", String(describing: error))
                 }

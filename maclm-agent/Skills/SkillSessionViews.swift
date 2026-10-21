@@ -14,6 +14,7 @@ struct SkillComposerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let skills = viewModel.currentRunner?.skills {
+                SkillChangedBanners(skills: skills)
                 SkillAttachmentList(skills: skills)
                 ForEach(Array(skills.notices.enumerated()), id: \.offset) { notice in
                     HStack {
@@ -76,14 +77,47 @@ struct SkillComposerView: View {
 
 struct SkillAttachmentList: View {
     @Bindable var skills: SessionSkills
+    var showPinButton = false
+    @State private var busy = false
     var body: some View {
         ForEach(skills.attached) { skill in
             HStack(spacing: 6) {
                 Text(verbatim: skill.id).font(.caption)
+                if showPinButton, skills.project != nil {
+                    Button(pinTitle(skill.id)) {
+                        togglePin(skill.id)
+                    }.buttonStyle(.borderless).disabled(busy)
+                }
                 Button { skills.detach(skill.id) } label: { Image(systemName: "xmark.circle") }
                     .buttonStyle(.plain).help(String(localized: "Отключить навык"))
                     .accessibilityLabel(String(localized: "Отключить навык") + " " + skill.id)
             }.padding(5).background(.quaternary, in: Capsule())
+                .contextMenu {
+                    if skills.project != nil {
+                        Button(pinTitle(skill.id)) {
+                            togglePin(skill.id)
+                        }.disabled(busy)
+                    }
+                    Button(String(localized: "Отключить навык")) { skills.detach(skill.id) }
+                }
+        }
+    }
+
+    private func pinTitle(_ id: String) -> String {
+        skills.isPinned(id) ? String(localized: "Открепить") : String(localized: "Закрепить за проектом")
+    }
+
+    private func togglePin(_ id: String) {
+        busy = true
+        Task {
+            defer { busy = false }
+            do {
+                if skills.isPinned(id) {
+                    try await skills.unpin(id)
+                } else {
+                    try await skills.pin(id)
+                }
+            } catch { skills.notices.append(error.localizedDescription) }
         }
     }
 }

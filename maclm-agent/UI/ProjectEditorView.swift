@@ -1,9 +1,11 @@
 import AppKit
+import SwiftData
 import SwiftUI
 
 struct ProjectEditorView: View {
     @Environment(\.dismiss) private var dismiss
     let project: Project?
+    let skillStore: SkillStore?
     let onSave: (Project) -> Void
     var onDirectoryChange: ((Project) -> Void)?
     @State private var name: String
@@ -12,8 +14,12 @@ struct ProjectEditorView: View {
     @State private var error: String?
     @State private var pendingPath: String?
 
-    init(project: Project?, onDirectoryChange: ((Project) -> Void)? = nil, onSave: @escaping (Project) -> Void) {
+    init(
+        project: Project?, skillStore: SkillStore? = nil,
+        onDirectoryChange: ((Project) -> Void)? = nil, onSave: @escaping (Project) -> Void
+    ) {
         self.project = project
+        self.skillStore = skillStore
         self.onDirectoryChange = onDirectoryChange
         self.onSave = onSave
         _name = State(initialValue: project?.name ?? "")
@@ -42,6 +48,9 @@ struct ProjectEditorView: View {
             TextEditor(text: $instructions).frame(height: 160).border(.quaternary)
                 .onChange(of: instructions) { instructions = String(instructions.prefix(4000)) }
             Text("\(instructions.count) / 4000").font(.caption).foregroundStyle(.secondary)
+            if let project, let skillStore {
+                ProjectSkillsList(project: project, store: skillStore)
+            }
             if let error {
                 Text(NSLocalizedString(error, comment: "")).foregroundStyle(.red)
             }
@@ -92,5 +101,39 @@ struct ProjectEditorView: View {
         result.instructions = String(instructions.prefix(4000))
         onSave(result)
         dismiss()
+    }
+}
+
+struct ProjectSkillsList: View {
+    @Bindable var project: Project
+    let store: SkillStore
+    @Environment(\.modelContext) private var context
+    @State private var error: String?
+    var body: some View {
+        GroupBox(String(localized: "Навыки")) {
+            VStack(alignment: .leading) {
+                if project.pinnedSkills.isEmpty {
+                    Text(String(localized: "Нет закреплённых навыков"))
+                }
+                ForEach(project.pinnedSkills) { pin in
+                    HStack {
+                        Text(verbatim: pin.id)
+                        Text(verbatim: String(pin.hash.prefix(12))).font(.caption.monospaced())
+                        Spacer()
+                        Button(String(localized: "Открепить")) {
+                            Task {
+                                do {
+                                    try SkillProjectActions.unpin(pin.id, project: project, context: context)
+                                    try await store.cleanupSnapshots()
+                                } catch { self.error = error.localizedDescription }
+                            }
+                        }
+                    }
+                }
+                if let error {
+                    Text(error).foregroundStyle(.red)
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
