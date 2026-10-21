@@ -55,6 +55,14 @@ struct WorkspaceInspectorView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
+                GroupBox(String(localized: "Навыки")) {
+                    if let skills = viewModel.currentRunner?.skills {
+                        SkillAttachmentList(skills: skills)
+                        if skills.attached.isEmpty {
+                            Text(String(localized: "Нет подключённых навыков"))
+                        }
+                    }
+                }
                 GroupBox(String(localized: "Проект")) {
                     VStack(alignment: .leading, spacing: 8) {
                         if let project = viewModel.selectedConversation?.project {

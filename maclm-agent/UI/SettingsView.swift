@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Bindable var clipboardHotkeyService: ClipboardHotkeyService
     let petLibrary: PetLibrary
     let skillStore: SkillStore
+    var skillContextWindow: Int?
     let sessionPermissions: SessionPermissions
     let accessibilityPermissionService: any AccessibilityPermissionService
 
@@ -29,7 +30,7 @@ struct SettingsView: View {
             appearanceSettings
                 .tabItem { Label(String(localized: "Внешний вид"), systemImage: "circle.lefthalf.filled") }
                 .tag("appearance")
-            SkillsSettingsView(store: skillStore)
+            SkillsSettingsView(store: skillStore, contextWindow: skillContextWindow)
                 .tabItem { Label(String(localized: "Навыки"), systemImage: "book.closed") }.tag("skills")
         }
         .frame(width: 900, height: 680)

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SkillsSettingsView: View {
     let store: SkillStore
+    var contextWindow: Int?
     @State private var entries: [SkillSnapshot] = []
     @State private var selectedID: String?
     @State private var busy = false
@@ -18,7 +19,10 @@ struct SkillsSettingsView: View {
                     ProgressView().controlSize(.small)
                 }
                 Spacer()
-                Text(String(localized: "Навыки пока не передаются модели.")).foregroundStyle(.secondary)
+                Text(
+                    String(localized: "Включённые навыки видны в каталоге модели. Текст передаётся после подключения.")
+                )
+                .font(.caption).foregroundStyle(.secondary)
             }
             HSplitView {
                 List(selection: $selectedID) {
@@ -91,6 +95,12 @@ struct SkillsSettingsView: View {
                 .foregroundStyle(entry.state == .invalid || entry.state == .needsReconfirm ? .orange : .secondary)
                 .padding(.horizontal, 6).padding(.vertical, 2)
                 .background(.quaternary, in: Capsule())
+            if entry.state == .enabled, !SkillCatalogBuilder.build(entries, contextWindow: contextWindow)
+                .components(separatedBy: "\n").contains(where: { $0.hasPrefix("\(entry.id): ") })
+            {
+                Text(String(localized: "Не вошёл в каталог"))
+                    .font(.caption).foregroundStyle(.orange)
+            }
             Text(String(localized: "Папка приложения")).font(.caption2).foregroundStyle(.secondary)
                 .padding(.horizontal, 6).padding(.vertical, 2)
                 .background(.quaternary, in: Capsule())

@@ -8,6 +8,7 @@ struct PetBubbleRow: Identifiable {
     let state: PetState
     let tool: String?
     let request: ConfirmationRequest?
+    var hasSkillProposal = false
 
     static func orderedIDs(_ aggregate: AggregateStatus) -> [UUID] {
         var seen: Set<UUID> = []
@@ -29,6 +30,9 @@ final class PetBubbleModel {
     }
 
     func rowHeight(_ row: PetBubbleRow) -> CGFloat {
+        if row.hasSkillProposal {
+            return settings.petHideContent ? 60 : 80
+        }
         if let request = row.request {
             return PetApprovalPolicy.allows(
                 risk: request.riskLevel, source: .pet, hidden: settings.petHideContent
@@ -91,11 +95,11 @@ final class PetBubbleModel {
                 let tool: String? = if case let .toolRunning(name) = runner?.status {
                     name
                 } else {
-                    runner?.pendingApproval?.toolCall.function.name
+                    runner?.skills?.pending == nil ? runner?.pendingApproval?.toolCall.function.name : "suggest_skill"
                 }
                 return PetBubbleRow(
                     id: uuid, title: conversation.interfaceTitle, state: state,
-                    tool: tool, request: runner?.pendingApproval
+                    tool: tool, request: runner?.pendingApproval, hasSkillProposal: runner?.skills?.pending != nil
                 )
             }
             _ = settings.petHideContent

@@ -46,6 +46,7 @@ struct ComposerView: View {
 
     var body: some View {
         VStack(spacing: 10) {
+            SkillComposerView(viewModel: viewModel)
             TextField(String(localized: "Сообщение для локальной модели"), text: $viewModel.input, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1 ... 8)

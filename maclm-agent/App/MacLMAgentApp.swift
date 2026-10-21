@@ -37,6 +37,9 @@ struct MacLMAgentApp: App {
                 clipboardHotkeyService: runtime.clipboardHotkeyService,
                 petLibrary: runtime.petLibrary,
                 skillStore: runtime.skillStore,
+                skillContextWindow: runtime.chatViewModel.selectedConversation.flatMap {
+                    runtime.chatViewModel.registry.skillContextWindow($0)
+                },
                 sessionPermissions: runtime.sessionPermissions,
                 accessibilityPermissionService: runtime.accessibilityPermissionService
             )

@@ -16,6 +16,8 @@ final class Conversation {
     var providerID: String?
     var lastContextTokens: Int?
     var titleIsManual: Bool = false
+    var attachedSkillsData: Data?
+    var declinedSkillsData: Data?
     var updatedAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \Message.conversation)

@@ -74,6 +74,8 @@ final class SessionRunnerRegistry {
     private let modelContext: ModelContext
     private let agentLoop: AgentLoop
     private let autoTitles: AutoTitleService
+    var skillStore: SkillStore?
+    var skillContextWindow: (Conversation) -> Int? = { _ in nil }
     var sessionProviderFactory: ((Conversation) throws -> any LLMProvider)?
     var sessionToolsEnabled: (Conversation) -> Bool = { _ in true }
     private let providerFactory: () throws -> any LLMProvider
@@ -109,6 +111,7 @@ final class SessionRunnerRegistry {
             modelContext: modelContext,
             agentLoop: agentLoop.independentRun(),
             autoTitles: autoTitles,
+            skillStore: skillStore,
             providerFactory: { [weak self] in
                 if let factory = self?.sessionProviderFactory {
                     return try factory(conversation)
@@ -118,6 +121,7 @@ final class SessionRunnerRegistry {
             }
         )
         runner.toolsEnabled = { [weak self] in self?.sessionToolsEnabled(conversation) ?? true }
+        runner.skills?.contextWindow = { [weak self] in self?.skillContextWindow(conversation) }
         let id = conversation.id
         runner.canStart = { [weak self] in
             guard let self else { return false }

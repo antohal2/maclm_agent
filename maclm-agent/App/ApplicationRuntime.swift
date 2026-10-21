@@ -38,6 +38,7 @@ final class ApplicationRuntime {
                 policyContext: policyContext, checkpointService: checkpointService, checkpoints: checkpoints,
                 permissions: sessionPermissions, appSettings: appSettings
             )
+            Self.configureSkills(skills, viewModel: viewModel)
             accessibilityPermissionService = SystemAccessibilityPermissionService()
             let clipboardActionRunner = Self.makeClipboardActionRunner(
                 viewModel: viewModel, appSettings: appSettings,
@@ -64,6 +65,14 @@ final class ApplicationRuntime {
             )
         } catch {
             Self.reportStartupFailure(error)
+        }
+    }
+
+    private static func configureSkills(_ skills: SkillStore, viewModel: ChatViewModel) {
+        viewModel.registry.skillStore = skills
+        viewModel.registry.skillContextWindow = { [weak viewModel] conversation in
+            let model = viewModel?.providerCoordinator.modelInfo(for: conversation)
+            return model?.loadedContextLength ?? model?.contextLength
         }
     }
 

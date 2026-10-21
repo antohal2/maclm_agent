@@ -15,6 +15,7 @@ actor AgentLoop {
     private let checkpointMaintenance: @MainActor @Sendable () async throws -> Void
     private let maximumIterations: Int
     private var isGenerating = false
+    private var skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)?
 
     init(
         toolRegistry: ToolRegistry = .all, confirmationCoordinator: ConfirmationCoordinator = ConfirmationCoordinator(),
@@ -76,18 +77,22 @@ actor AgentLoop {
     func streamResponse(
         to messages: [ChatMessage], using provider: any LLMProvider, toolsEnabled: Bool = true,
         invocationContext: @escaping @MainActor @Sendable () -> ToolInvocationContext,
+        systemPrompt: (@MainActor @Sendable () async -> String)? = nil,
+        skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)? = nil,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
         guard !isGenerating else {
             throw AgentLoopError.alreadyGenerating
         }
         isGenerating = true
-        defer { isGenerating = false }
+        self.skillSuggestion = skillSuggestion
+        defer { isGenerating = false; self.skillSuggestion = nil }
         var history = messages
         for iteration in 0 ..< maximumIterations {
             if iteration > 0 {
                 await onEvent(.assistantResponseStarted)
             }
+            history = await SkillPromptHistory.refresh(history, systemPrompt: systemPrompt)
             let turn = try await receiveTurn(
                 history: history, provider: provider, toolsEnabled: toolsEnabled,
                 onEvent: onEvent
@@ -103,8 +108,7 @@ actor AgentLoop {
                 do {
                     execution = try await execute(toolCall, invocation: invocationContext(), onEvent: onEvent)
                 } catch is CancellationError {
-                    // The model may request several calls in one turn. Record the remaining
-                    // calls too; cancellation prevents them from reaching any tool.
+                    // Record remaining calls too; cancellation prevents them from reaching any tool.
                     for pending in turn.toolCalls.dropFirst(index + 1) {
                         do {
                             _ = try await execute(pending, invocation: invocationContext(), onEvent: onEvent)
@@ -386,7 +390,17 @@ extension AgentLoop {
             let encodedArguments = try JSONSerialization.data(withJSONObject: executionArguments)
             let toolArguments = try JSONSerialization.jsonObject(with: encodedArguments) as? [String: Any] ?? [:]
             executionBegan = true
-            let result = try await tool.execute(arguments: toolArguments, invocation: invocation, policy: policy)
+            let result: ToolExecutionResult = if tool is SuggestSkillTool, let skillSuggestion {
+                if let name = toolArguments["name"] as? String, !name.isEmpty,
+                   let reason = toolArguments["reason"] as? String, !reason.isEmpty
+                {
+                    try await .success(content: skillSuggestion(name, reason))
+                } else {
+                    .success(content: "unavailable: name and reason must be nonempty strings")
+                }
+            } else {
+                try await tool.execute(arguments: toolArguments, invocation: invocation, policy: policy)
+            }
             if let checkpoints, let checkpoint {
                 do {
                     let completed = try await checkpoints.complete(checkpoint)
@@ -483,14 +497,4 @@ extension AgentLoop {
         }
         return ToolConfirmation(decision: decision, requestID: request.id)
     }
-}
-
-private struct EvaluatedToolOperation {
-    let tool: any Tool
-    let toolCall: ChatToolCall
-    let arguments: [String: Any]
-    let executionArguments: [String: Any]
-    let invocation: ToolInvocationContext
-    let policy: SecurityPolicyEngine
-    let assessment: RiskAssessment
 }

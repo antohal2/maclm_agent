@@ -203,6 +203,7 @@ struct ToolRegistry: Sendable {
                 MoveFileTool(),
                 DeleteFileTool(),
                 RunShellTool(),
+                SuggestSkillTool(),
             ]
         )
     }

@@ -20,6 +20,7 @@ enum SkillState: String, Sendable, CaseIterable {
     var stateRaw: String = SkillState.disabled.rawValue
     var enabledHash: String?
     var enabledAt: Date?
+    var lastUsedAt: Date?
     var origin: String = "manual"
 
     init(skillID: String) {
@@ -45,6 +46,7 @@ struct SkillSnapshot: Sendable, Identifiable {
     var id: String
     var description = ""
     var text = ""
+    var body = ""
     var files: [SkillFile] = []
     var size = 0
     var hash: String?
@@ -53,6 +55,7 @@ struct SkillSnapshot: Sendable, Identifiable {
     var source = "appFolder"
     var problem: SkillValidationError?
     var largeInstructionWarning = false
+    var lastUsedAt: Date?
     var catalogDescription: String {
         description.count > 250 ? String(description.prefix(250)) + "…" : description
     }

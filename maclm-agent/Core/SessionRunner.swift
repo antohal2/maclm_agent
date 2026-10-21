@@ -25,6 +25,7 @@ final class SessionRunner {
     let modelContext: ModelContext
     private let agentLoop: AgentLoop
     let autoTitles: AutoTitleService
+    let skills: SessionSkills?
     private let providerFactory: () throws -> any LLMProvider
     private var generationToken: UUID?
     private var generationTask: Task<Void, Never>?
@@ -43,6 +44,7 @@ final class SessionRunner {
         modelContext: ModelContext,
         agentLoop: AgentLoop,
         autoTitles: AutoTitleService,
+        skillStore: SkillStore? = nil,
         providerFactory: @escaping () throws -> any LLMProvider
     ) {
         self.conversation = conversation
@@ -50,6 +52,12 @@ final class SessionRunner {
         self.agentLoop = agentLoop
         self.autoTitles = autoTitles
         self.providerFactory = providerFactory
+        skills = skillStore.map { SessionSkills(store: $0, conversation: conversation, context: modelContext) }
+        skills?.onPendingChanged = { [weak self] pending in
+            guard let self, self.isGenerating else { return }
+            self.status = pending ? .needsApproval(risk: .safe) : .running
+            self.isWaitingForFirstToken = false
+        }
     }
 
     func send(_ content: String) {
@@ -112,6 +120,7 @@ final class SessionRunner {
     func cancel() {
         guard isGenerating else { return }
         generationTask?.cancel()
+        skills?.cancelProposal()
         let calls = generatingMessageID.flatMap { persistentMessage(id: $0) }?.toolCalls ?? []
         for call in calls where call.status == .pending {
             resolveApproval(id: call.id, decision: .rejected)
@@ -148,41 +157,6 @@ final class SessionRunner {
         }
     }
 
-    private func persistPrompt(
-        _ content: String,
-        in conversation: Conversation
-    ) -> (requestMessages: [ChatMessage], assistantID: UUID) {
-        let previousMessages = conversation.orderedMessages
-        let lastTimestamp = previousMessages.last?.timestamp ?? .distantPast
-        let userTimestamp = max(Date(), lastTimestamp.addingTimeInterval(0.000_001))
-        let userMessage = Message(
-            role: .user,
-            content: content,
-            timestamp: userTimestamp,
-            conversation: conversation
-        )
-        modelContext.insert(userMessage)
-
-        let prompt = SystemPromptBuilder.build(
-            projectName: conversation.project?.name,
-            instructions: conversation.project?.instructions ?? ""
-        )
-        let systemMessages = prompt.isEmpty ? [] : [ChatMessage(role: .system, content: prompt)]
-        let requestMessages = systemMessages + previousMessages.map(\.chatMessage) + [userMessage.chatMessage]
-        let assistantMessage = Message(
-            role: .assistant,
-            content: "",
-            timestamp: userTimestamp.addingTimeInterval(0.000_001),
-            conversation: conversation
-        )
-        modelContext.insert(assistantMessage)
-
-        conversation.updatedAt = assistantMessage.timestamp
-        saveContext()
-
-        return (requestMessages, assistantMessage.id)
-    }
-
     private func startGeneration(
         requestMessages: [ChatMessage],
         assistantID: UUID,
@@ -194,22 +168,26 @@ final class SessionRunner {
         generationToken = token
         let conversation = self.conversation
         let invocationContext: @MainActor @Sendable () -> ToolInvocationContext = {
-            let project = conversation.project
-            return ToolInvocationContext(conversationID: conversationID, project: project.map {
-                ProjectSecuritySnapshot(id: $0.id, workingDirectoryPath: $0.workingDirectoryPath)
-            })
+            Self.toolInvocation(for: conversation)
         }
         generationTask = Task { [weak self, agentLoop, requestMessages, provider] in
             do {
+                try await self?.skills?.refreshCatalog()
+                try Task.checkCancellation()
                 try await agentLoop.streamResponse(
                     to: requestMessages,
                     using: provider,
                     toolsEnabled: enabled,
-                    invocationContext: invocationContext
-                ) { [weak self] event in
-                    guard await self?.generationToken == token else { return }
-                    await self?.consume(event, assistantID: assistantID)
-                }
+                    invocationContext: invocationContext,
+                    systemPrompt: { [weak self] in await self?.currentSystemPrompt() ?? "" },
+                    skillSuggestion: { [weak self] name, reason in
+                        await self?.suggestSkill(name, reason: reason) ?? "unavailable: no skill session"
+                    },
+                    onEvent: { [weak self] event in
+                        guard await self?.generationToken == token else { return }
+                        await self?.consume(event, assistantID: assistantID)
+                    }
+                )
                 try Task.checkCancellation()
                 self?.autoTitles.requestTitle(conversationID: conversationID, provider: provider)
             } catch is CancellationError {
@@ -234,6 +212,14 @@ final class SessionRunner {
                 self.finishGeneration(cancelled: Task.isCancelled)
             }
         }
+    }
+
+    private func currentSystemPrompt() async -> String {
+        await skills?.updateCatalogMetadata()
+        let project = SystemPromptBuilder.build(
+            projectName: conversation.project?.name, instructions: conversation.project?.instructions ?? ""
+        )
+        return [project, skills?.prompt ?? ""].filter { !$0.isEmpty }.joined(separator: "\n\n")
     }
 
     private func consume(_ event: AgentLoopEvent, assistantID: UUID) {

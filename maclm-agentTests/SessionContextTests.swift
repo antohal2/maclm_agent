@@ -162,7 +162,7 @@ import XCTest
             )
             let count = await recorder.toolCount
             usage = await recorder.usage
-            XCTAssertEqual(count, enabled ? 7 : 0)
+            XCTAssertEqual(count, enabled ? 8 : 0)
             XCTAssertEqual(usage, 23)
         }
     }

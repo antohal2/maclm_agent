@@ -104,6 +104,9 @@ struct ChatView: View {
                                 bubble(live, final: false)
                             }
                         }
+                        if let skills = viewModel.currentRunner?.skills, let proposal = skills.pending {
+                            SkillProposalCard(proposal: proposal, skills: skills)
+                        }
                     }
                 }
                 .padding()

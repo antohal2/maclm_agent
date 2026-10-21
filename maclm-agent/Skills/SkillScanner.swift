@@ -72,6 +72,7 @@ enum SkillScanner {
             snapshot.text = String(data: skillData, encoding: .utf8) ?? ""
             let parsed = try SkillParser.parse(skillData, folderName: name)
             snapshot.description = parsed.description
+            snapshot.body = parsed.body
             snapshot.hash = SkillHasher.manifestHash(snapshot.files)
             snapshot.largeInstructionWarning = instruction.size >= 8 * 1024
         } catch {

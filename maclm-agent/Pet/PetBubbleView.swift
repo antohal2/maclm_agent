@@ -57,7 +57,9 @@ struct PetBubbleView: View {
                     }
                 }.font(.caption)
             }
-            if let request = row.request {
+            if row.hasSkillProposal {
+                Button(String(localized: "Открыть в чате")) { model.onOpen?(row.id) }
+            } else if let request = row.request {
                 if PetApprovalPolicy.allows(risk: request.riskLevel, source: .pet, hidden: hidden) {
                     Text(verbatim: summary(request)).font(.caption).lineLimit(1).truncationMode(.middle)
                     HStack {

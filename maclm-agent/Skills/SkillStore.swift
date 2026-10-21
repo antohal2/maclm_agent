@@ -78,6 +78,48 @@ actor SkillStore {
         } catch { context.rollback(); throw error }
     }
 
+    /// One folder pass: SKILL.md is read once by SkillFileIO; the returned text
+    /// and manifest hash use those same bytes. No cached text crosses this gate.
+    func verifiedAttachment(_ id: String, expectedHash: String? = nil) throws -> AttachedSkill {
+        guard let record = try record(id), record.state == .enabled else {
+            throw SkillValidationError.unavailable
+        }
+        guard SkillParser.validName(id) else {
+            throw SkillValidationError.unavailable
+        }
+        var scanned = SkillScanner.scanSkill(at: root.appendingPathComponent(id))
+        try reconcile(&scanned, record: record)
+        try context.save()
+        if let index = snapshots.firstIndex(where: { $0.id == id }) {
+            snapshots[index] = scanned
+        }
+        guard scanned.state == .enabled, let hash = scanned.hash, hash == record.enabledHash else {
+            throw SkillValidationError.reconfirmRequired
+        }
+        guard expectedHash == nil || expectedHash == hash else { throw SkillValidationError.changedSincePreview }
+        return AttachedSkill(reference: .init(id: id, hash: hash, source: record.source), body: scanned.body)
+    }
+
+    func state(of id: String) throws -> SkillState? {
+        try record(id)?.state
+    }
+
+    /// Metadata refresh between model turns; never re-reads instruction bytes.
+    func catalogSnapshots() -> [SkillSnapshot] {
+        snapshots
+    }
+
+    func noteUsed(_ id: String, expectedHash: String) throws {
+        guard let record = try record(id), record.state == .enabled, record.enabledHash == expectedHash else {
+            throw SkillValidationError.unavailable
+        }
+        record.lastUsedAt = Date()
+        try context.save()
+        if let index = snapshots.firstIndex(where: { $0.id == id }) {
+            snapshots[index].lastUsedAt = record.lastUsedAt
+        }
+    }
+
     private func approve(_ id: String, expectedHash: String, reconfirm: Bool) throws -> [SkillSnapshot] {
         _ = try rescan()
         guard let index = snapshots.firstIndex(where: { $0.id == id }), let record = try record(id),
@@ -120,6 +162,7 @@ actor SkillStore {
         snapshot.state = record.state
         snapshot.enabledHash = record.enabledHash
         snapshot.source = record.source
+        snapshot.lastUsedAt = record.lastUsedAt
     }
 
     private func audit(_ event: String, record: SkillRecord, hash: String?, automatic: Bool = false) throws {

@@ -57,6 +57,7 @@ import XCTest
         let container = try ModelContainer(
             for: Conversation.self, Project.self, Message.self, ToolCall.self,
             ClipboardAction.self, SecurityRule.self, AuditEntry.self, Checkpoint.self,
+            SkillRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let snapshot = container.schema.entities.flatMap { entity -> [String] in
@@ -124,7 +125,7 @@ import XCTest
         )
     }
 
-    /// Captured from the in-memory container at v0.4.7.1 before lint cleanup.
+    /// v0.4.7.1 snapshot plus Skills metadata and the additive v0.5.1 session skill fields.
     private static let expectedSchema = """
     attribute|AuditEntry|argumentsJSON|Swift.String|false
     attribute|AuditEntry|checkpointID|Swift.Optional<Foundation.UUID>|true
@@ -158,7 +159,9 @@ import XCTest
     attribute|ClipboardAction|promptTemplate|Swift.String|false
     attribute|ClipboardAction|sortOrder|Swift.Int|false
     attribute|ClipboardAction|updatedAt|Foundation.Date|false
+    attribute|Conversation|attachedSkillsData|Swift.Optional<Foundation.Data>|true
     attribute|Conversation|createdAt|Foundation.Date|false
+    attribute|Conversation|declinedSkillsData|Swift.Optional<Foundation.Data>|true
     attribute|Conversation|hasUnreadResult|Swift.Bool|false
     attribute|Conversation|id|Foundation.UUID|false
     attribute|Conversation|isArchived|Swift.Bool|false
@@ -189,6 +192,13 @@ import XCTest
     attribute|SecurityRule|order|Swift.Int|false
     attribute|SecurityRule|pattern|Swift.String|false
     attribute|SecurityRule|ruleDescription|Swift.String|false
+    attribute|SkillRecord|enabledAt|Swift.Optional<Foundation.Date>|true
+    attribute|SkillRecord|enabledHash|Swift.Optional<Swift.String>|true
+    attribute|SkillRecord|lastUsedAt|Swift.Optional<Foundation.Date>|true
+    attribute|SkillRecord|origin|Swift.String|false
+    attribute|SkillRecord|skillID|Swift.String|false
+    attribute|SkillRecord|source|Swift.String|false
+    attribute|SkillRecord|stateRaw|Swift.String|false
     attribute|ToolCall|argumentsJSON|Swift.String|false
     attribute|ToolCall|confirmationRiskRawValue|Swift.Optional<Swift.Int>|true
     attribute|ToolCall|confirmationRiskReason|Swift.Optional<Swift.String>|true
@@ -206,6 +216,7 @@ import XCTest
     entity|Message
     entity|Project
     entity|SecurityRule
+    entity|SkillRecord
     entity|ToolCall
     relationship|Conversation|messages|Swift.Array<maclm_agent.Message>|Message|conversation|cascade|0|0
     relationship|Conversation|project|Swift.Optional<maclm_agent.Project>|Project|conversations|nullify|nil|nil
