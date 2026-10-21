@@ -10121,6 +10121,125 @@
           }
         }
       }
+    },
+    "Личный абсолютный путь": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal absolute path"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Личный абсолютный путь"
+          }
+        }
+      }
+    },
+    "Возможный секрет": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible secret"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Возможный секрет"
+          }
+        }
+      }
+    },
+    "Проверьте все файлы. После подтверждения навык будет создан выключенным.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review every file. Approval creates a disabled skill."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверьте все файлы. После подтверждения навык будет создан выключенным."
+          }
+        }
+      }
+    },
+    "Полное содержимое файла": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full file contents"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Полное содержимое файла"
+          }
+        }
+      }
+    },
+    "Создать навык из этой сессии": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create skill from this session"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создать навык из этой сессии"
+          }
+        }
+      }
+    },
+    "Создан моделью": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Created by model"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создан моделью"
+          }
+        }
+      }
+    },
+    "Пересканировать": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пересканировать"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

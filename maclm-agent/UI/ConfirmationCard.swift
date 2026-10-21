@@ -48,7 +48,12 @@ struct ConfirmationCard: View {
                     .foregroundStyle(.red)
             }
 
-            if isDangerous {
+            if
+                toolCall.toolName == "create_skill_draft",
+                let draft = try? SkillDraft.parse(Data(toolCall.argumentsJSON.utf8))
+            {
+                SkillDraftContentView(draft: draft)
+            } else if isDangerous {
                 argumentDetails
             } else {
                 DisclosureGroup(String(localized: "Аргументы"), isExpanded: $isArgumentsExpanded) {
@@ -57,7 +62,7 @@ struct ConfirmationCard: View {
             }
 
             if toolCall.status == .pending {
-                if riskLevel.canBeRemembered {
+                if riskLevel.canBeRemembered, !ToolApprovalPolicy.neverRemember(toolCall.toolName) {
                     Toggle(String(localized: "Не спрашивать снова в этой сессии"), isOn: $rememberForSession)
                         .toggleStyle(.checkbox)
                         .font(.callout)
@@ -68,7 +73,11 @@ struct ConfirmationCard: View {
                     }
                     Spacer()
                     Button("Approve") {
-                        onDecision(.approved, riskLevel.canBeRemembered && rememberForSession)
+                        onDecision(
+                            .approved,
+                            riskLevel.canBeRemembered && !ToolApprovalPolicy
+                                .neverRemember(toolCall.toolName) && rememberForSession
+                        )
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -165,6 +174,8 @@ struct ConfirmationCard: View {
 
     private var actionDescription: String {
         switch toolCall.toolName {
+        case "create_skill_draft":
+            String(localized: "Проверьте все файлы. После подтверждения навык будет создан выключенным.")
         case "write_file":
             String(localized: "Записать данные в файл с указанными ниже точными параметрами.")
         case "move_file":

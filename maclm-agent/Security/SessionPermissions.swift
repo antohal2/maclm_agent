@@ -42,7 +42,7 @@ final class SessionPermissions {
         expectedEpoch: Int? = nil
     ) -> Bool {
         guard expectedEpoch == nil || expectedEpoch == epoch(for: conversationID) else { return false }
-        return riskLevel.canBeRemembered && permissions.contains(.init(
+        return !ToolApprovalPolicy.neverRemember(toolName) && riskLevel.canBeRemembered && permissions.contains(.init(
             conversationID: conversationID,
             toolName: toolName,
             riskLevel: riskLevel
@@ -50,7 +50,7 @@ final class SessionPermissions {
     }
 
     func remember(conversationID: UUID, toolName: String, riskLevel: RiskLevel, expectedEpoch: Int? = nil) {
-        guard riskLevel.canBeRemembered,
+        guard !ToolApprovalPolicy.neverRemember(toolName), riskLevel.canBeRemembered,
               expectedEpoch == nil || expectedEpoch == epoch(for: conversationID) else { return }
         permissions.insert(.init(conversationID: conversationID, toolName: toolName, riskLevel: riskLevel))
     }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.5.4] - 2026-10-21
+
+- Create disabled skills from a session menu or `/skill new`, using a one-time request and full file review.
+- Always require chat approval for drafts, with secret/path warnings and no session memory or pet approval.
+- Install through exclusive atomic staging, reject name collisions, clean interrupted writes, and audit draft decisions.
+- Show model origin until the first manual enable; localize the new interface in Russian and English.
+
 ## [v0.4.10.1] - 2026-10-06
 
 - Ship original AI-generated Scout (Скаут) sprite art through the existing bundle folder resource and production validator.

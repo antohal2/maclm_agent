@@ -42,6 +42,7 @@ import XCTest
         project.pinnedSkillsData = conversation.attachedSkillsData
         let manifests = ["v052-enabled": [SkillFile(path: "SKILL.md", size: 12, digest: "digest")]]
         record.manifestsData = try JSONEncoder().encode(manifests)
+        record.firstEnabledAt = Date(timeIntervalSince1970: 456)
         conversation.detachedPinnedSkillsData = Data("[\"sample\"]".utf8)
         conversation.skillCatalogOrderData = Data("[\"sample\",\"other\"]".utf8)
         try context.save()
@@ -55,6 +56,7 @@ import XCTest
         XCTAssertEqual(saved.project?.pinnedSkills, attachments)
         let savedSkill = try XCTUnwrap(reopened.mainContext.fetch(FetchDescriptor<SkillRecord>()).first)
         XCTAssertEqual(savedSkill.manifestsData, record.manifestsData)
+        XCTAssertEqual(savedSkill.firstEnabledAt, record.firstEnabledAt)
         XCTAssertEqual(try reopened.mainContext.fetch(FetchDescriptor<AuditEntry>()).first?.id, audit.id)
     }
 
@@ -68,6 +70,7 @@ import XCTest
         XCTAssertEqual(record.lastUsedAt, Date(timeIntervalSince1970: 123))
         XCTAssertNil(project.pinnedSkillsData)
         XCTAssertNil(record.manifestsData)
+        XCTAssertNil(record.firstEnabledAt)
         XCTAssertNil(conversation.detachedPinnedSkillsData)
         XCTAssertNil(conversation.skillCatalogOrderData)
         let attachments = try JSONDecoder().decode(

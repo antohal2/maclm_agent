@@ -163,7 +163,9 @@ final class RiskLevelTests: XCTestCase {
                 }
                 return nil
             }
-            XCTAssertEqual(confirmations.count, type(of: tool).baseRiskLevel.requiresConfirmation ? 1 : 0, tool.name)
+            // Draft calls are gated before validation/approval without a session request.
+            let requiresCard = type(of: tool).baseRiskLevel.requiresConfirmation && !(tool is CreateSkillDraftTool)
+            XCTAssertEqual(confirmations.count, requiresCard ? 1 : 0, tool.name)
             XCTAssertTrue(events.contains(.done), tool.name)
         }
     }

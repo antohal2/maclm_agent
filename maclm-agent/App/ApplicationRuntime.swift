@@ -128,6 +128,7 @@ final class ApplicationRuntime {
         if !testHost {
             Task {
                 do {
+                    try await skills.cleanupStaging()
                     try await skills.rescan()
                     try await skills.cleanupSnapshots()
                 } catch {

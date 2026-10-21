@@ -35,7 +35,8 @@ final class PetBubbleModel {
         }
         if let request = row.request {
             return PetApprovalPolicy.allows(
-                risk: request.riskLevel, source: .pet, hidden: settings.petHideContent
+                risk: request.riskLevel, source: .pet, hidden: settings.petHideContent,
+                toolName: request.toolCall.function.name
             ) ? 100 : settings.petHideContent ? 60 : 80
         }
         return settings.petHideContent || row.tool == nil ? 32 : 52

@@ -197,6 +197,7 @@ import XCTest
     attribute|SecurityRule|ruleDescription|Swift.String|false
     attribute|SkillRecord|enabledAt|Swift.Optional<Foundation.Date>|true
     attribute|SkillRecord|enabledHash|Swift.Optional<Swift.String>|true
+    attribute|SkillRecord|firstEnabledAt|Swift.Optional<Foundation.Date>|true
     attribute|SkillRecord|lastUsedAt|Swift.Optional<Foundation.Date>|true
     attribute|SkillRecord|manifestsData|Swift.Optional<Foundation.Data>|true
     attribute|SkillRecord|origin|Swift.String|false

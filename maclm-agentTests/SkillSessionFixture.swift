@@ -26,6 +26,7 @@ import XCTest
     func clean() {
         try? FileManager.default.removeItem(at: root)
         try? FileManager.default.removeItem(at: store.snapshotRoot)
+        try? FileManager.default.removeItem(at: store.stagingRoot)
     }
 
     func write(_ id: String = "sample", body: String = "Secret skill instructions") throws {

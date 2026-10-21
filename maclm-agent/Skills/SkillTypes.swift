@@ -20,6 +20,7 @@ enum SkillState: String, Sendable, CaseIterable {
     var stateRaw: String = SkillState.disabled.rawValue
     var enabledHash: String?
     var enabledAt: Date?
+    var firstEnabledAt: Date?
     var lastUsedAt: Date?
     var manifestsData: Data?
     var origin: String = "manual"
@@ -54,6 +55,12 @@ struct SkillSnapshot: Sendable, Identifiable {
     var state: SkillState = .disabled
     var enabledHash: String?
     var source = "appFolder"
+    var origin = "manual"
+    var firstEnabledAt: Date?
+    var showsModelOrigin: Bool {
+        origin == "model-drafted" && firstEnabledAt == nil
+    }
+
     var problem: SkillValidationError?
     var largeInstructionWarning = false
     var lastUsedAt: Date?

@@ -11,6 +11,9 @@ struct ConfirmationRequest: Identifiable, Equatable, Sendable {
     let riskReason: String?
     let riskLevel: RiskLevel
     let filePreview: FilePreview?
+    var neverRemember: Bool {
+        ToolApprovalPolicy.neverRemember(toolCall.function.name)
+    }
 
     init(
         id: UUID = UUID(),

@@ -192,6 +192,12 @@ final class ChatViewModel {
     }
 
     func send() {
+        if input.trimmingCharacters(in: .whitespacesAndNewlines) == "/skill new" {
+            if createSkillFromSession() {
+                input = ""
+            }
+            return
+        }
         if handlePetCommand(input) {
             input = ""; return
         }
@@ -200,6 +206,12 @@ final class ChatViewModel {
         let content = input
         input = ""
         registry.runner(for: conversation).send(content)
+    }
+
+    @discardableResult
+    func createSkillFromSession(_ conversation: Conversation? = nil) -> Bool {
+        guard let target = conversation ?? selectedConversation else { return false }
+        return registry.runner(for: target).createSkillFromSession()
     }
 
     @discardableResult
@@ -231,6 +243,9 @@ final class ChatViewModel {
             selectedConversation
         } else {
             createConversation()
+        }
+        if content.trimmingCharacters(in: .whitespacesAndNewlines) == "/skill new" {
+            return createSkillFromSession(target)
         }
         registry.runner(for: target).send(content)
         return true

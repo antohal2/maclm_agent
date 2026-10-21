@@ -60,7 +60,9 @@ struct PetBubbleView: View {
             if row.hasSkillProposal {
                 Button(String(localized: "Открыть в чате")) { model.onOpen?(row.id) }
             } else if let request = row.request {
-                if PetApprovalPolicy.allows(risk: request.riskLevel, source: .pet, hidden: hidden) {
+                if PetApprovalPolicy.allows(
+                    risk: request.riskLevel, source: .pet, hidden: hidden, toolName: request.toolCall.function.name
+                ) {
                     Text(verbatim: summary(request)).font(.caption).lineLimit(1).truncationMode(.middle)
                     HStack {
                         Button(String(localized: "Разрешить")) { model.resolve(row, decision: .approved) }

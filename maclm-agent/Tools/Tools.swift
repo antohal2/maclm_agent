@@ -204,6 +204,7 @@ struct ToolRegistry: Sendable {
                 DeleteFileTool(),
                 RunShellTool(),
                 SuggestSkillTool(),
+                CreateSkillDraftTool(),
                 ListSkillFilesTool(),
                 ReadSkillFileTool(),
             ]

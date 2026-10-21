@@ -162,6 +162,11 @@ struct ConversationListView: View {
         }
         .tag(conversation.id)
         .contextMenu {
+            Button(String(localized: "Создать навык из этой сессии")) {
+                viewModel.createSkillFromSession(conversation)
+            }
+            .disabled(viewModel.registry.runners[conversation.id]?.isGenerating == true
+                || viewModel.registry.skillStore == nil)
             Button(conversation.isPinned ? String(localized: "Открепить") : String(localized: "Закрепить")) {
                 viewModel.togglePin(conversation)
             }

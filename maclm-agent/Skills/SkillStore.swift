@@ -157,6 +157,7 @@ actor SkillStore {
             record.state = .enabled
             record.enabledHash = hash
             record.enabledAt = Date()
+            record.firstEnabledAt = record.firstEnabledAt ?? record.enabledAt
             try audit("skill.enable", record: record, hash: hash)
             if reconfirm {
                 try auditReconfirm(id: id, oldHash: referenceHash ?? oldHash, newHash: hash, projectID: projectID)
@@ -164,6 +165,7 @@ actor SkillStore {
             try context.save()
             snapshots[index].state = .enabled
             snapshots[index].enabledHash = hash
+            snapshots[index].firstEnabledAt = record.firstEnabledAt
             try cleanupSnapshots()
             return snapshots
         } catch { context.rollback(); throw error }
@@ -187,6 +189,8 @@ actor SkillStore {
         snapshot.state = record.state
         snapshot.enabledHash = record.enabledHash
         snapshot.source = record.source
+        snapshot.origin = record.origin
+        snapshot.firstEnabledAt = record.firstEnabledAt
         snapshot.lastUsedAt = record.lastUsedAt
     }
 

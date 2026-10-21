@@ -26,6 +26,7 @@ final class SessionRunner {
     private let agentLoop: AgentLoop
     let autoTitles: AutoTitleService
     let skills: SessionSkills?
+    let skillDraft: SessionSkillDraft?
     private let providerFactory: () throws -> any LLMProvider
     private var generationToken: UUID?
     private var generationTask: Task<Void, Never>?
@@ -52,12 +53,21 @@ final class SessionRunner {
         self.agentLoop = agentLoop
         self.autoTitles = autoTitles
         self.providerFactory = providerFactory
+        skillDraft = skillStore.map { SessionSkillDraft(store: $0, conversationID: conversation.id) }
         skills = skillStore.map { SessionSkills(store: $0, conversation: conversation, context: modelContext) }
         skills?.onPendingChanged = { [weak self] pending in
             guard let self, self.isGenerating else { return }
             self.status = pending ? .needsApproval(risk: .safe) : .running
             self.isWaitingForFirstToken = false
         }
+    }
+
+    @discardableResult
+    func createSkillFromSession() -> Bool {
+        guard canStart(), !isGenerating, !isRestoringCheckpoint, let skillDraft else { return false }
+        skillDraft.request()
+        send(SessionSkillDraft.instruction)
+        return true
     }
 
     func send(_ content: String) {
@@ -85,9 +95,10 @@ final class SessionRunner {
     }
 
     func retry(after user: Message) {
-        guard !isGenerating, !isRestoringCheckpoint, canStart(), user.role == .user,
-              !messages.flatMap(\.toolCalls).contains(where: { $0.status == .pending || $0.status == .approved }),
-              let index = messages.firstIndex(where: { $0.id == user.id }) else { return }
+        guard
+            !isGenerating, !isRestoringCheckpoint, canStart(), user.role == .user,
+            !messages.flatMap(\.toolCalls).contains(where: { $0.status == .pending || $0.status == .approved }),
+            let index = messages.firstIndex(where: { $0.id == user.id }) else { return }
         autoTitles.cancelTitle(for: conversation)
         let history = Array(messages.prefix(index + 1))
         traceEndings = traceEndings.filter { key, _ in history.contains { $0.id == key } }
@@ -119,6 +130,7 @@ final class SessionRunner {
 
     func cancel() {
         guard isGenerating else { return }
+        skillDraft?.clear()
         generationTask?.cancel()
         skills?.cancelProposal()
         let calls = generatingMessageID.flatMap { persistentMessage(id: $0) }?.toolCalls ?? []
@@ -134,14 +146,18 @@ final class SessionRunner {
     func resolveApproval(
         id: UUID, decision: ConfirmationDecision, rememberForSession: Bool = false, source: ApprovalSource = .feed
     ) {
-        guard isGenerating, let request = pendingApproval, request.id == id,
-              let toolCall = persistentToolCall(id: id),
-              toolCall.message?.conversation?.id == conversationID,
-              toolCall.message?.id == generatingMessageID,
-              toolCall.status == .pending else { return }
-        guard decision == .rejected || PetApprovalPolicy.allows(
-            risk: request.riskLevel, source: source, hidden: petContentHidden()
-        ) else {
+        guard
+            isGenerating, let request = pendingApproval, request.id == id,
+            let toolCall = persistentToolCall(id: id),
+            toolCall.message?.conversation?.id == conversationID,
+            toolCall.message?.id == generatingMessageID,
+            toolCall.status == .pending else { return }
+        guard
+            decision == .rejected || PetApprovalPolicy.allows(
+                risk: request.riskLevel, source: source, hidden: petContentHidden(),
+                toolName: request.toolCall.function.name
+            )
+        else {
             NSLog("Approval refused by pet policy: %@", id.uuidString)
             return
         }
@@ -183,6 +199,7 @@ final class SessionRunner {
                     skillFileRequest: { [weak self] request in
                         await self?.skills?.fileRequest(request) ?? .failure("unavailable: no skill session")
                     },
+                    skillDraftSession: self?.skillDraft,
                     onEvent: { [weak self] event in
                         guard await self?.generationToken == token else { return }
                         await self?.consume(event, assistantID: assistantID)
@@ -453,6 +470,7 @@ extension SessionRunner {
     }
 
     private func finishGeneration(cancelled: Bool) {
+        skillDraft?.clear()
         lastRunCancelled = cancelled
         lastRunEndedAt = Date()
         if let user = messages.last(where: { $0.role == .user }) {

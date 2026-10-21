@@ -1,7 +1,7 @@
 import Foundation
 
 actor AgentLoop {
-    private let toolRegistry: ToolRegistry
+    let toolRegistry: ToolRegistry
     private let confirmationCoordinator: ConfirmationCoordinator
     nonisolated let sessionPermissions: SessionPermissions
     private var pendingConfirmations: [UUID: ConfirmationRequest] = [:]
@@ -15,6 +15,7 @@ actor AgentLoop {
     private let checkpointMaintenance: @MainActor @Sendable () async throws -> Void
     private let maximumIterations: Int
     private var isGenerating = false
+    private var skillDraftSession: SessionSkillDraft?
     private var skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)?
 
     private var skillFileRequest: (@MainActor @Sendable (SkillFileRequest) async -> ToolExecutionResult)?
@@ -59,12 +60,13 @@ actor AgentLoop {
         rememberForSession: Bool = false, source: ApprovalSource = .feed
     ) async {
         guard let pending = pendingConfirmations[requestID] else { return }
-        guard decision == .rejected || PetApprovalPolicy.allows(
-            risk: pending.riskLevel, source: source, hidden: false
-        ) else { return }
+        guard
+            decision == .rejected || PetApprovalPolicy.allows(
+                risk: pending.riskLevel, source: source, hidden: false, toolName: pending.toolCall.function.name
+            ) else { return }
         decisionSources[requestID] = source
         if
-            decision == .approved, rememberForSession, source == .feed,
+            decision == .approved, rememberForSession, source == .feed, !pending.neverRemember,
             let request = pendingConfirmations[requestID],
             let (invocation, epoch) = pendingContexts[requestID]
         {
@@ -82,15 +84,17 @@ actor AgentLoop {
         systemPrompt: (@MainActor @Sendable () async -> String)? = nil,
         skillSuggestion: (@MainActor @Sendable (String, String) async throws -> String)? = nil,
         skillFileRequest: (@MainActor @Sendable (SkillFileRequest) async -> ToolExecutionResult)? = nil,
+        skillDraftSession: SessionSkillDraft? = nil,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
     ) async throws {
         guard !isGenerating else {
             throw AgentLoopError.alreadyGenerating
         }
         isGenerating = true
+        self.skillDraftSession = skillDraftSession
         self.skillSuggestion = skillSuggestion
         self.skillFileRequest = skillFileRequest
-        defer { isGenerating = false; self.skillSuggestion = nil; self.skillFileRequest = nil }
+        defer { resetGenerationCallbacks() }
         var history = messages
         for iteration in 0 ..< maximumIterations {
             if iteration > 0 {
@@ -131,38 +135,6 @@ actor AgentLoop {
                 throw AgentLoopError.maximumIterationsReached(maximumIterations)
             }
         }
-    }
-
-    private func receiveTurn(
-        history: [ChatMessage], provider: any LLMProvider, toolsEnabled: Bool,
-        onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
-    ) async throws -> AssistantTurn {
-        var content = ""
-        var toolCallAccumulators: [Int: ToolCallAccumulator] = [:]
-        await onEvent(.contextRequestStarted)
-        for try await event in provider.streamChat(
-            messages: history,
-            tools: toolsEnabled ? toolRegistry.definitions : []
-        ) {
-            switch event {
-            case let .contentDelta(delta):
-                content += delta
-                await onEvent(.contentDelta(delta))
-            case let .toolCallDelta(delta):
-                toolCallAccumulators[delta.index, default: ToolCallAccumulator()]
-                    .append(delta)
-            case let .usage(prompt, completion):
-                await onEvent(.usage(promptTokens: prompt, completionTokens: completion))
-            case .done:
-                break
-            }
-        }
-        return AssistantTurn(
-            content: content,
-            toolCalls: (toolsEnabled ? toolCallAccumulators : [:])
-                .sorted { $0.key < $1.key }
-                .map(\.value.chatToolCall)
-        )
     }
 }
 
@@ -216,6 +188,11 @@ extension AgentLoop {
             return AgentToolCallExecution(
                 toolCall: toolCall,
                 result: .failure("Unknown tool: \(toolCall.function.name)")
+            )
+        }
+        if tool is CreateSkillDraftTool {
+            return try await executeSkillDraft(
+                toolCall, session: skillDraftSession, invocation: invocation, audit: &audit, onEvent: onEvent
             )
         }
         guard
@@ -393,8 +370,9 @@ extension AgentLoop {
             let toolArguments = try JSONSerialization.jsonObject(with: encodedArguments) as? [String: Any] ?? [:]
             executionBegan = true
             let result: ToolExecutionResult = if tool is SuggestSkillTool, let skillSuggestion {
-                if let name = toolArguments["name"] as? String, !name.isEmpty,
-                   let reason = toolArguments["reason"] as? String, !reason.isEmpty
+                if
+                    let name = toolArguments["name"] as? String, !name.isEmpty,
+                    let reason = toolArguments["reason"] as? String, !reason.isEmpty
                 {
                     try await .success(content: skillSuggestion(name, reason))
                 } else {
@@ -451,7 +429,7 @@ extension AgentLoop {
 
     // Preserve the existing security operation signature.
     // swiftlint:disable:next function_parameter_count
-    private func confirmIfNeeded(
+    func confirmIfNeeded(
         toolCall: ChatToolCall, assessment: RiskAssessment, invocation: ToolInvocationContext, callID: UUID,
         prepared: PreparedFileOperation?,
         onEvent: @escaping @Sendable (AgentLoopEvent) async -> Void
@@ -495,5 +473,21 @@ extension AgentLoop {
             )
         }
         return ToolConfirmation(decision: decision, requestID: request.id)
+    }
+}
+
+extension AgentLoop {
+    private func resetGenerationCallbacks() {
+        isGenerating = false
+        skillSuggestion = nil
+        skillFileRequest = nil
+        skillDraftSession = nil
+    }
+
+    func recordUnrequestedDraft(_ call: ChatToolCall, invocation: ToolInvocationContext) async throws {
+        try await auditSink(SkillStore.draftAudit(
+            "skill.draftUnrequested", hash: SkillHasher.digest(Data(call.function.arguments.utf8)),
+            conversationID: invocation.conversationID
+        ))
     }
 }

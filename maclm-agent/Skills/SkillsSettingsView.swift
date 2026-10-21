@@ -98,6 +98,10 @@ struct SkillsSettingsView: View {
                 .labelsHidden()
                 .disabled(entry.state == .invalid)
             }
+            if entry.showsModelOrigin {
+                Label(String(localized: "Создан моделью"), systemImage: "sparkles")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Text(entry.state.displayName).font(.caption)
                 .foregroundStyle(entry.state == .invalid || entry.state == .needsReconfirm ? .orange : .secondary)
                 .padding(.horizontal, 6).padding(.vertical, 2)
