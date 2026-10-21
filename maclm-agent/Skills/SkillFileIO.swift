@@ -53,7 +53,9 @@ enum SkillFileIO {
 
     static func readFile(_ file: SkillFile, root: Int32) throws -> Data {
         let parts = file.path.components(separatedBy: "/")
-        guard let last = parts.last, !parts.contains(".."), !parts.contains("") else {
+        guard let last = parts.last, !parts.contains(".."), !parts.contains(""),
+              !parts.contains(where: SkillFilePolicy.isIgnored)
+        else {
             throw SkillValidationError.unreadable
         }
         var parent = dup(root)

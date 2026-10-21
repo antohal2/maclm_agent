@@ -26,6 +26,7 @@ enum SkillScanner {
         let descriptor = try SkillFileIO.directory(root.path)
         defer { close(descriptor) }
         return try SkillFileIO.names(descriptor).compactMap { name in
+            guard !SkillFilePolicy.isIgnored(name) else { return nil }
             let info = try SkillFileIO.info(name, parent: descriptor)
             let kind = SkillFileIO.kind(info)
             guard kind == S_IFDIR || kind == S_IFLNK else { return nil }
@@ -84,6 +85,7 @@ enum SkillScanner {
         _ directory: Int32, prefix: String, files: inout [SkillFile], total: inout Int
     ) throws {
         for name in try SkillFileIO.names(directory) {
+            guard !SkillFilePolicy.isIgnored(name) else { continue }
             let info = try SkillFileIO.info(name, parent: directory)
             let path = prefix + name
             switch SkillFileIO.kind(info) {

@@ -50,6 +50,145 @@ final class SkillScannerTests: XCTestCase {
         }
     }
 
+    func testMetadataAtEveryDepthIsExcludedFromFilesSizeAndHash() throws {
+        try withSkill { folder in
+            let baseline = SkillScanner.scanSkill(at: folder)
+            let nested = folder.appendingPathComponent("references")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: false)
+            for directory in [folder, nested] {
+                for name in [".DS_Store", "._foo"] {
+                    try Data("metadata".utf8).write(to: directory.appendingPathComponent(name))
+                }
+            }
+            let scan = SkillScanner.scanSkill(at: folder)
+            XCTAssertNil(scan.problem)
+            XCTAssertEqual(scan.files, baseline.files)
+            XCTAssertEqual(scan.size, baseline.size)
+            XCTAssertEqual(scan.hash, baseline.hash)
+        }
+    }
+
+    func testMetadataDoesNotConsumeFileLimit() throws {
+        try withSkill { folder in
+            let nested = folder.appendingPathComponent("references")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: false)
+            for index in 0 ..< SkillScanner.maximumFiles - 1 {
+                try Data().write(to: folder.appendingPathComponent("file-\(index)"))
+            }
+            for directory in [folder, nested] {
+                try Data().write(to: directory.appendingPathComponent(".DS_Store"))
+                for index in 0 ..< SkillScanner.maximumFiles {
+                    try Data().write(to: directory.appendingPathComponent("._file-\(index)"))
+                }
+            }
+            let scan = SkillScanner.scanSkill(at: folder)
+            XCTAssertNil(scan.problem)
+            XCTAssertEqual(scan.files.count, SkillScanner.maximumFiles)
+            try Data().write(to: folder.appendingPathComponent("one-too-many"))
+            XCTAssertEqual(SkillScanner.scanSkill(at: folder).problem, .tooManyFiles)
+        }
+    }
+
+    func testMetadataDoesNotConsumeSizeLimit() throws {
+        try withSkill { folder in
+            let baseline = SkillScanner.scanSkill(at: folder)
+            try Data(repeating: 0, count: SkillScanner.maximumSize - baseline.size)
+                .write(to: folder.appendingPathComponent("asset.bin"))
+            let nested = folder.appendingPathComponent("references")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: false)
+            for directory in [folder, nested] {
+                for name in [".DS_Store", "._foo"] {
+                    try Data(repeating: 0, count: SkillScanner.maximumSize + 1)
+                        .write(to: directory.appendingPathComponent(name))
+                }
+            }
+            let scan = SkillScanner.scanSkill(at: folder)
+            XCTAssertNil(scan.problem)
+            XCTAssertEqual(scan.size, SkillScanner.maximumSize)
+            try Data([1]).write(to: folder.appendingPathComponent("one-too-many"))
+            XCTAssertEqual(SkillScanner.scanSkill(at: folder).problem, .folderTooLarge)
+        }
+    }
+
+    func testIgnoredSymlinksSpecialFilesAndDirectoriesAreSkipped() throws {
+        try withSkill { folder in
+            let baseline = SkillScanner.scanSkill(at: folder)
+            let nested = folder.appendingPathComponent("references")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: false)
+            for directory in [folder, nested] {
+                for name in [".DS_Store", "._foo"] {
+                    let entry = directory.appendingPathComponent(name)
+                    try FileManager.default.createSymbolicLink(atPath: entry.path, withDestinationPath: "missing")
+                    XCTAssertEqual(SkillScanner.scanSkill(at: folder).hash, baseline.hash)
+                    try FileManager.default.removeItem(at: entry)
+                    XCTAssertEqual(mkfifo(entry.path, 0o600), 0)
+                    XCTAssertEqual(SkillScanner.scanSkill(at: folder).hash, baseline.hash)
+                    try FileManager.default.removeItem(at: entry)
+                    try FileManager.default.createDirectory(at: entry, withIntermediateDirectories: false)
+                    XCTAssertEqual(mkfifo(entry.appendingPathComponent("pipe").path, 0o600), 0)
+                    let scan = SkillScanner.scanSkill(at: folder)
+                    XCTAssertNil(scan.problem)
+                    XCTAssertEqual(scan.files, baseline.files)
+                    XCTAssertEqual(scan.hash, baseline.hash)
+                }
+            }
+        }
+    }
+
+    func testSimilarNamesAreIncludedAndHashed() throws {
+        try withSkill { folder in
+            let baseline = SkillScanner.scanSkill(at: folder)
+            for name in ["DS_Store", ".DS_Store.txt"] {
+                let file = folder.appendingPathComponent(name)
+                try Data("content".utf8).write(to: file)
+                let scan = SkillScanner.scanSkill(at: folder)
+                XCTAssertNil(scan.problem)
+                XCTAssertTrue(scan.files.contains { $0.path == name })
+                XCTAssertEqual(scan.size, baseline.size + 7)
+                XCTAssertNotEqual(scan.hash, baseline.hash)
+                try FileManager.default.removeItem(at: file)
+            }
+        }
+    }
+
+    func testSkillFileReadsRefuseIgnoredPathComponents() throws {
+        for path in [
+            ".DS_Store",
+            "._foo",
+            "references/.DS_Store",
+            "references/._foo",
+            ".DS_Store/file",
+            "._folder/file",
+        ] {
+            try withSkill { folder in
+                let file = folder.appendingPathComponent(path)
+                try FileManager.default.createDirectory(
+                    at: file.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try Data("metadata".utf8).write(to: file)
+                let descriptor = try SkillFileIO.directory(folder.path)
+                defer { close(descriptor) }
+                XCTAssertThrowsError(try SkillFileIO.readFile(SkillFile(path: path, size: 8), root: descriptor)) {
+                    XCTAssertEqual($0 as? SkillValidationError, .unreadable)
+                }
+            }
+        }
+    }
+
+    func testSourceTraversalSkipsIgnoredNames() throws {
+        try withSkill { folder in
+            let root = folder.deletingLastPathComponent()
+            for name in [".DS_Store", "._foo"] {
+                let entry = root.appendingPathComponent(name)
+                try FileManager.default.createSymbolicLink(atPath: entry.path, withDestinationPath: "missing")
+            }
+            let scans = try SkillScanner.scan(root: root)
+            XCTAssertEqual(scans.map(\.id), ["sample"])
+            XCTAssertNil(scans.first?.problem)
+        }
+    }
+
     func testTotalSizeLimit() throws {
         try withSkill { folder in
             try Data(repeating: 0, count: 5 * 1024 * 1024).write(to: folder.appendingPathComponent("large.bin"))

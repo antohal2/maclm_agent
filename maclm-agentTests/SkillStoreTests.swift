@@ -68,6 +68,68 @@ import XCTest
         }
     }
 
+    func testMetadataChangesPreserveEnabledStateAndHash() async throws {
+        try await withStore { store, container, folder in
+            let found = try await store.rescan()
+            let hash = try XCTUnwrap(found.first?.hash)
+            _ = try await store.enable("sample", expectedHash: hash)
+            let nested = folder.appendingPathComponent("references")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: false)
+            for directory in [folder, nested] {
+                for name in [".DS_Store", "._foo"] {
+                    let file = directory.appendingPathComponent(name)
+                    for content in ["added", "changed"] {
+                        try Data(content.utf8).write(to: file)
+                        let scanned = try await store.rescan()
+                        XCTAssertEqual(scanned.first?.state, .enabled)
+                        XCTAssertEqual(scanned.first?.hash, hash)
+                        XCTAssertEqual(scanned.first?.enabledHash, hash)
+                    }
+                    try FileManager.default.removeItem(at: file)
+                    let removed = try await store.rescan()
+                    XCTAssertEqual(removed.first?.state, .enabled)
+                    XCTAssertEqual(removed.first?.hash, hash)
+                    try FileManager.default.createSymbolicLink(atPath: file.path, withDestinationPath: "missing")
+                    let linked = try await store.rescan()
+                    XCTAssertEqual(linked.first?.state, .enabled)
+                    XCTAssertEqual(linked.first?.hash, hash)
+                    try FileManager.default.removeItem(at: file)
+                }
+            }
+            let restarted = SkillStore(root: folder.deletingLastPathComponent(), container: container)
+            let scanned = try await restarted.rescan()
+            XCTAssertEqual(scanned.first?.state, .enabled)
+            let events = try ModelContext(container).fetch(FetchDescriptor<AuditEntry>())
+            XCTAssertFalse(events.contains { $0.toolName == "skill.hashMismatch" })
+        }
+    }
+
+    func testLegacyHashContainingMetadataRequiresReconfirmationOnce() async throws {
+        try await withStore { store, container, folder in
+            let metadata = Data("old metadata".utf8)
+            try metadata.write(to: folder.appendingPathComponent(".DS_Store"))
+            let scan = SkillScanner.scanSkill(at: folder)
+            let legacyFiles = scan.files + [
+                SkillFile(path: ".DS_Store", size: metadata.count, digest: SkillHasher.digest(metadata)),
+            ]
+            let record = SkillRecord(skillID: "sample")
+            record.state = .enabled
+            record.enabledHash = SkillHasher.manifestHash(legacyFiles)
+            let context = ModelContext(container)
+            context.insert(record)
+            try context.save()
+            let changed = try await store.rescan()
+            XCTAssertEqual(changed.first?.state, .needsReconfirm)
+            let hash = try XCTUnwrap(changed.first?.hash)
+            _ = try await store.reconfirm("sample", expectedHash: hash)
+            let confirmed = try await store.rescan()
+            XCTAssertEqual(confirmed.first?.state, .enabled)
+            XCTAssertEqual(confirmed.first?.hash, hash)
+            let events = try ModelContext(container).fetch(FetchDescriptor<AuditEntry>())
+            XCTAssertEqual(events.filter { $0.toolName == "skill.hashMismatch" }.count, 1)
+        }
+    }
+
     func testStalePreviewCannotApproveDifferentBytes() async throws {
         try await withStore { store, _, folder in
             let found = try await store.rescan()

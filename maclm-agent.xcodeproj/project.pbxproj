@@ -104,6 +104,7 @@
 		8817296B29666CA89281C143 /* ClipboardActionStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09A375F450E01A949AF1CAF /* ClipboardActionStoreTests.swift */; };
 		88A8775576343F7E70917501 /* ToolInvocationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A9F3B73AD15CBD14E25919E /* ToolInvocationContext.swift */; };
 		8AA0DE891770AD3C1B4166B6 /* SkillParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC8E226D3197E7CDDB95ACE /* SkillParser.swift */; };
+		8AFFE4FA073C374AC477E56D /* SkillFilePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7554905E10AD368228D9E85 /* SkillFilePolicy.swift */; };
 		8DD02FD87788477A80585BBD /* ClipboardActionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB459D3ACF66313FC02F21C5 /* ClipboardActionEditorView.swift */; };
 		8DF8647AEDF3BC5B69F5184F /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126AD51B613FFC9F3B4474C7 /* Project.swift */; };
 		8FDAC9B442164981522826AA /* ModelSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 900CC41233B21B418D24556A /* ModelSettingsTests.swift */; };
@@ -374,6 +375,7 @@
 		E30C2ABA14D6698C7823FE00 /* ConversationListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationListView.swift; sourceTree = "<group>"; };
 		E3B4E2903A5C74F659D94A33 /* ollama-show-synthetic.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "ollama-show-synthetic.json"; sourceTree = "<group>"; };
 		E726C38719DC47EF6E82A644 /* SecurityRuleEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityRuleEditorTests.swift; sourceTree = "<group>"; };
+		E7554905E10AD368228D9E85 /* SkillFilePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillFilePolicy.swift; sourceTree = "<group>"; };
 		E9936E6A8DD8E2727B4AF0C3 /* SearchFilesTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFilesTool.swift; sourceTree = "<group>"; };
 		EB36C62F087DF9B563EDD289 /* ModelInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelInfo.swift; sourceTree = "<group>"; };
 		EBEFFB854A6EDDE79EC2CF95 /* ClipboardAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardAction.swift; sourceTree = "<group>"; };
@@ -452,6 +454,7 @@
 			isa = PBXGroup;
 			children = (
 				AA4E21FA59653ACE1C34851F /* SkillFileIO.swift */,
+				E7554905E10AD368228D9E85 /* SkillFilePolicy.swift */,
 				BDC8E226D3197E7CDDB95ACE /* SkillParser.swift */,
 				388D592CCC2C3C366EA740DA /* SkillScanner.swift */,
 				6ED0865CDCEDE0D6B94C07C0 /* SkillsSettingsView.swift */,
@@ -977,6 +980,7 @@
 				A95A7A3DFD60902F9FD81BBA /* SettingsView.swift in Sources */,
 				384F5E913BAC76779908249D /* ShortcutRecorder.swift in Sources */,
 				26B6A46891A9D507D7E72188 /* SkillFileIO.swift in Sources */,
+				8AFFE4FA073C374AC477E56D /* SkillFilePolicy.swift in Sources */,
 				8AA0DE891770AD3C1B4166B6 /* SkillParser.swift in Sources */,
 				40CA770CFBF574B30CF0B07D /* SkillScanner.swift in Sources */,
 				058395944AD01D66B6982186 /* SkillStore.swift in Sources */,
@@ -1150,7 +1154,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.5.0.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
@@ -1175,7 +1179,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.5.0;
+				MARKETING_VERSION = 0.5.0.1;
 				OTHER_LDFLAGS = "$(inherited) -licucore";
 				PRODUCT_BUNDLE_IDENTIFIER = "local.maclm-agent";
 				PRODUCT_NAME = "maclm-agent";
